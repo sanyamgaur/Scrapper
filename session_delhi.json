@@ -1,0 +1,2560 @@
+{
+  "captured_at": 1789577797,
+  "lat": "28.6139",
+  "lon": "77.2090",
+  "delivery_header": "Delivery in 11 minutes | 3, Rashtrapati Bhavan Rd, Central Secretariat, Kartavya Path, New Delhi, Delhi 110011, India | ! | Search \"paneer\" | Search \"chocolate\" | Search \"curd\"",
+  "cookies": {
+    "gr_1_lat": "28.6139",
+    "gr_1_lon": "77.2088",
+    "gr_1_locality": "",
+    "gr_1_city": "",
+    "gr_1_deviceId": "f16b50c5-33e2-447a-a1c4-e678b77850fa",
+    "city": "",
+    "__cf_bm": "f73dl3cofQur1TAupeUA1HR9hPVv4NGbk4jzx3h0u9g-1789577777.2487614-1.0.1.1-NuKtRXchX14PKP.gobOENEN.MzgVd79NrEoF6VBdhba4ImezDF2XNvbwAzukYs7Gu877P5KasvWpzZK7KdJklGXUtRVICy5rfMwtqCys1YYmjIaAbpjvsSXI7E3uF4AI",
+    "_cfuvid": "gKHpG_3y5DzPDq0JR2clEsrU2fC.jLY5cCVP8CvNha4-1789577777.2487614-1.0.1.1-tqeGB5RbPP0FjAaRFUV7d3lcHNn6ObvFVHuwPgNECGo",
+    "_gid": "GA1.2.1215053306.1789577778",
+    "_gat_UA-85989319-1": "1",
+    "_gcl_au": "1.1.65732430.1789577778.-.-.1789577778.196598500.1789577778.1789577778",
+    "_fbp": "fb.1.1789577778210.6267416875058975",
+    "gr_1_landmark": "undefined",
+    "_ga_JSMJG966C7": "GS2.1.s1789577778$o1$g1$t1789577792$j46$l0$h0",
+    "_ga": "GA1.2.386787771.1789577778",
+    "_ga_DDJ0134H6Z": "GS2.2.s1789577778$o1$g1$t1789577792$j46$l0$h0"
+  },
+  "templates": {
+    "tag_collections": {
+      "url": "https://blinkit.com/v1/layout/tag_collections",
+      "method": "POST",
+      "headers": {
+        "x-age-consent-granted": "false",
+        "sec-ch-ua-platform": "\"macOS\"",
+        "lat": "28.6139",
+        "session_uuid": "57dab3c9-5d01-4334-92bc-360fd59695a7",
+        "web_app_version": "1008010016",
+        "sec-ch-ua": "\"Chromium\";v=\"129\", \"Not=A?Brand\";v=\"8\"",
+        "sec-ch-ua-mobile": "?0",
+        "app_client": "consumer_web",
+        "device_id": "655a5cdd1ce26659",
+        "auth_key": "c761ec3633c22afad934fb17a66385c1c06c5472b4898b866b7306186d0bb477",
+        "content-type": "application/json",
+        "lon": "77.2088",
+        "platform": "desktop_web",
+        "referer": "https://blinkit.com/s/?q=milk",
+        "accept-language": "en-IN",
+        "app_version": "52434332",
+        "rn_bundle_version": "1009003012",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+        "access_token": "null"
+      },
+      "body": "{\"fetch_categories\":true}"
+    },
+    "listing": {
+      "url": "https://blinkit.com/v1/layout/listing_widgets",
+      "method": "POST",
+      "headers": {
+        "x-age-consent-granted": "false",
+        "sec-ch-ua-platform": "\"macOS\"",
+        "lat": "28.6139",
+        "session_uuid": "ddda6dbd-33c8-474d-a6b9-ad1185ce04a6",
+        "web_app_version": "1008010016",
+        "sec-ch-ua": "\"Chromium\";v=\"129\", \"Not=A?Brand\";v=\"8\"",
+        "sec-ch-ua-mobile": "?0",
+        "app_client": "consumer_web",
+        "device_id": "655a5cdd1ce26659",
+        "auth_key": "c761ec3633c22afad934fb17a66385c1c06c5472b4898b866b7306186d0bb477",
+        "content-type": "application/json",
+        "lon": "77.2088",
+        "platform": "desktop_web",
+        "referer": "https://blinkit.com/dc/x/y/?collection_uuid=OTg3NjU0MzIxMjM0NTMzNDY=&collection_group_id=679509",
+        "accept-language": "en-IN",
+        "app_version": "1010101010",
+        "rn_bundle_version": "1009003012",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+        "access_token": "null"
+      },
+      "body": null
+    },
+    "search": {
+      "url": "https://blinkit.com/v1/layout/search",
+      "method": "POST",
+      "headers": {
+        "sec-ch-ua-platform": "\"macOS\"",
+        "lat": "28.6139",
+        "session_uuid": "57dab3c9-5d01-4334-92bc-360fd59695a7",
+        "web_app_version": "1008010016",
+        "sec-ch-ua": "\"Chromium\";v=\"129\", \"Not=A?Brand\";v=\"8\"",
+        "sec-ch-ua-mobile": "?0",
+        "app_client": "consumer_web",
+        "device_id": "655a5cdd1ce26659",
+        "auth_key": "c761ec3633c22afad934fb17a66385c1c06c5472b4898b866b7306186d0bb477",
+        "content-type": "application/json",
+        "lon": "77.2088",
+        "referer": "https://blinkit.com/s/?q=milk",
+        "accept-language": "en-IN",
+        "app_version": "1010101010",
+        "rn_bundle_version": "1009003012",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+        "access_token": "null"
+      },
+      "body": null
+    }
+  },
+  "categories": [
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDY=",
+      "collection_group_id": "679509",
+      "category_name": "Bath & Body",
+      "group_name": "Bathing Soaps",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231389
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDY=",
+      "collection_group_id": "723321",
+      "category_name": "Bath & Body",
+      "group_name": "Shower Gels & Scrubs",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231389
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDY=",
+      "collection_group_id": "11650",
+      "category_name": "Bath & Body",
+      "group_name": "Oral Care",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231389
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDY=",
+      "collection_group_id": "11658",
+      "category_name": "Bath & Body",
+      "group_name": "Handwash",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231389
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDY=",
+      "collection_group_id": "174026",
+      "category_name": "Bath & Body",
+      "group_name": "Fragrance & Talc",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231389
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDY=",
+      "collection_group_id": "12739",
+      "category_name": "Bath & Body",
+      "group_name": "Bath Accessories",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231389
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDY=",
+      "collection_group_id": "12011",
+      "category_name": "Bath & Body",
+      "group_name": "Shampoo",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231389
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDY=",
+      "collection_group_id": "12012",
+      "category_name": "Bath & Body",
+      "group_name": "Conditioner",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231389
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDY=",
+      "collection_group_id": "209068",
+      "category_name": "Bath & Body",
+      "group_name": "Face Cleaning",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231389
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDY=",
+      "collection_group_id": "209073",
+      "category_name": "Bath & Body",
+      "group_name": "Body Lotions & Oils",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231389
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDY=",
+      "collection_group_id": "887335",
+      "category_name": "Bath & Body",
+      "group_name": "Body Treatment & Roll On",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231389
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDY=",
+      "collection_group_id": "18689",
+      "category_name": "Bath & Body",
+      "group_name": "Bath & Beauty Gifts",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231389
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDU=",
+      "collection_group_id": "12014",
+      "category_name": "Hair",
+      "group_name": "Shampoo",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 102133
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDU=",
+      "collection_group_id": "12015",
+      "category_name": "Hair",
+      "group_name": "Conditioner",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 102133
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDU=",
+      "collection_group_id": "135472",
+      "category_name": "Hair",
+      "group_name": "Hair Colour",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 102133
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDU=",
+      "collection_group_id": "12016",
+      "category_name": "Hair",
+      "group_name": "Hair Colour",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 102133
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDU=",
+      "collection_group_id": "11659",
+      "category_name": "Hair",
+      "group_name": "Hair Oil & Cream",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 102133
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDU=",
+      "collection_group_id": "135473",
+      "category_name": "Hair",
+      "group_name": "Hair Serums",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 102133
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDU=",
+      "collection_group_id": "11660",
+      "category_name": "Hair",
+      "group_name": "Hair Serum",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 102133
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDU=",
+      "collection_group_id": "11661",
+      "category_name": "Hair",
+      "group_name": "Hair Styling",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 102133
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDU=",
+      "collection_group_id": "12018",
+      "category_name": "Hair",
+      "group_name": "Appliances",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 102133
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDU=",
+      "collection_group_id": "11662",
+      "category_name": "Hair",
+      "group_name": "Hair Accessories",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 102133
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDI=",
+      "collection_group_id": "12020",
+      "category_name": "Skin & Face",
+      "group_name": "Sunscreen",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231354
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDI=",
+      "collection_group_id": "204868",
+      "category_name": "Skin & Face",
+      "group_name": "Face Cleaning",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231354
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDI=",
+      "collection_group_id": "206263",
+      "category_name": "Skin & Face",
+      "group_name": "Face Oil, Serum & Essence",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231354
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDI=",
+      "collection_group_id": "204873",
+      "category_name": "Skin & Face",
+      "group_name": "Face Moisturisers",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231354
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDI=",
+      "collection_group_id": "204875",
+      "category_name": "Skin & Face",
+      "group_name": "Body Lotions & Oils",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231354
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDI=",
+      "collection_group_id": "204900",
+      "category_name": "Skin & Face",
+      "group_name": "Lip & Eye Care",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231354
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDI=",
+      "collection_group_id": "887330",
+      "category_name": "Skin & Face",
+      "group_name": "Face Masks & Packs",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231354
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDI=",
+      "collection_group_id": "887331",
+      "category_name": "Skin & Face",
+      "group_name": "Toners & Mists",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231354
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDI=",
+      "collection_group_id": "887332",
+      "category_name": "Skin & Face",
+      "group_name": "Acne & Blackhead Fixers",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231354
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDI=",
+      "collection_group_id": "204902",
+      "category_name": "Skin & Face",
+      "group_name": "Men's Grooming",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231354
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDI=",
+      "collection_group_id": "204891",
+      "category_name": "Skin & Face",
+      "group_name": "Women's Grooming",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231354
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDE=",
+      "collection_group_id": "11672",
+      "category_name": "Beauty & Cosmetics",
+      "group_name": "Lipstick & Gloss ",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 104848
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDE=",
+      "collection_group_id": "11671",
+      "category_name": "Beauty & Cosmetics",
+      "group_name": "Cleansers & Toners",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 104848
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDE=",
+      "collection_group_id": "11675",
+      "category_name": "Beauty & Cosmetics",
+      "group_name": "Foundation & Compact",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 104848
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDE=",
+      "collection_group_id": "22980",
+      "category_name": "Beauty & Cosmetics",
+      "group_name": "Blush & Highlighter",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 104848
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDE=",
+      "collection_group_id": "11676",
+      "category_name": "Beauty & Cosmetics",
+      "group_name": "Primer & Concealer",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 104848
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDE=",
+      "collection_group_id": "11673",
+      "category_name": "Beauty & Cosmetics",
+      "group_name": "Kajal & Eyeliners",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 104848
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDE=",
+      "collection_group_id": "11911",
+      "category_name": "Beauty & Cosmetics",
+      "group_name": "Bindi, Bangles & Others",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 104848
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDE=",
+      "collection_group_id": "11674",
+      "category_name": "Beauty & Cosmetics",
+      "group_name": "Nail Paints & Accessories",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 104848
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDE=",
+      "collection_group_id": "13642",
+      "category_name": "Beauty & Cosmetics",
+      "group_name": "Beauty Accessories",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 104848
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDE=",
+      "collection_group_id": "628082",
+      "category_name": "Beauty & Cosmetics",
+      "group_name": "Bath & Beauty Gifts",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 104848
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDE=",
+      "collection_group_id": "128500",
+      "category_name": "Beauty & Cosmetics",
+      "group_name": "Beauty E-Card",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 104848
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDA=",
+      "collection_group_id": "12237",
+      "category_name": "Feminine Hygiene",
+      "group_name": "Sanitary Pads",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231304
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDA=",
+      "collection_group_id": "11677",
+      "category_name": "Feminine Hygiene",
+      "group_name": "Tampons & Menstrual Cups",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231304
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDA=",
+      "collection_group_id": "12238",
+      "category_name": "Feminine Hygiene",
+      "group_name": "Period Panty",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231304
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDA=",
+      "collection_group_id": "11680",
+      "category_name": "Feminine Hygiene",
+      "group_name": "Period Pain Relief",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231304
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDA=",
+      "collection_group_id": "11678",
+      "category_name": "Feminine Hygiene",
+      "group_name": "Intimate Wash & Wipes",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231304
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDA=",
+      "collection_group_id": "12239",
+      "category_name": "Feminine Hygiene",
+      "group_name": "Hair Removal",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231304
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDA=",
+      "collection_group_id": "11679",
+      "category_name": "Feminine Hygiene",
+      "group_name": "Mom Care",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231304
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzk=",
+      "collection_group_id": "46757",
+      "category_name": "Baby Care",
+      "group_name": "Diaper & Wipes",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231296
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzk=",
+      "collection_group_id": "20667",
+      "category_name": "Baby Care",
+      "group_name": "Baby Food",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231296
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzk=",
+      "collection_group_id": "11683",
+      "category_name": "Baby Care",
+      "group_name": "Baby Shampoo & Soaps",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231296
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzk=",
+      "collection_group_id": "11682",
+      "category_name": "Baby Care",
+      "group_name": "Skin & Hair Care",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231296
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzk=",
+      "collection_group_id": "11686",
+      "category_name": "Baby Care",
+      "group_name": "Feeding Essentials",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231296
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzk=",
+      "collection_group_id": "46758",
+      "category_name": "Baby Care",
+      "group_name": "Clothes & Accessories",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231296
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzk=",
+      "collection_group_id": "11687",
+      "category_name": "Baby Care",
+      "group_name": "Health &  Hygiene",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231296
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzk=",
+      "collection_group_id": "11688",
+      "category_name": "Baby Care",
+      "group_name": "Baby Oral Care",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231296
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzk=",
+      "collection_group_id": "11689",
+      "category_name": "Baby Care",
+      "group_name": "Baby Toys & Gifts",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231296
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzk=",
+      "collection_group_id": "628097",
+      "category_name": "Baby Care",
+      "group_name": "Baby Gear",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231296
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzk=",
+      "collection_group_id": "814811",
+      "category_name": "Baby Care",
+      "group_name": "Mom Care Needs",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 231296
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzI=",
+      "collection_group_id": "532514",
+      "category_name": "Health & Pharma",
+      "group_name": "Fever & Pain Relief",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 98591
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzI=",
+      "collection_group_id": "556584",
+      "category_name": "Health & Pharma",
+      "group_name": "Cough, Cold & Flu",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 98591
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzI=",
+      "collection_group_id": "11698",
+      "category_name": "Health & Pharma",
+      "group_name": "Masks & Sanitizers",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 98591
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzI=",
+      "collection_group_id": "531928",
+      "category_name": "Health & Pharma",
+      "group_name": "Stomach & Digestive Care",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 98591
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzI=",
+      "collection_group_id": "11695",
+      "category_name": "Health & Pharma",
+      "group_name": "Protein Supplements",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 98591
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzI=",
+      "collection_group_id": "11694",
+      "category_name": "Health & Pharma",
+      "group_name": "Vitamins & Supplements",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 98591
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzI=",
+      "collection_group_id": "534592",
+      "category_name": "Health & Pharma",
+      "group_name": "Derma Medicines",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 98591
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzI=",
+      "collection_group_id": "534549",
+      "category_name": "Health & Pharma",
+      "group_name": "Bandaid & Wound Care",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 98591
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzI=",
+      "collection_group_id": "534595",
+      "category_name": "Health & Pharma",
+      "group_name": "Eye & Ear Care",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 98591
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzI=",
+      "collection_group_id": "11697",
+      "category_name": "Health & Pharma",
+      "group_name": "Adult Diapers",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 98591
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzI=",
+      "collection_group_id": "766707",
+      "category_name": "Health & Pharma",
+      "group_name": "Health & Ortho Supports",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 98591
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzI=",
+      "collection_group_id": "534594",
+      "category_name": "Health & Pharma",
+      "group_name": "Gynaecology Medicines",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 98591
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzI=",
+      "collection_group_id": "556595",
+      "category_name": "Health & Pharma",
+      "group_name": "Oral Care",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 98591
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzI=",
+      "collection_group_id": "534591",
+      "category_name": "Health & Pharma",
+      "group_name": "Diabetes Medicines",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 98591
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzI=",
+      "collection_group_id": "534587",
+      "category_name": "Health & Pharma",
+      "group_name": "Heart Medicines",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 98591
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzI=",
+      "collection_group_id": "534593",
+      "category_name": "Health & Pharma",
+      "group_name": "Neuro Medicines",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 98591
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzI=",
+      "collection_group_id": "627432",
+      "category_name": "Health & Pharma",
+      "group_name": "Hangover Cure",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 98591
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzI=",
+      "collection_group_id": "128505",
+      "category_name": "Health & Pharma",
+      "group_name": "Health & Wellness E-Cards",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 98591
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzA=",
+      "collection_group_id": "12241",
+      "category_name": "Sexual Wellness",
+      "group_name": "Massagers",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 88853
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzA=",
+      "collection_group_id": "12240",
+      "category_name": "Sexual Wellness",
+      "group_name": "Condoms",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 88853
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzA=",
+      "collection_group_id": "11699",
+      "category_name": "Sexual Wellness",
+      "group_name": "Lubricants",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 88853
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzA=",
+      "collection_group_id": "11748",
+      "category_name": "Sexual Wellness",
+      "group_name": "Enhancers",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 88853
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzA=",
+      "collection_group_id": "63166",
+      "category_name": "Sexual Wellness",
+      "group_name": "Adult Games",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 88853
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzA=",
+      "collection_group_id": "486692",
+      "category_name": "Sexual Wellness",
+      "group_name": "Test Kits",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 88853
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMzA=",
+      "collection_group_id": "557599",
+      "category_name": "Sexual Wellness",
+      "group_name": "Medicines",
+      "super_category": "Beauty & Personal Care",
+      "collection_id": 88853
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNzE=",
+      "collection_group_id": "90651",
+      "category_name": "Vegetables & Fruits",
+      "group_name": "All",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 10255
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNzE=",
+      "collection_group_id": "11370",
+      "category_name": "Vegetables & Fruits",
+      "group_name": "Fresh Vegetables",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 10255
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNzE=",
+      "collection_group_id": "11371",
+      "category_name": "Vegetables & Fruits",
+      "group_name": "Fresh Fruits",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 10255
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNzE=",
+      "collection_group_id": "11372",
+      "category_name": "Vegetables & Fruits",
+      "group_name": "Exotics",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 10255
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNzE=",
+      "collection_group_id": "11373",
+      "category_name": "Vegetables & Fruits",
+      "group_name": "Coriander & Others",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 10255
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNzE=",
+      "collection_group_id": "11374",
+      "category_name": "Vegetables & Fruits",
+      "group_name": "Freshly Cut & Sprouts",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 10255
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNzE=",
+      "collection_group_id": "11375",
+      "category_name": "Vegetables & Fruits",
+      "group_name": "Trusted Organics",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 10255
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNzE=",
+      "collection_group_id": "18664",
+      "category_name": "Vegetables & Fruits",
+      "group_name": "Flowers & Leaves",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 10255
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNzE=",
+      "collection_group_id": "16398",
+      "category_name": "Vegetables & Fruits",
+      "group_name": "Seasonal",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 10255
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNzE=",
+      "collection_group_id": "11376",
+      "category_name": "Vegetables & Fruits",
+      "group_name": "Frozen Veg",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 10255
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNzE=",
+      "collection_group_id": "11377",
+      "category_name": "Vegetables & Fruits",
+      "group_name": "Hydroponic",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 10255
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjk=",
+      "collection_group_id": "11387",
+      "category_name": "Atta, Rice & Dal",
+      "group_name": "Atta",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 231463
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjk=",
+      "collection_group_id": "11380",
+      "category_name": "Atta, Rice & Dal",
+      "group_name": "Rice",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 231463
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjk=",
+      "collection_group_id": "11381",
+      "category_name": "Atta, Rice & Dal",
+      "group_name": "Dal",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 231463
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjk=",
+      "collection_group_id": "11386",
+      "category_name": "Atta, Rice & Dal",
+      "group_name": "Besan, Sooji & Maida",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 231463
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjk=",
+      "collection_group_id": "11383",
+      "category_name": "Atta, Rice & Dal",
+      "group_name": "Rajma, Chhole & Others",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 231463
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjk=",
+      "collection_group_id": "874041",
+      "category_name": "Atta, Rice & Dal",
+      "group_name": "Millet & Other Flours",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 231463
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjk=",
+      "collection_group_id": "11519",
+      "category_name": "Atta, Rice & Dal",
+      "group_name": "Organic",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 231463
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjk=",
+      "collection_group_id": "18665",
+      "category_name": "Atta, Rice & Dal",
+      "group_name": "Poha, Daliya & Other Grains",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 231463
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjk=",
+      "collection_group_id": "885917",
+      "category_name": "Atta, Rice & Dal",
+      "group_name": "Summer Specials",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 231463
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTY=",
+      "collection_group_id": "18687",
+      "category_name": "Oil, Ghee & Masala",
+      "group_name": "Oil",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 104858
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTY=",
+      "collection_group_id": "11585",
+      "category_name": "Oil, Ghee & Masala",
+      "group_name": "Desi Ghee",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 104858
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTY=",
+      "collection_group_id": "92942",
+      "category_name": "Oil, Ghee & Masala",
+      "group_name": "Cow Ghee",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 104858
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTY=",
+      "collection_group_id": "16433",
+      "category_name": "Oil, Ghee & Masala",
+      "group_name": "Powdered Spices",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 104858
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTY=",
+      "collection_group_id": "880385",
+      "category_name": "Oil, Ghee & Masala",
+      "group_name": "Non Veg Spices",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 104858
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTY=",
+      "collection_group_id": "11582",
+      "category_name": "Oil, Ghee & Masala",
+      "group_name": "Salt, Sugar & Jaggery",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 104858
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTY=",
+      "collection_group_id": "17743",
+      "category_name": "Oil, Ghee & Masala",
+      "group_name": "Whole Spices",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 104858
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTY=",
+      "collection_group_id": "895753",
+      "category_name": "Oil, Ghee & Masala",
+      "group_name": "Gravy Mixes & Pastes",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 104858
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTY=",
+      "collection_group_id": "16419",
+      "category_name": "Oil, Ghee & Masala",
+      "group_name": "Herbs & Seasoning",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 104858
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTY=",
+      "collection_group_id": "11590",
+      "category_name": "Oil, Ghee & Masala",
+      "group_name": "Organic",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 104858
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTU=",
+      "collection_group_id": "11591",
+      "category_name": "Dairy, Bread & Eggs",
+      "group_name": "Milk",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 96263
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTU=",
+      "collection_group_id": "11592",
+      "category_name": "Dairy, Bread & Eggs",
+      "group_name": "Bread & Pav",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 96263
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTU=",
+      "collection_group_id": "11595",
+      "category_name": "Dairy, Bread & Eggs",
+      "group_name": "Eggs",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 96263
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTU=",
+      "collection_group_id": "11593",
+      "category_name": "Dairy, Bread & Eggs",
+      "group_name": "Curd & Yogurt",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 96263
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTU=",
+      "collection_group_id": "17124",
+      "category_name": "Dairy, Bread & Eggs",
+      "group_name": "Cheese & Butter",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 96263
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTU=",
+      "collection_group_id": "109735",
+      "category_name": "Dairy, Bread & Eggs",
+      "group_name": "Batter",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 96263
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTU=",
+      "collection_group_id": "11596",
+      "category_name": "Dairy, Bread & Eggs",
+      "group_name": "Paneer & Tofu",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 96263
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTU=",
+      "collection_group_id": "183969",
+      "category_name": "Dairy, Bread & Eggs",
+      "group_name": "Soy Milk & More",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 96263
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTU=",
+      "collection_group_id": "11594",
+      "category_name": "Dairy, Bread & Eggs",
+      "group_name": "Lassi & Milkshakes",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 96263
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTU=",
+      "collection_group_id": "11598",
+      "category_name": "Dairy, Bread & Eggs",
+      "group_name": "Cream & Whitener",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 96263
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTQ=",
+      "collection_group_id": "11527",
+      "category_name": "Bakery & Biscuits",
+      "group_name": "Cookies",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102156
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTQ=",
+      "collection_group_id": "11528",
+      "category_name": "Bakery & Biscuits",
+      "group_name": "Cream Biscuits",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102156
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTQ=",
+      "collection_group_id": "11530",
+      "category_name": "Bakery & Biscuits",
+      "group_name": "Healthy & Digestive",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102156
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTQ=",
+      "collection_group_id": "11531",
+      "category_name": "Bakery & Biscuits",
+      "group_name": "Sweet & Salty",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102156
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTQ=",
+      "collection_group_id": "12726",
+      "category_name": "Bakery & Biscuits",
+      "group_name": "Glucose & Marie",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102156
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTQ=",
+      "collection_group_id": "12732",
+      "category_name": "Bakery & Biscuits",
+      "group_name": "Rusks & Wafers",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102156
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTQ=",
+      "collection_group_id": "11529",
+      "category_name": "Bakery & Biscuits",
+      "group_name": "Cakes & Rolls",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102156
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTQ=",
+      "collection_group_id": "11532",
+      "category_name": "Bakery & Biscuits",
+      "group_name": "Baking Ingredients",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102156
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTQ=",
+      "collection_group_id": "11534",
+      "category_name": "Bakery & Biscuits",
+      "group_name": "Gourmet Bakery",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102156
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTQ=",
+      "collection_group_id": "18679",
+      "category_name": "Bakery & Biscuits",
+      "group_name": "Biscuit Gift Pack",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102156
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTM=",
+      "collection_group_id": "11599",
+      "category_name": "Dry Fruits & Cereals",
+      "group_name": "Dry Fruits",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 231500
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTM=",
+      "collection_group_id": "11600",
+      "category_name": "Dry Fruits & Cereals",
+      "group_name": "Dry Fruits Snacks",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 231500
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTM=",
+      "collection_group_id": "11601",
+      "category_name": "Dry Fruits & Cereals",
+      "group_name": "Corn Flakes & Kids Cereals",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 231500
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTM=",
+      "collection_group_id": "11602",
+      "category_name": "Dry Fruits & Cereals",
+      "group_name": "Muesli & Granola",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 231500
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTM=",
+      "collection_group_id": "11603",
+      "category_name": "Dry Fruits & Cereals",
+      "group_name": "Oats & Daliya",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 231500
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTM=",
+      "collection_group_id": "892781",
+      "category_name": "Dry Fruits & Cereals",
+      "group_name": "Dates",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 231500
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTM=",
+      "collection_group_id": "892782",
+      "category_name": "Dry Fruits & Cereals",
+      "group_name": "Seeds",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 231500
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTM=",
+      "collection_group_id": "11606",
+      "category_name": "Dry Fruits & Cereals",
+      "group_name": "Vermicelli & Poha",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 231500
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTM=",
+      "collection_group_id": "11605",
+      "category_name": "Dry Fruits & Cereals",
+      "group_name": "Organic & Premium",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 231500
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTM=",
+      "collection_group_id": "12734",
+      "category_name": "Dry Fruits & Cereals",
+      "group_name": "Dry Fruit Gift Packs",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 231500
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTI=",
+      "collection_group_id": "11537",
+      "category_name": "Chicken, Meat & Fish",
+      "group_name": "Chicken",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102144
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTI=",
+      "collection_group_id": "24161",
+      "category_name": "Chicken, Meat & Fish",
+      "group_name": "Fresh Meat",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102144
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTI=",
+      "collection_group_id": "11540",
+      "category_name": "Chicken, Meat & Fish",
+      "group_name": "Fish & Seafood",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102144
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTI=",
+      "collection_group_id": "11543",
+      "category_name": "Chicken, Meat & Fish",
+      "group_name": "Mutton",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102144
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTI=",
+      "collection_group_id": "497533",
+      "category_name": "Chicken, Meat & Fish",
+      "group_name": "Frozen Non-Veg Snacks",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102144
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTI=",
+      "collection_group_id": "880650",
+      "category_name": "Chicken, Meat & Fish",
+      "group_name": "Non Veg Spices",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102144
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTI=",
+      "collection_group_id": "11538",
+      "category_name": "Chicken, Meat & Fish",
+      "group_name": "Sausage, Salami & Ham",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102144
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTI=",
+      "collection_group_id": "11541",
+      "category_name": "Chicken, Meat & Fish",
+      "group_name": "Exotic Meat",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102144
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTI=",
+      "collection_group_id": "900714",
+      "category_name": "Chicken, Meat & Fish",
+      "group_name": "Fresh Marinades",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102144
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTI=",
+      "collection_group_id": "11542",
+      "category_name": "Chicken, Meat & Fish",
+      "group_name": "Plant Based Meat",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102144
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTI=",
+      "collection_group_id": "11539",
+      "category_name": "Chicken, Meat & Fish",
+      "group_name": "Eggs",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102144
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTI5ODI=",
+      "collection_group_id": "620088",
+      "category_name": "Kitchenware & Appliances",
+      "group_name": "Bottles & Flasks",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102110
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTI5ODI=",
+      "collection_group_id": "659661",
+      "category_name": "Kitchenware & Appliances",
+      "group_name": "Kitchen Accessories",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102110
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTI5ODI=",
+      "collection_group_id": "620090",
+      "category_name": "Kitchenware & Appliances",
+      "group_name": "Mugs & Glasses",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102110
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTI5ODI=",
+      "collection_group_id": "620091",
+      "category_name": "Kitchenware & Appliances",
+      "group_name": "Cookware & Sets",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102110
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTI5ODI=",
+      "collection_group_id": "620092",
+      "category_name": "Kitchenware & Appliances",
+      "group_name": "Storage & Containers",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102110
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTI5ODI=",
+      "collection_group_id": "620093",
+      "category_name": "Kitchenware & Appliances",
+      "group_name": "Barware",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102110
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTI5ODI=",
+      "collection_group_id": "620094",
+      "category_name": "Kitchenware & Appliances",
+      "group_name": "Lunch Boxes",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102110
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTI5ODI=",
+      "collection_group_id": "620095",
+      "category_name": "Kitchenware & Appliances",
+      "group_name": "Cutting & Chopping",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102110
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTI5ODI=",
+      "collection_group_id": "578042",
+      "category_name": "Kitchenware & Appliances",
+      "group_name": "Dining & Serveware",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102110
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTI5ODI=",
+      "collection_group_id": "13653",
+      "category_name": "Kitchenware & Appliances",
+      "group_name": "Kitchen Appliances",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102110
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTI5ODI=",
+      "collection_group_id": "13652",
+      "category_name": "Kitchenware & Appliances",
+      "group_name": "Tissues & Disposables",
+      "super_category": "Grocery & Kitchen",
+      "collection_id": 102110
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjg=",
+      "collection_group_id": "11402",
+      "category_name": "Chips & Namkeen",
+      "group_name": "Chips & Wafers",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231418
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjg=",
+      "collection_group_id": "11405",
+      "category_name": "Chips & Namkeen",
+      "group_name": "Bhujia & Mixtures",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231418
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjg=",
+      "collection_group_id": "11404",
+      "category_name": "Chips & Namkeen",
+      "group_name": "Namkeen Snacks",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231418
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjg=",
+      "collection_group_id": "11407",
+      "category_name": "Chips & Namkeen",
+      "group_name": "Nachos",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231418
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjg=",
+      "collection_group_id": "11403",
+      "category_name": "Chips & Namkeen",
+      "group_name": "Healthy Snacks",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231418
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjg=",
+      "collection_group_id": "11406",
+      "category_name": "Chips & Namkeen",
+      "group_name": "Popcorn",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231418
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjg=",
+      "collection_group_id": "11408",
+      "category_name": "Chips & Namkeen",
+      "group_name": "Papad & Fryums",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231418
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjg=",
+      "collection_group_id": "11410",
+      "category_name": "Chips & Namkeen",
+      "group_name": "Premium",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231418
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjg=",
+      "collection_group_id": "11409",
+      "category_name": "Chips & Namkeen",
+      "group_name": "Gift Packs",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231418
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjc=",
+      "collection_group_id": "11414",
+      "category_name": "Sweets & Chocolates",
+      "group_name": "Chocolates",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231407
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjc=",
+      "collection_group_id": "11415",
+      "category_name": "Sweets & Chocolates",
+      "group_name": "Chocolate Packs",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231407
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjc=",
+      "collection_group_id": "18681",
+      "category_name": "Sweets & Chocolates",
+      "group_name": "Chocolate Gift Pack",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231407
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjc=",
+      "collection_group_id": "11418",
+      "category_name": "Sweets & Chocolates",
+      "group_name": "Indian Sweets",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231407
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjc=",
+      "collection_group_id": "11417",
+      "category_name": "Sweets & Chocolates",
+      "group_name": "Candies & Gum",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231407
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjc=",
+      "collection_group_id": "13640",
+      "category_name": "Sweets & Chocolates",
+      "group_name": "Premium",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231407
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjc=",
+      "collection_group_id": "18685",
+      "category_name": "Sweets & Chocolates",
+      "group_name": "Energy Bars",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231407
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNjc=",
+      "collection_group_id": "11419",
+      "category_name": "Sweets & Chocolates",
+      "group_name": "Syrups",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231407
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTE=",
+      "collection_group_id": "11607",
+      "category_name": "Drinks & Juices",
+      "group_name": "Soft Drinks",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 92887
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTE=",
+      "collection_group_id": "673755",
+      "category_name": "Drinks & Juices",
+      "group_name": "Fruit Juices",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 92887
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTE=",
+      "collection_group_id": "885907",
+      "category_name": "Drinks & Juices",
+      "group_name": "Zero Sugar Drinks",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 92887
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTE=",
+      "collection_group_id": "14471",
+      "category_name": "Drinks & Juices",
+      "group_name": "Energy Drinks",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 92887
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTE=",
+      "collection_group_id": "304488",
+      "category_name": "Drinks & Juices",
+      "group_name": "Hydration Drinks",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 92887
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTE=",
+      "collection_group_id": "11613",
+      "category_name": "Drinks & Juices",
+      "group_name": "Soda & Mixers",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 92887
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTE=",
+      "collection_group_id": "11615",
+      "category_name": "Drinks & Juices",
+      "group_name": "Water & Ice Cubes",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 92887
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTE=",
+      "collection_group_id": "18673",
+      "category_name": "Drinks & Juices",
+      "group_name": "Mango Drinks",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 92887
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTE=",
+      "collection_group_id": "17133",
+      "category_name": "Drinks & Juices",
+      "group_name": "Soy Milk & More",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 92887
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTE=",
+      "collection_group_id": "18675",
+      "category_name": "Drinks & Juices",
+      "group_name": "Cold Coffee & Ice Tea",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 92887
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTE=",
+      "collection_group_id": "11616",
+      "category_name": "Drinks & Juices",
+      "group_name": "Coconut Water",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 92887
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTE=",
+      "collection_group_id": "11609",
+      "category_name": "Drinks & Juices",
+      "group_name": "Concentrates & Syrups",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 92887
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTE=",
+      "collection_group_id": "11750",
+      "category_name": "Drinks & Juices",
+      "group_name": "Premium",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 92887
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTE=",
+      "collection_group_id": "18695",
+      "category_name": "Drinks & Juices",
+      "group_name": "Beverages Gift Packs",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 92887
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTA=",
+      "collection_group_id": "11617",
+      "category_name": "Tea, Coffee & Milk Drinks",
+      "group_name": "Tea",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 85325
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTA=",
+      "collection_group_id": "11618",
+      "category_name": "Tea, Coffee & Milk Drinks",
+      "group_name": "Coffee",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 85325
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTA=",
+      "collection_group_id": "18677",
+      "category_name": "Tea, Coffee & Milk Drinks",
+      "group_name": "Hot Chocolate",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 85325
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTA=",
+      "collection_group_id": "11619",
+      "category_name": "Tea, Coffee & Milk Drinks",
+      "group_name": "Green Tea",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 85325
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTA=",
+      "collection_group_id": "11622",
+      "category_name": "Tea, Coffee & Milk Drinks",
+      "group_name": "Milk Drinks",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 85325
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTA=",
+      "collection_group_id": "11620",
+      "category_name": "Tea, Coffee & Milk Drinks",
+      "group_name": "Cold Coffee & Ice Tea",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 85325
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTA=",
+      "collection_group_id": "11621",
+      "category_name": "Tea, Coffee & Milk Drinks",
+      "group_name": "Bags & Premixes",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 85325
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTA=",
+      "collection_group_id": "11623",
+      "category_name": "Tea, Coffee & Milk Drinks",
+      "group_name": "Premium",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 85325
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNTA=",
+      "collection_group_id": "899305",
+      "category_name": "Tea, Coffee & Milk Drinks",
+      "group_name": "Herbal Infusion",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 85325
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDk=",
+      "collection_group_id": "11624",
+      "category_name": "Instant Food",
+      "group_name": "Noodles",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231366
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDk=",
+      "collection_group_id": "11629",
+      "category_name": "Instant Food",
+      "group_name": "Frozen Veg Snacks",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231366
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDk=",
+      "collection_group_id": "11626",
+      "category_name": "Instant Food",
+      "group_name": "Pasta",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231366
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDk=",
+      "collection_group_id": "11625",
+      "category_name": "Instant Food",
+      "group_name": "Frozen Non-Veg Snacks",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231366
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDk=",
+      "collection_group_id": "11628",
+      "category_name": "Instant Food",
+      "group_name": "Soup",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231366
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDk=",
+      "collection_group_id": "11627",
+      "category_name": "Instant Food",
+      "group_name": "Ready to Eat",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231366
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDk=",
+      "collection_group_id": "11630",
+      "category_name": "Instant Food",
+      "group_name": "Idli & Dosa Batter",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231366
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDk=",
+      "collection_group_id": "11631",
+      "category_name": "Instant Food",
+      "group_name": "Dessert & Cake Mixes",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231366
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDk=",
+      "collection_group_id": "11632",
+      "category_name": "Instant Food",
+      "group_name": "Organic & Premium",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231366
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDk=",
+      "collection_group_id": "18693",
+      "category_name": "Instant Food",
+      "group_name": "Energy Bars",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231366
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDg=",
+      "collection_group_id": "11643",
+      "category_name": "Sauces & Spreads",
+      "group_name": "Tomato Ketchup",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231342
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDg=",
+      "collection_group_id": "11636",
+      "category_name": "Sauces & Spreads",
+      "group_name": "Jam & Spreads",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231342
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDg=",
+      "collection_group_id": "11641",
+      "category_name": "Sauces & Spreads",
+      "group_name": "Mayonnaise",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231342
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDg=",
+      "collection_group_id": "11638",
+      "category_name": "Sauces & Spreads",
+      "group_name": "Chutney & Pickle ",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231342
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDg=",
+      "collection_group_id": "11639",
+      "category_name": "Sauces & Spreads",
+      "group_name": "Peanut Butter",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231342
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDg=",
+      "collection_group_id": "11634",
+      "category_name": "Sauces & Spreads",
+      "group_name": "Asian Sauces",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231342
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDg=",
+      "collection_group_id": "11640",
+      "category_name": "Sauces & Spreads",
+      "group_name": "Chyawanprash & Honey",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231342
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDg=",
+      "collection_group_id": "105531",
+      "category_name": "Sauces & Spreads",
+      "group_name": "Syrups",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231342
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDg=",
+      "collection_group_id": "326530",
+      "category_name": "Sauces & Spreads",
+      "group_name": "Dips & Salad Dressings",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231342
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDg=",
+      "collection_group_id": "11633",
+      "category_name": "Sauces & Spreads",
+      "group_name": "Cooking Sauces",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231342
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDg=",
+      "collection_group_id": "11635",
+      "category_name": "Sauces & Spreads",
+      "group_name": "Premium",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231342
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDc=",
+      "collection_group_id": "15119",
+      "category_name": "Paan Corner",
+      "group_name": "Cigarettes",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231316
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDc=",
+      "collection_group_id": "383144",
+      "category_name": "Paan Corner",
+      "group_name": "Lighters",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231316
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDc=",
+      "collection_group_id": "62439",
+      "category_name": "Paan Corner",
+      "group_name": "Cigar",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231316
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDc=",
+      "collection_group_id": "11644",
+      "category_name": "Paan Corner",
+      "group_name": "Rolling Needs",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231316
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDc=",
+      "collection_group_id": "744872",
+      "category_name": "Paan Corner",
+      "group_name": "Hookah Needs",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231316
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDc=",
+      "collection_group_id": "127956",
+      "category_name": "Paan Corner",
+      "group_name": "Rolling Tobacco",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231316
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDc=",
+      "collection_group_id": "127957",
+      "category_name": "Paan Corner",
+      "group_name": "Paan Masala",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231316
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDc=",
+      "collection_group_id": "438175",
+      "category_name": "Paan Corner",
+      "group_name": "Ashtrays",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231316
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDc=",
+      "collection_group_id": "11649",
+      "category_name": "Paan Corner",
+      "group_name": "Mouth Fresheners & Gums",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231316
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDc=",
+      "collection_group_id": "389984",
+      "category_name": "Paan Corner",
+      "group_name": "Non-Tobacco Blends",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231316
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzNDc=",
+      "collection_group_id": "15725",
+      "category_name": "Paan Corner",
+      "group_name": "Smoking Cessation",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 231316
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMxOTg=",
+      "collection_group_id": "12770",
+      "category_name": "Ice Creams & More",
+      "group_name": "Tubs",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 230714
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMxOTg=",
+      "collection_group_id": "12768",
+      "category_name": "Ice Creams & More",
+      "group_name": "Sticks",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 230714
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMxOTg=",
+      "collection_group_id": "15719",
+      "category_name": "Ice Creams & More",
+      "group_name": "Cones",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 230714
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMxOTg=",
+      "collection_group_id": "12769",
+      "category_name": "Ice Creams & More",
+      "group_name": "Cassata & Sandwich",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 230714
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMxOTg=",
+      "collection_group_id": "12778",
+      "category_name": "Ice Creams & More",
+      "group_name": "Single Serve Cups",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 230714
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMxOTg=",
+      "collection_group_id": "806290",
+      "category_name": "Ice Creams & More",
+      "group_name": "Cakes & Others",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 230714
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMxOTg=",
+      "collection_group_id": "12779",
+      "category_name": "Ice Creams & More",
+      "group_name": "Guilt-Free",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 230714
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMxOTg=",
+      "collection_group_id": "12777",
+      "category_name": "Ice Creams & More",
+      "group_name": "Gourmet",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 230714
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMxOTg=",
+      "collection_group_id": "354853",
+      "category_name": "Ice Creams & More",
+      "group_name": "Syrups",
+      "super_category": "Snacks & Drinks",
+      "collection_id": 230714
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjk=",
+      "collection_group_id": "274585",
+      "category_name": "Home & Lifestyle",
+      "group_name": "Home Decor",
+      "super_category": "Household Essentials",
+      "collection_id": 87061
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjk=",
+      "collection_group_id": "11740",
+      "category_name": "Home & Lifestyle",
+      "group_name": "Plants & Bouquets",
+      "super_category": "Household Essentials",
+      "collection_id": 87061
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjk=",
+      "collection_group_id": "11705",
+      "category_name": "Home & Lifestyle",
+      "group_name": "Bedsheets & Towels",
+      "super_category": "Household Essentials",
+      "collection_id": 87061
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjk=",
+      "collection_group_id": "416530",
+      "category_name": "Home & Lifestyle",
+      "group_name": "Gardening",
+      "super_category": "Household Essentials",
+      "collection_id": 87061
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjk=",
+      "collection_group_id": "11710",
+      "category_name": "Home & Lifestyle",
+      "group_name": "Decorative Lights",
+      "super_category": "Household Essentials",
+      "collection_id": 87061
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjk=",
+      "collection_group_id": "11702",
+      "category_name": "Home & Lifestyle",
+      "group_name": "Home Needs",
+      "super_category": "Household Essentials",
+      "collection_id": 87061
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjk=",
+      "collection_group_id": "628253",
+      "category_name": "Home & Lifestyle",
+      "group_name": "Tissues & Disposables",
+      "super_category": "Household Essentials",
+      "collection_id": 87061
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjk=",
+      "collection_group_id": "131574",
+      "category_name": "Home & Lifestyle",
+      "group_name": "Jewellery",
+      "super_category": "Household Essentials",
+      "collection_id": 87061
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjk=",
+      "collection_group_id": "11703",
+      "category_name": "Home & Lifestyle",
+      "group_name": "Innerwear",
+      "super_category": "Household Essentials",
+      "collection_id": 87061
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjk=",
+      "collection_group_id": "11707",
+      "category_name": "Home & Lifestyle",
+      "group_name": "Lifestyle Accessories",
+      "super_category": "Household Essentials",
+      "collection_id": 87061
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjk=",
+      "collection_group_id": "659636",
+      "category_name": "Home & Lifestyle",
+      "group_name": "Party & Festive Needs",
+      "super_category": "Household Essentials",
+      "collection_id": 87061
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjk=",
+      "collection_group_id": "627704",
+      "category_name": "Home & Lifestyle",
+      "group_name": "Socks & Handkerchiefs",
+      "super_category": "Household Essentials",
+      "collection_id": 87061
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjk=",
+      "collection_group_id": "11709",
+      "category_name": "Home & Lifestyle",
+      "group_name": "Fresheners",
+      "super_category": "Household Essentials",
+      "collection_id": 87061
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjk=",
+      "collection_group_id": "21983",
+      "category_name": "Home & Lifestyle",
+      "group_name": "Pooja Needs",
+      "super_category": "Household Essentials",
+      "collection_id": 87061
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjk=",
+      "collection_group_id": "22864",
+      "category_name": "Home & Lifestyle",
+      "group_name": "Bathroom Essentials",
+      "super_category": "Household Essentials",
+      "collection_id": 87061
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjk=",
+      "collection_group_id": "22865",
+      "category_name": "Home & Lifestyle",
+      "group_name": "Bags",
+      "super_category": "Household Essentials",
+      "collection_id": 87061
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjk=",
+      "collection_group_id": "127889",
+      "category_name": "Home & Lifestyle",
+      "group_name": "E-Gift Cards",
+      "super_category": "Household Essentials",
+      "collection_id": 87061
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjc=",
+      "collection_group_id": "11720",
+      "category_name": "Cleaners & Repellents",
+      "group_name": "Repellents & Disinfectants",
+      "super_category": "Household Essentials",
+      "collection_id": 231106
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjc=",
+      "collection_group_id": "11711",
+      "category_name": "Cleaners & Repellents",
+      "group_name": "Detergent Powder & Bars",
+      "super_category": "Household Essentials",
+      "collection_id": 231106
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjc=",
+      "collection_group_id": "82715",
+      "category_name": "Cleaners & Repellents",
+      "group_name": "Liquid Detergents",
+      "super_category": "Household Essentials",
+      "collection_id": 231106
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjc=",
+      "collection_group_id": "11715",
+      "category_name": "Cleaners & Repellents",
+      "group_name": "Laundry Additives",
+      "super_category": "Household Essentials",
+      "collection_id": 231106
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjc=",
+      "collection_group_id": "12759",
+      "category_name": "Cleaners & Repellents",
+      "group_name": "Dishwashing Gels & Bars",
+      "super_category": "Household Essentials",
+      "collection_id": 231106
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjc=",
+      "collection_group_id": "12760",
+      "category_name": "Cleaners & Repellents",
+      "group_name": "Dishwashing Accessories",
+      "super_category": "Household Essentials",
+      "collection_id": 231106
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjc=",
+      "collection_group_id": "11713",
+      "category_name": "Cleaners & Repellents",
+      "group_name": "Toilet Cleaners",
+      "super_category": "Household Essentials",
+      "collection_id": 231106
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjc=",
+      "collection_group_id": "11714",
+      "category_name": "Cleaners & Repellents",
+      "group_name": "Floor Cleaners",
+      "super_category": "Household Essentials",
+      "collection_id": 231106
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjc=",
+      "collection_group_id": "11716",
+      "category_name": "Cleaners & Repellents",
+      "group_name": "Cleaning Tools",
+      "super_category": "Household Essentials",
+      "collection_id": 231106
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjc=",
+      "collection_group_id": "11718",
+      "category_name": "Cleaners & Repellents",
+      "group_name": "Garbage Bags",
+      "super_category": "Household Essentials",
+      "collection_id": 231106
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjc=",
+      "collection_group_id": "11721",
+      "category_name": "Cleaners & Repellents",
+      "group_name": "Glass, Metal Cleaners & Others",
+      "super_category": "Household Essentials",
+      "collection_id": 231106
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjc=",
+      "collection_group_id": "36577",
+      "category_name": "Cleaners & Repellents",
+      "group_name": "Shoe Care",
+      "super_category": "Household Essentials",
+      "collection_id": 231106
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjc=",
+      "collection_group_id": "11722",
+      "category_name": "Cleaners & Repellents",
+      "group_name": "Machine & Car Care",
+      "super_category": "Household Essentials",
+      "collection_id": 231106
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjc=",
+      "collection_group_id": "628094",
+      "category_name": "Cleaners & Repellents",
+      "group_name": "Household Appliance Cleaners",
+      "super_category": "Household Essentials",
+      "collection_id": 231106
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjY=",
+      "collection_group_id": "11728",
+      "category_name": "Electronics",
+      "group_name": "Trimmers & Hair Appliances",
+      "super_category": "Household Essentials",
+      "collection_id": 87086
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjY=",
+      "collection_group_id": "17702",
+      "category_name": "Electronics",
+      "group_name": "Earphones & Headsets",
+      "super_category": "Household Essentials",
+      "collection_id": 87086
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjY=",
+      "collection_group_id": "12249",
+      "category_name": "Electronics",
+      "group_name": "Speakers",
+      "super_category": "Household Essentials",
+      "collection_id": 87086
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjY=",
+      "collection_group_id": "11723",
+      "category_name": "Electronics",
+      "group_name": "Mobile & Computer",
+      "super_category": "Household Essentials",
+      "collection_id": 87086
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjY=",
+      "collection_group_id": "11724",
+      "category_name": "Electronics",
+      "group_name": "Decorative Lights",
+      "super_category": "Household Essentials",
+      "collection_id": 87086
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjY=",
+      "collection_group_id": "98396",
+      "category_name": "Electronics",
+      "group_name": "Chargers & Cables",
+      "super_category": "Household Essentials",
+      "collection_id": 87086
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjY=",
+      "collection_group_id": "12250",
+      "category_name": "Electronics",
+      "group_name": "Smart Watches",
+      "super_category": "Household Essentials",
+      "collection_id": 87086
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjY=",
+      "collection_group_id": "628148",
+      "category_name": "Electronics",
+      "group_name": "Kitchen Appliances",
+      "super_category": "Household Essentials",
+      "collection_id": 87086
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjY=",
+      "collection_group_id": "349680",
+      "category_name": "Electronics",
+      "group_name": "Laptop & Mobile Phones",
+      "super_category": "Household Essentials",
+      "collection_id": 87086
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjY=",
+      "collection_group_id": "12248",
+      "category_name": "Electronics",
+      "group_name": "Batteries",
+      "super_category": "Household Essentials",
+      "collection_id": 87086
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjY=",
+      "collection_group_id": "11726",
+      "category_name": "Electronics",
+      "group_name": "Extension Cables & Accessories",
+      "super_category": "Household Essentials",
+      "collection_id": 87086
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjY=",
+      "collection_group_id": "11727",
+      "category_name": "Electronics",
+      "group_name": "Home Appliances",
+      "super_category": "Household Essentials",
+      "collection_id": 87086
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjY=",
+      "collection_group_id": "118329",
+      "category_name": "Electronics",
+      "group_name": "Music Instruments & Accessories",
+      "super_category": "Household Essentials",
+      "collection_id": 87086
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjY=",
+      "collection_group_id": "128506",
+      "category_name": "Electronics",
+      "group_name": "Electronics E-Card",
+      "super_category": "Household Essentials",
+      "collection_id": 87086
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjU=",
+      "collection_group_id": "627397",
+      "category_name": "Stationery & Games",
+      "group_name": "Notebooks & Diaries",
+      "super_category": "Household Essentials",
+      "collection_id": 231150
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjU=",
+      "collection_group_id": "627401",
+      "category_name": "Stationery & Games",
+      "group_name": "Pens & Pencils",
+      "super_category": "Household Essentials",
+      "collection_id": 231150
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjU=",
+      "collection_group_id": "12256",
+      "category_name": "Stationery & Games",
+      "group_name": "Toys & Games",
+      "super_category": "Household Essentials",
+      "collection_id": 231150
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjU=",
+      "collection_group_id": "11730",
+      "category_name": "Stationery & Games",
+      "group_name": "Glue & Tape",
+      "super_category": "Household Essentials",
+      "collection_id": 231150
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjU=",
+      "collection_group_id": "12254",
+      "category_name": "Stationery & Games",
+      "group_name": "Books & Magazines",
+      "super_category": "Household Essentials",
+      "collection_id": 231150
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjU=",
+      "collection_group_id": "12255",
+      "category_name": "Stationery & Games",
+      "group_name": "Bags & School Needs",
+      "super_category": "Household Essentials",
+      "collection_id": 231150
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjU=",
+      "collection_group_id": "714981",
+      "category_name": "Stationery & Games",
+      "group_name": "Children's Books",
+      "super_category": "Household Essentials",
+      "collection_id": 231150
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjU=",
+      "collection_group_id": "583269",
+      "category_name": "Stationery & Games",
+      "group_name": "Arts & Crafts",
+      "super_category": "Household Essentials",
+      "collection_id": 231150
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjU=",
+      "collection_group_id": "12257",
+      "category_name": "Stationery & Games",
+      "group_name": "Files & Office Needs",
+      "super_category": "Household Essentials",
+      "collection_id": 231150
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjU=",
+      "collection_group_id": "627415",
+      "category_name": "Stationery & Games",
+      "group_name": "Gift Wraps & Bags",
+      "super_category": "Household Essentials",
+      "collection_id": 231150
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjU=",
+      "collection_group_id": "11731",
+      "category_name": "Stationery & Games",
+      "group_name": "Sports & Gym",
+      "super_category": "Household Essentials",
+      "collection_id": 231150
+    },
+    {
+      "collection_uuid": "OTg3NjU0MzIxMjM0NTMzMjU=",
+      "collection_group_id": "11729",
+      "category_name": "Stationery & Games",
+      "group_name": "Shoe Polish & Brush",
+      "super_category": "Household Essentials",
+      "collection_id": 231150
+    }
+  ]
+}

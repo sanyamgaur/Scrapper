@@ -1,0 +1,540 @@
+<title>Blinkit Darkstore Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground:   #F1F2EE;
+    --surface:  #FBFBF9;
+    --raised:   #FFFFFF;
+    --ink:      #14171A;
+    --muted:    #6C736D;
+    --faint:    #8C938C;
+    --line:     #DBDED6;
+    --line-soft:#E7E9E2;
+    --accent:   #3B45B5;
+    --accent-w: #ECEEFF;
+    --save:     #177049;
+    --save-w:   #E4F2EA;
+    --oos:      #A33A32;
+    --oos-w:    #F7E7E5;
+    --shadow:   0 1px 2px rgba(20,23,26,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:   #111315;
+      --surface:  #17191C;
+      --raised:   #1D2024;
+      --ink:      #E7E9E4;
+      --muted:    #9AA09A;
+      --faint:    #757B75;
+      --line:     #2B2F33;
+      --line-soft:#232629;
+      --accent:   #949CFF;
+      --accent-w: #21243B;
+      --save:     #5FC894;
+      --save-w:   #14291F;
+      --oos:      #E0857C;
+      --oos-w:    #2E1E1C;
+      --shadow:   0 1px 2px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:   #111315;
+    --surface:  #17191C;
+    --raised:   #1D2024;
+    --ink:      #E7E9E4;
+    --muted:    #9AA09A;
+    --faint:    #757B75;
+    --line:     #2B2F33;
+    --line-soft:#232629;
+    --accent:   #949CFF;
+    --accent-w: #21243B;
+    --save:     #5FC894;
+    --save-w:   #14291F;
+    --oos:      #E0857C;
+    --oos-w:    #2E1E1C;
+    --shadow:   0 1px 2px rgba(0,0,0,.4);
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px 72px; }
+
+  /* ---- masthead ---- */
+  .mast {
+    display: flex; flex-wrap: wrap; align-items: flex-end;
+    justify-content: space-between; gap: 20px;
+    padding: 34px 0 20px; border-bottom: 2px solid var(--ink);
+  }
+  .mast h1 {
+    font-family: Archivo, "IBM Plex Sans", sans-serif;
+    font-weight: 700; font-size: clamp(28px, 4.2vw, 42px);
+    letter-spacing: -.024em; line-height: 1.02; margin: 0;
+    text-wrap: balance;
+  }
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px; font-weight: 500; letter-spacing: .13em;
+    text-transform: uppercase; color: var(--muted); margin: 0 0 9px;
+  }
+  .store {
+    font-size: 13px; color: var(--muted); max-width: 42ch;
+    text-align: right; line-height: 1.45;
+  }
+  .store b { color: var(--ink); font-weight: 600; }
+  .store .coord {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11.5px; color: var(--faint); display: block; margin-top: 3px;
+  }
+
+  /* ---- crawl status ---- */
+  .status {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin: 16px 0 0; padding: 11px 14px;
+    background: var(--accent-w); border-radius: 3px;
+    font-size: 12.5px; color: var(--ink);
+  }
+  .status .bar {
+    flex: 1 1 160px; min-width: 120px; height: 5px;
+    background: var(--line); border-radius: 99px; overflow: hidden;
+  }
+  .status .bar i { display: block; height: 100%; background: var(--accent); }
+  .status .n {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums; font-weight: 600;
+  }
+
+  /* ---- stat strip ---- */
+  .stats {
+    display: grid; gap: 1px; margin: 22px 0 0;
+    grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+    background: var(--line-soft); border: 1px solid var(--line-soft);
+  }
+  .stat { background: var(--surface); padding: 13px 14px 12px; }
+  .stat dt {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 5px;
+  }
+  .stat dd {
+    margin: 0; font-family: Archivo, sans-serif; font-weight: 600;
+    font-size: 21px; letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat dd small { font-size: 12px; font-weight: 500; color: var(--muted); }
+
+  /* ---- controls ---- */
+  .controls {
+    position: sticky; top: 0; z-index: 5;
+    background: var(--ground);
+    padding: 16px 0 12px; margin-top: 26px;
+    border-bottom: 1px solid var(--line);
+  }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .row + .row { margin-top: 8px; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field > span {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  input[type="search"], input[type="text"], select {
+    font: inherit; font-size: 13px; color: var(--ink);
+    background: var(--raised); border: 1px solid var(--line);
+    border-radius: 3px; padding: 7px 9px; min-width: 0;
+  }
+  input[type="search"] { min-width: 230px; flex: 1 1 260px; }
+  select { max-width: 260px; }
+  input:focus-visible, select:focus-visible, button:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 1px;
+  }
+  .toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12.5px; color: var(--muted); cursor: pointer;
+    padding: 7px 10px; border: 1px solid var(--line);
+    border-radius: 3px; background: var(--raised); user-select: none;
+  }
+  .toggle input { accent-color: var(--accent); margin: 0; }
+  .toggle:has(input:checked) { color: var(--ink); border-color: var(--accent); background: var(--accent-w); }
+  .btn {
+    font: inherit; font-size: 12.5px; color: var(--muted);
+    background: none; border: 1px solid var(--line); border-radius: 3px;
+    padding: 7px 11px; cursor: pointer;
+  }
+  .btn:hover { color: var(--ink); border-color: var(--ink); }
+  .count {
+    margin-left: auto; font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .count b { color: var(--ink); font-weight: 600; }
+
+  /* ---- ledger ---- */
+  .scroller { overflow-x: auto; margin-top: 2px; }
+  table { border-collapse: collapse; width: 100%; min-width: 720px; }
+  thead th {
+    position: sticky; top: 0; background: var(--ground);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 10.5px; font-weight: 500; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted);
+    text-align: left; padding: 10px 10px 8px;
+    border-bottom: 1px solid var(--line); white-space: nowrap;
+  }
+  th.num, td.num { text-align: right; }
+  tbody tr { border-bottom: 1px solid var(--line-soft); }
+  tbody tr:hover { background: var(--surface); }
+  td { padding: 9px 10px; vertical-align: top; }
+  .pname { font-weight: 500; line-height: 1.35; }
+  .pbrand {
+    font-size: 11.5px; color: var(--muted); margin-top: 2px;
+  }
+  .shelf {
+    font-size: 11.5px; color: var(--muted); line-height: 1.35;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 210px;
+  }
+  .shelf b { color: var(--ink); font-weight: 500; }
+  .more {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 10.5px; color: var(--accent);
+  }
+  .unit, .price, .mrp, .pid {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .unit { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .price { font-size: 13.5px; font-weight: 600; white-space: nowrap; }
+  .mrp {
+    font-size: 12px; color: var(--faint);
+    text-decoration: line-through; white-space: nowrap;
+  }
+  .pid { font-size: 11px; color: var(--faint); }
+  .chip {
+    display: inline-block; font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 10.5px; font-weight: 600; padding: 2px 5px;
+    border-radius: 2px; white-space: nowrap;
+  }
+  .chip.save { color: var(--save); background: var(--save-w); }
+  .chip.oos  { color: var(--oos);  background: var(--oos-w); }
+
+  .empty {
+    padding: 56px 20px; text-align: center; color: var(--muted);
+  }
+  .empty b { display: block; color: var(--ink); font-size: 16px; margin-bottom: 6px;
+             font-family: Archivo, sans-serif; }
+  .foot {
+    display: flex; justify-content: center; padding: 22px 0 0;
+  }
+  .note {
+    margin-top: 34px; padding-top: 18px; border-top: 1px solid var(--line);
+    font-size: 12px; color: var(--muted); line-height: 1.6; max-width: 68ch;
+  }
+  .note code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11.5px; background: var(--surface);
+    padding: 1px 4px; border-radius: 2px;
+  }
+  @media (max-width: 620px) {
+    .mast { padding-top: 26px; }
+    .store { text-align: left; }
+    .count { margin-left: 0; width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="mast">
+    <div>
+      <p class="eyebrow" id="eyebrow">Quick-commerce inventory · snapshot</p>
+      <h1>Blinkit Darkstore Ledger</h1>
+    </div>
+    <div class="store" id="store"></div>
+  </header>
+
+  <div class="status" id="status"></div>
+
+  <dl class="stats" id="stats"></dl>
+
+  <div class="controls">
+    <div class="row">
+      <input type="search" id="q" placeholder="Search product or brand — try “ice cream”, “atta”, “Amul”" aria-label="Search products">
+      <select id="dept" aria-label="Department"></select>
+      <select id="shelf" aria-label="Shelf"></select>
+    </div>
+    <div class="row">
+      <input type="text" id="brand" list="brandlist" placeholder="Brand" aria-label="Brand" style="flex:0 1 180px">
+      <datalist id="brandlist"></datalist>
+      <select id="sort" aria-label="Sort by">
+        <option value="name">Sort: name A–Z</option>
+        <option value="plo">Sort: price, low to high</option>
+        <option value="phi">Sort: price, high to low</option>
+        <option value="disc">Sort: biggest discount</option>
+      </select>
+      <label class="toggle"><input type="checkbox" id="inst"> In stock</label>
+      <label class="toggle"><input type="checkbox" id="donly"> Discounted</label>
+      <button class="btn" id="reset" type="button">Reset</button>
+      <span class="count" id="count"></span>
+    </div>
+  </div>
+
+  <div class="scroller">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Shelf</th>
+          <th class="num">Pack</th>
+          <th class="num">Price</th>
+          <th class="num">MRP</th>
+          <th class="num">Off</th>
+          <th class="num">ID</th>
+        </tr>
+      </thead>
+      <tbody id="body"></tbody>
+    </table>
+  </div>
+
+  <div id="empty" class="empty" hidden>
+    <b>Nothing on that shelf</b>
+    No product matches these filters. Clear the search or pick another shelf.
+  </div>
+
+  <div class="foot"><button class="btn" id="more" type="button" hidden></button></div>
+
+  <p class="note" id="note"></p>
+</div>
+
+<script src="catalog_data.js"></script>
+<script>
+(function () {
+  var C = window.CATALOG;
+  var ROWS = C.rows, PL = C.placements, BR = C.brands;
+  var PAGE = 120, shown = PAGE, view = ROWS;
+
+  // rows: [id, name, brandIdx, unit, price, mrp, inStock, [placementIdx...]]
+  var ID = 0, NAME = 1, BRAND = 2, UNIT = 3, PRICE = 4, MRP = 5, STOCK = 6, PLACE = 7;
+
+  var rupee = function (n) {
+    if (n === null || n === undefined) return "";
+    return "₹" + Number(n).toLocaleString("en-IN",
+      { maximumFractionDigits: Number.isInteger(n) ? 0 : 2 });
+  };
+  var off = function (r) {
+    if (!r[MRP] || !r[PRICE] || r[MRP] <= r[PRICE]) return 0;
+    return Math.round((r[MRP] - r[PRICE]) / r[MRP] * 100);
+  };
+  var hay = ROWS.map(function (r) {
+    return (r[NAME] + " " + BR[r[BRAND]]).toLowerCase();
+  });
+
+  /* ---------- masthead + stats ---------- */
+  var s = C.store || {};
+  document.getElementById("store").innerHTML =
+    (s.address ? "<b>" + esc(s.address) + "</b><br>" : "") +
+    (s.eta ? esc(s.eta) + " · " : "") +
+    "catalog as the store served it on " + stamp(C.scraped_at) +
+    (s.lat ? '<span class="coord">pinned at ' + esc(s.lat) + ", " + esc(s.lon) + "</span>" : "");
+
+  var st = C.stats, done = C.leaves_done, total = C.leaves_total;
+  var pct = Math.round(done / total * 100);
+  document.getElementById("status").innerHTML =
+    '<span><span class="n">' + done + "</span> of <span class=\"n\">" + total +
+    "</span> shelves read</span>" +
+    '<span class="bar"><i style="width:' + pct + '%"></i></span>' +
+    "<span>" + (done >= total
+      ? "Complete pass over the category tree."
+      : "Crawl still running — later shelves are not in this snapshot yet.") + "</span>";
+
+  var cells = [
+    ["Products", st.products.toLocaleString("en-IN"), ""],
+    ["Brands", st.brands.toLocaleString("en-IN"), ""],
+    ["Shelves", st.shelves.toLocaleString("en-IN"), ""],
+    ["Median price", rupee(st.median_price), ""],
+    ["Discounted", st.discounted.toLocaleString("en-IN"),
+      Math.round(st.discounted / st.products * 100) + "% of catalog"],
+    ["In stock", st.in_stock.toLocaleString("en-IN"),
+      Math.round(st.in_stock / st.products * 100) + "% of catalog"]
+  ];
+  document.getElementById("stats").innerHTML = cells.map(function (c) {
+    return '<div class="stat"><dt>' + c[0] + "</dt><dd>" + c[1] +
+      (c[2] ? " <small>" + c[2] + "</small>" : "") + "</dd></div>";
+  }).join("");
+
+  /* ---------- filter options ---------- */
+  var depts = [];
+  PL.forEach(function (p) { if (depts.indexOf(p[0]) < 0) depts.push(p[0]); });
+  depts.sort();
+  var deptSel = document.getElementById("dept"), shelfSel = document.getElementById("shelf");
+  deptSel.innerHTML = '<option value="">All departments</option>' +
+    depts.map(function (d) { return '<option value="' + esc(d) + '">' + esc(d) + "</option>"; }).join("");
+
+  function fillShelves() {
+    var d = deptSel.value;
+    var opts = PL.map(function (p, i) { return [i, p]; })
+      .filter(function (x) { return !d || x[1][0] === d; })
+      .sort(function (a, b) {
+        return (a[1][1] + a[1][2]).localeCompare(b[1][1] + b[1][2]);
+      });
+    var groups = {}, order = [];
+    opts.forEach(function (x) {
+      var k = x[1][1];
+      if (!groups[k]) { groups[k] = []; order.push(k); }
+      groups[k].push(x);
+    });
+    shelfSel.innerHTML = '<option value="">All shelves</option>' +
+      order.map(function (k) {
+        return '<optgroup label="' + esc(k) + '">' + groups[k].map(function (x) {
+          return '<option value="' + x[0] + '">' + esc(x[1][2]) + "</option>";
+        }).join("") + "</optgroup>";
+      }).join("");
+  }
+  fillShelves();
+
+  var brandCount = {};
+  ROWS.forEach(function (r) { brandCount[r[BRAND]] = (brandCount[r[BRAND]] || 0) + 1; });
+  document.getElementById("brandlist").innerHTML = BR
+    .map(function (b, i) { return [b, brandCount[i] || 0]; })
+    .filter(function (x) { return x[0]; })
+    .sort(function (a, b) { return b[1] - a[1]; })
+    .slice(0, 900)
+    .map(function (x) { return '<option value="' + esc(x[0]) + '">'; }).join("");
+
+  /* ---------- filtering ---------- */
+  var q = document.getElementById("q"), brandIn = document.getElementById("brand"),
+      sortSel = document.getElementById("sort"), inst = document.getElementById("inst"),
+      donly = document.getElementById("donly");
+
+  function apply() {
+    var text = q.value.trim().toLowerCase();
+    var terms = text ? text.split(/\s+/) : [];
+    var shelfIdx = shelfSel.value === "" ? -1 : +shelfSel.value;
+    var dept = deptSel.value;
+    var bw = brandIn.value.trim().toLowerCase();
+    var wantStock = inst.checked, wantDisc = donly.checked;
+
+    var out = [];
+    for (var i = 0; i < ROWS.length; i++) {
+      var r = ROWS[i];
+      if (wantStock && !r[STOCK]) continue;
+      if (wantDisc && !off(r)) continue;
+      if (bw && BR[r[BRAND]].toLowerCase().indexOf(bw) < 0) continue;
+      if (shelfIdx >= 0) {
+        if (r[PLACE].indexOf(shelfIdx) < 0) continue;
+      } else if (dept) {
+        var hit = false;
+        for (var k = 0; k < r[PLACE].length; k++) {
+          if (PL[r[PLACE][k]][0] === dept) { hit = true; break; }
+        }
+        if (!hit) continue;
+      }
+      if (terms.length) {
+        var h = hay[i], ok = true;
+        for (var t = 0; t < terms.length; t++) {
+          if (h.indexOf(terms[t]) < 0) { ok = false; break; }
+        }
+        if (!ok) continue;
+      }
+      out.push(r);
+    }
+
+    var mode = sortSel.value;
+    out.sort(function (a, b) {
+      if (mode === "plo") return (a[PRICE] || 1e9) - (b[PRICE] || 1e9);
+      if (mode === "phi") return (b[PRICE] || -1) - (a[PRICE] || -1);
+      if (mode === "disc") return off(b) - off(a);
+      return a[NAME].localeCompare(b[NAME]);
+    });
+
+    view = out; shown = PAGE;
+    render();
+  }
+
+  function render() {
+    var body = document.getElementById("body");
+    var n = Math.min(shown, view.length);
+    var html = "";
+    for (var i = 0; i < n; i++) {
+      var r = view[i], d = off(r), pl = r[PLACE];
+      var first = PL[pl[0]];
+      html += "<tr><td>" +
+        '<div class="pname">' + esc(r[NAME]) + "</div>" +
+        '<div class="pbrand">' + (esc(BR[r[BRAND]]) || "—") + "</div>" +
+        '</td><td><div class="shelf">' + esc(first[1]) + " › <b>" + esc(first[2]) + "</b>" +
+        (pl.length > 1 ? ' <span class="more">+' + (pl.length - 1) + "</span>" : "") +
+        '</div></td>' +
+        '<td class="num unit">' + esc(r[UNIT]) + "</td>" +
+        '<td class="num price">' + (r[PRICE] === null ? "—" : rupee(r[PRICE])) +
+        (r[STOCK] ? "" : ' <span class="chip oos">out</span>') + "</td>" +
+        '<td class="num mrp">' + (r[MRP] && r[MRP] > (r[PRICE] || 0) ? rupee(r[MRP]) : "") + "</td>" +
+        '<td class="num">' + (d ? '<span class="chip save">' + d + "%</span>" : "") + "</td>" +
+        '<td class="num pid">' + esc(r[ID]) + "</td></tr>";
+    }
+    body.innerHTML = html;
+    document.getElementById("empty").hidden = view.length > 0;
+
+    var c = document.getElementById("count");
+    c.innerHTML = view.length === ROWS.length
+      ? "<b>" + ROWS.length.toLocaleString("en-IN") + "</b> products"
+      : "<b>" + view.length.toLocaleString("en-IN") + "</b> of " +
+        ROWS.length.toLocaleString("en-IN");
+
+    var more = document.getElementById("more");
+    if (view.length > n) {
+      more.hidden = false;
+      more.textContent = "Show " + Math.min(PAGE, view.length - n) + " more — " +
+        (view.length - n).toLocaleString("en-IN") + " left";
+    } else { more.hidden = true; }
+  }
+
+  document.getElementById("more").addEventListener("click", function () {
+    shown += PAGE; render();
+  });
+  deptSel.addEventListener("change", function () { fillShelves(); apply(); });
+  [shelfSel, sortSel, inst, donly].forEach(function (el) {
+    el.addEventListener("change", apply);
+  });
+  var timer;
+  [q, brandIn].forEach(function (el) {
+    el.addEventListener("input", function () {
+      clearTimeout(timer); timer = setTimeout(apply, 130);
+    });
+  });
+  document.getElementById("reset").addEventListener("click", function () {
+    q.value = ""; brandIn.value = ""; deptSel.value = ""; sortSel.value = "name";
+    inst.checked = false; donly.checked = false;
+    fillShelves(); apply();
+  });
+
+  document.getElementById("note").innerHTML =
+    "Every row is one SKU as this darkstore served it, read from Blinkit’s own " +
+    "<code>/v1/layout/listing_widgets</code> API and parsed into SQLite. " +
+    "Inventory is per-darkstore, so these prices and this assortment belong to this " +
+    "store alone — another pin returns a different catalog. " +
+    "<b>MRP</b> is the printed maximum retail price; the <b>Off</b> column is the gap " +
+    "between it and what the store is actually charging. A product can sit on more " +
+    "than one shelf — <span class=\"more\">+1</span> marks that, and it filters " +
+    "under all of them. Generated " + stamp(C.generated_at) + ".";
+
+  function esc(v) {
+    return String(v === null || v === undefined ? "" : v)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function stamp(t) {
+    if (!t) return "an unknown date";
+    return new Date(t * 1000).toLocaleString("en-IN",
+      { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  }
+
+  apply();
+})();
+</script>

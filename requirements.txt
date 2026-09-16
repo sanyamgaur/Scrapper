@@ -1,0 +1,2 @@
+httpx[http2]==0.27.2
+playwright==1.47.0
