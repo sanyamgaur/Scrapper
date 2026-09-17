@@ -182,10 +182,21 @@ class OperatorFlow:
 
     def reconcile_bill(self, batch_id: str, cart_no: int,
                        bill_total_inr: float, tolerance_pct: float = 8.0) -> dict:
-        """The bill must balance against attested lines before a run closes.
+        """The Blinkit bill must balance before a run closes.
 
-        Delivery fees, surge and instant-discounts move the total legitimately,
-        hence a tolerance rather than an exact match.
+        The baseline is the SYSTEM's expected price, never the operator's typed
+        price. Checking the bill against numbers the operator typed is circular:
+        a wrong pack picked and honestly typed moves both sides of the
+        comparison together and the gate reports "balances". That would collapse
+        the three confirmations into two, since the typed figure is already what
+        attest_price() checks.
+
+        So this compares against `expected_inr` from the catalogue, which the
+        operator cannot influence, and reports the attested total alongside it
+        so a divergence between the two is visible rather than cancelled out.
+
+        Delivery fees, surge and instant-discounts move the real total, hence a
+        tolerance rather than an exact match.
         """
         conn = connect(self.db_path)
         rows = conn.execute("""SELECT qty_bought, actual_inr, expected_inr
@@ -193,16 +204,36 @@ class OperatorFlow:
             AND state IN ('BOUGHT','SHORT','RECEIVED','SUBSTITUTED')""",
             (batch_id, cart_no)).fetchall()
         conn.close()
-        expected = sum((r["actual_inr"] or r["expected_inr"] or 0) * (r["qty_bought"] or 0)
+
+        # Independent baseline: our catalogue price, untouched by the operator.
+        expected = sum((r["expected_inr"] or 0) * (r["qty_bought"] or 0) for r in rows)
+        # What the operator claims they paid, kept separate on purpose.
+        attested = sum((r["actual_inr"] or r["expected_inr"] or 0) * (r["qty_bought"] or 0)
                        for r in rows)
+
         if expected <= 0:
-            return {"balanced": False, "expected_inr": 0, "bill_total_inr": bill_total_inr,
+            return {"balanced": False, "expected_inr": 0, "attested_inr": round(attested, 2),
+                    "bill_total_inr": bill_total_inr,
                     "message": "nothing marked bought in this cart yet"}
+
         delta = (bill_total_inr - expected) / expected * 100.0
         balanced = abs(delta) <= tolerance_pct
+
+        # A gap between the typed total and the catalogue total is its own
+        # signal: it means a mis-pick was attested rather than corrected.
+        attest_gap = ((attested - expected) / expected * 100.0) if expected else 0.0
+        msg = "bill balances"
+        if not balanced:
+            msg = (f"bill is ₹{bill_total_inr:.0f} against ₹{expected:.0f} expected "
+                   f"({delta:+.0f}%) — check for a missed or extra item")
+        elif abs(attest_gap) > tolerance_pct:
+            # Bill matches the catalogue but the typed prices do not: the typing
+            # is wrong, not the shopping.
+            msg = (f"bill balances, but attested prices total ₹{attested:.0f} vs "
+                   f"₹{expected:.0f} expected ({attest_gap:+.0f}%) — re-check the "
+                   f"prices you typed")
+
         return {"balanced": balanced, "expected_inr": round(expected, 2),
+                "attested_inr": round(attested, 2),
                 "bill_total_inr": bill_total_inr, "delta_pct": round(delta, 1),
-                "message": ("bill balances" if balanced else
-                            f"bill is ₹{bill_total_inr:.0f} against ₹{expected:.0f} "
-                            f"of attested lines ({delta:+.0f}%) — check for a missed "
-                            f"or extra item")}
+                "attest_gap_pct": round(attest_gap, 1), "message": msg}

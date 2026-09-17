@@ -234,6 +234,33 @@ class TestOperatorFlow(TempDB):
         self.assertTrue(o.reconcile_bill("PB-2026-01-01", 1, 104.0)["balanced"])
         self.assertFalse(o.reconcile_bill("PB-2026-01-01", 1, 400.0)["balanced"])
 
+    def test_bill_check_is_independent_of_operator_typing(self):
+        """REGRESSION: the bill gate must not validate the operator against
+        the operator. A mis-picked item typed honestly once moved both sides of
+        the comparison together and the gate reported 'balances', collapsing
+        three independent confirmations into two."""
+        self.order("O1", "C1", [("P1", 1)])   # catalogue price INR 100
+        e = ProcurementEngine(db_path=self.path)
+        e.build_batch("2026-01-01")
+        # Operator grabs the wrong pack at INR 900 and types that price.
+        e.mark_line("PB-2026-01-01", "P1", "BOUGHT", qty_bought=1, actual_inr=900.0)
+        o = OperatorFlow(db_path=self.path)
+        r = o.reconcile_bill("PB-2026-01-01", 1, 900.0)
+        # Bill and typed price agree, but both disagree with the catalogue.
+        self.assertFalse(r["balanced"], "bill gate validated the operator against themselves")
+        self.assertEqual(r["expected_inr"], 100.0)
+        self.assertEqual(r["attested_inr"], 900.0)
+
+    def test_bill_flags_bad_typing_even_when_total_is_right(self):
+        self.order("O1", "C1", [("P1", 2)])
+        e = ProcurementEngine(db_path=self.path)
+        e.build_batch("2026-01-01")
+        # Right goods, right bill, but the typed unit price is wrong.
+        e.mark_line("PB-2026-01-01", "P1", "BOUGHT", qty_bought=2, actual_inr=300.0)
+        r = OperatorFlow(db_path=self.path).reconcile_bill("PB-2026-01-01", 1, 200.0)
+        self.assertTrue(r["balanced"])
+        self.assertIn("re-check the prices", r["message"])
+
     def test_pick_sheet_flags_shared_lines(self):
         self.order("O1", "C1", [("P1", 1)])
         self.order("O2", "C2", [("P1", 1)])
