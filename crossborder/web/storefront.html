@@ -83,6 +83,36 @@
     background:var(--panel);border-radius:8px;cursor:pointer}
   a.ops{margin-left:auto;font-size:12px;color:var(--muted);text-decoration:none;
     border:1px solid var(--line);padding:6px 10px;border-radius:7px}
+
+  /* --- basket builder panel --- */
+  .bb{margin-top:16px;border-top:1px solid var(--line);padding-top:13px}
+  .bb h3{margin:0 0 4px}
+  .bbhead{font-size:12.5px;color:var(--muted);line-height:1.45;margin-bottom:10px}
+  .bbhead b{color:var(--ink)}
+  .headroom{margin:9px 0 12px}
+  .hbar{height:9px;background:var(--line);border-radius:5px;overflow:hidden;display:flex}
+  .hbar .used{background:var(--accent)}
+  .hbar .free{background:color-mix(in srgb,var(--ok) 45%,transparent)}
+  .hlabel{display:flex;justify-content:space-between;font-size:11px;
+    color:var(--muted);margin-top:5px}
+  .hlabel b{color:var(--ok)}
+  .sg{display:flex;gap:9px;align-items:center;padding:8px;border:1px solid var(--line);
+    border-radius:9px;margin-bottom:7px;background:var(--bg)}
+  .sg.free{border-color:color-mix(in srgb,var(--ok) 45%,transparent);
+    background:color-mix(in srgb,var(--ok) 7%,transparent)}
+  .sgt{width:40px;height:40px;flex:none;background:#fff;border-radius:6px;
+    display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .sgt img{max-width:100%;max-height:100%;object-fit:contain}
+  .sgg{flex:1;min-width:0}
+  .sgn{font-size:12.5px;font-weight:600;line-height:1.25;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .sgr{font-size:11px;color:var(--muted);margin-top:2px}
+  .sgr.ok{color:var(--ok);font-weight:600}
+  .sgp{font-size:13px;font-weight:700;white-space:nowrap}
+  .sgadd{border:1px solid var(--accent);background:transparent;color:var(--accent);
+    border-radius:6px;padding:5px 9px;font-size:12px;font-weight:700;cursor:pointer;flex:none}
+  .sgadd:hover{background:var(--accent);color:#fff}
+  .ratio{font-size:11.5px;color:var(--muted);margin-top:8px}
 </style>
 </head>
 <body>
@@ -110,6 +140,7 @@
     <h3>Your cart</h3>
     <div id="cart"><div class="empty">Cart is empty</div></div>
     <div id="quote"></div>
+    <div id="basket"></div>
   </aside>
 </main>
 
@@ -177,7 +208,7 @@ function renderCart(){
   const ids = Object.keys(cart);
   if(!ids.length){
     $('#cart').innerHTML = '<div class="empty">Cart is empty</div>';
-    $('#quote').innerHTML = ''; return;
+    $('#quote').innerHTML = ''; $('#basket').innerHTML = ''; return;
   }
   $('#cart').innerHTML = ids.map(id => {
     const c = cart[id];
@@ -207,6 +238,71 @@ async function quote(){
   if(!r.ok){ $('#quote').innerHTML = '<div class="note e">Could not quote this cart.</div>'; return; }
   lastQuote = await r.json();
   renderQuote(lastQuote);
+  advise(lines);
+}
+
+// --- basket builder -------------------------------------------------------
+// The economics that make this business work are invisible to a shopper: a
+// small cart pays 6.8x its goods value in freight, an eight-item one pays 2.7x.
+// This panel turns that into something the customer actually benefits from --
+// weight they have already paid for and can still spend.
+async function advise(lines){
+  const r = await fetch('/api/basket/advise', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ lines, carrier })
+  });
+  if(!r.ok){ $('#basket').innerHTML = ''; return; }
+  renderAdvice(await r.json());
+}
+
+function renderAdvice(a){
+  if(!a.suggestions || !a.suggestions.length){ $('#basket').innerHTML = ''; return; }
+
+  const used = a.chargeable_g, free = a.free_headroom_g, billed = a.billed_g || 1;
+  const bar = free > 20 ? `
+    <div class="headroom">
+      <div class="hbar">
+        <div class="used" style="width:${used/billed*100}%"></div>
+        <div class="free" style="width:${free/billed*100}%"></div>
+      </div>
+      <div class="hlabel">
+        <span>${(used/1000).toFixed(2)} kg packed</span>
+        <b>${free.toFixed(0)} g still free</b>
+      </div>
+    </div>` : '';
+
+  $('#basket').innerHTML = `
+    <div class="bb">
+      <h3>Make this shipment worth it</h3>
+      <div class="bbhead">${esc(a.headline)}</div>
+      ${bar}
+      ${a.suggestions.map(s => `
+        <div class="sg ${s.fits_free_headroom ? 'free' : ''}">
+          <div class="sgt">${s.image ? `<img loading="lazy" src="${esc(s.image)}" alt="">` : ''}</div>
+          <div class="sgg">
+            <div class="sgn">${esc(s.name)}</div>
+            <div class="sgr ${s.fits_free_headroom ? 'ok' : ''}">${esc(s.reason)}</div>
+          </div>
+          <div class="sgp">${money(s.list_price_usd)}</div>
+          <button class="sgadd" data-add="${esc(s.product_id)}">Add</button>
+        </div>`).join('')}
+      <div class="ratio">Shipping is currently
+        <b>${a.freight_ratio.toFixed(1)}×</b> the value of your goods${
+          a.freight_ratio > 2 ? ' — adding a few dense items brings that down.' : '.'}</div>
+    </div>`;
+
+  $('#basket').querySelectorAll('[data-add]').forEach(b => b.onclick = async () => {
+    const pid = b.dataset.add;
+    b.disabled = true; b.textContent = '…';
+    // Fetch the full product so the cart line matches a normal add-to-cart.
+    const d = await (await fetch('/api/product/' + pid)).json();
+    const p = d.product;
+    cart[pid] = cart[pid] || { item: {
+      product_id: pid, name: p.name, unit: p.unit, price_inr: p.price_inr,
+      image: p.image, in_stock: p.in_stock }, qty: 0 };
+    cart[pid].qty++;
+    renderCart(); quote();
+  });
 }
 
 function renderQuote(d){
@@ -238,7 +334,8 @@ function renderQuote(d){
       <span>Chargeable weight</span><span>${(s.weight.chargeable_g/1000).toFixed(2)} kg</span></div>
     ${warn}
     <button class="co" id="co" ${p.viable ? '' : 'disabled'}>
-      ${p.viable ? 'Checkout &middot; ' + money(p.list_price_usd) : 'Not shippable as-is'}</button>`;
+      ${p.viable ? 'Checkout &middot; ' + money(p.list_price_usd)
+                 : 'Add a little more to ship this &darr;'}</button>`;
 
   $('#quote').querySelectorAll('.ship').forEach(el => el.onclick = () => {
     carrier = el.dataset.c; quote();

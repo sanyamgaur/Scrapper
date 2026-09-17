@@ -17,7 +17,7 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from crossborder import db as dbmod
-from crossborder.basket import billed_weight_g
+from crossborder.basket import BasketBuilder, billed_weight_g
 from crossborder.operator import OperatorFlow, product_link, search_link
 from crossborder.pricedrift import PriceDriftEngine
 from crossborder.procurement import ProcurementEngine
@@ -301,6 +301,61 @@ class TestRestock(TempDB):
         out = r.notify_waitlist("P1")
         self.assertEqual(len(out["notify"]), out["capped_at"])
         self.assertEqual(out["still_waiting"], 20 - out["capped_at"])
+
+
+class TestBasketBuilder(TempDB):
+    """The builder must improve economics WITHOUT making absurd suggestions."""
+
+    def _cart(self, pid="P1"):
+        r = dict(self.conn.execute(
+            "SELECT * FROM products WHERE product_id=?", (pid,)).fetchone())
+        r["price"] = r["price_inr"]
+        return [(r, 1)]
+
+    def test_never_suggests_an_item_that_dwarfs_the_cart(self):
+        # REGRESSION: pure freight arithmetic recommended a $197 watch beside
+        # INR 93 of chana. Optimal maths, absurd shopping.
+        self.conn.execute("""INSERT INTO products
+            (product_id,name,merchant_id,price_inr,in_stock,est_weight_g,
+             group_name,category_name,super_category)
+            VALUES ('LUX','Gold Watch','MA',90000.0,1,60.0,'Jewellery',
+                    'Home & Lifestyle','Household Essentials')""")
+        self.conn.execute("""INSERT INTO classifications (product_id,verdict,source)
+            VALUES ('LUX','ALLOWED','rules')""")
+        self.conn.commit()
+        b = BasketBuilder(db_path=self.path)
+        sugg = b.advise(self._cart("P1")).suggestions
+        self.assertNotIn("LUX", [s.product_id for s in sugg])
+
+    def test_never_suggests_out_of_stock(self):
+        self.conn.execute("UPDATE products SET in_stock=0 WHERE product_id='P2'")
+        self.conn.commit()
+        b = BasketBuilder(db_path=self.path)
+        self.assertNotIn("P2", [s.product_id for s in b.advise(self._cart()).suggestions])
+
+    def test_never_suggests_a_high_stockout_risk_sku(self):
+        # A suggestion that fails procurement costs more than no suggestion.
+        self.conn.execute("""INSERT INTO stockout_risk (product_id,score,bucket,confidence)
+            VALUES ('P2',0.95,'CRITICAL','low')""")
+        self.conn.commit()
+        b = BasketBuilder(db_path=self.path)
+        self.assertNotIn("P2", [s.product_id for s in b.advise(self._cart()).suggestions])
+
+    def test_never_suggests_a_non_listable_sku(self):
+        self.conn.execute("UPDATE classifications SET verdict='BLOCKED' WHERE product_id='P2'")
+        self.conn.commit()
+        b = BasketBuilder(db_path=self.path)
+        self.assertNotIn("P2", [s.product_id for s in b.advise(self._cart()).suggestions])
+
+    def test_never_suggests_what_is_already_in_the_cart(self):
+        b = BasketBuilder(db_path=self.path)
+        self.assertNotIn("P1", [s.product_id for s in b.advise(self._cart("P1")).suggestions])
+
+    def test_reports_free_headroom_and_ratio(self):
+        a = BasketBuilder(db_path=self.path).advise(self._cart())
+        self.assertGreaterEqual(a.free_headroom_g, 0)
+        self.assertLessEqual(a.free_headroom_g, a.billed_g)
+        self.assertGreater(a.freight_ratio, 0)
 
 
 class TestBasketMath(unittest.TestCase):
