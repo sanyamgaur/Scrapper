@@ -16,6 +16,7 @@ Tables:
 
 from __future__ import annotations
 
+import re
 import sqlite3
 from pathlib import Path
 
@@ -286,8 +287,83 @@ CREATE TABLE IF NOT EXISTS orders (
 """
 
 
+# SQLite's `CREATE TABLE IF NOT EXISTS` is a no-op on a table that already
+# exists, so adding a column to SCHEMA silently fails to reach existing
+# databases. Worse, a later `CREATE INDEX` on that new column then throws, so an
+# older database cannot even be opened. Columns are therefore reconciled against
+# SCHEMA before it runs.
+_COLDEF_SKIP = ("primary key", "unique", "foreign key", "check", "constraint")
+
+
+def _expected_columns(schema: str) -> dict[str, list[tuple[str, str]]]:
+    """Parse SCHEMA into {table: [(column, type_and_default), ...]}.
+
+    Derived from SCHEMA itself rather than a hand-kept migration list, so a
+    column added above is migrated automatically and this bug cannot recur.
+    """
+    out: dict[str, list[tuple[str, str]]] = {}
+    for block in re.finditer(
+            r"CREATE TABLE IF NOT EXISTS\s+(\w+)\s*\((.*?)\n\);",
+            schema, re.S | re.I):
+        table, body = block.group(1), block.group(2)
+        # Strip `--` comments BEFORE splitting on commas: a comment containing a
+        # comma would otherwise split mid-sentence and its tail would be read as
+        # a column name.
+        body = re.sub(r"--[^\n]*", "", body)
+        cols: list[tuple[str, str]] = []
+        depth = 0
+        cur = ""
+        for ch in body:
+            if ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+            if ch == "," and depth == 0:
+                cols.append(cur); cur = ""
+            else:
+                cur += ch
+        cols.append(cur)
+        parsed = []
+        for raw in cols:
+            line = " ".join(raw.split())
+            if not line or line.lower().startswith(_COLDEF_SKIP):
+                continue
+            parts = line.split(None, 1)
+            if not parts:
+                continue
+            parsed.append((parts[0], parts[1] if len(parts) > 1 else ""))
+        if parsed:
+            out[table] = parsed
+    return out
+
+
+def _migrate(conn: sqlite3.Connection) -> list[str]:
+    """Add columns missing from tables that already exist. Returns what changed."""
+    existing = {r[0] for r in conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table'")}
+    applied: list[str] = []
+    for table, cols in _expected_columns(SCHEMA).items():
+        if table not in existing:
+            continue   # CREATE TABLE will handle it
+        have = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
+        for name, decl in cols:
+            if name in have:
+                continue
+            # SQLite refuses ADD COLUMN with a non-constant default such as
+            # datetime('now'), so add those as plain nullable columns.
+            safe = re.sub(r"DEFAULT\s*\([^)]*\)", "", decl, flags=re.I)
+            safe = re.sub(r"REFERENCES\s+\w+\s*\([^)]*\)", "", safe, flags=re.I)
+            safe = safe.replace("PRIMARY KEY", "").replace("AUTOINCREMENT", "").strip()
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {safe}".strip())
+            applied.append(f"{table}.{name}")
+    if applied:
+        conn.commit()
+    return applied
+
+
 def connect(path: Path | str = DB_PATH) -> sqlite3.Connection:
     conn = sqlite3.connect(str(path))
     conn.row_factory = sqlite3.Row
+    _migrate(conn)
     conn.executescript(SCHEMA)
     return conn

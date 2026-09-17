@@ -154,6 +154,18 @@ class PricingEngine:
         if margin_usd < 0:
             warnings.append("Negative margin at the rounded list price.")
             viable = False
+        # Backstop on the configured floor. It cannot fire while _round_price
+        # rounds UP and the target margin sits above the floor, so today this is
+        # a guard rather than a live check -- but min_gross_margin_pct existed in
+        # policy while nothing enforced it, which reads as a safety net that is
+        # not there. It becomes real the moment a per-category target is set
+        # below the floor, or the rounding rule changes.
+        min_margin = self.cfg["margin"]["min_gross_margin_pct"]
+        realized = (margin_usd / list_price * 100) if list_price else 0.0
+        if 0 <= realized < min_margin:
+            warnings.append(f"Gross margin {realized:.1f}% is below the "
+                            f"{min_margin:.0f}% floor.")
+            viable = False
         if quote.weight.confidence != "high":
             warnings.append("Weight partly estimated; freight may be understated.")
 

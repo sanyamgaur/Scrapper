@@ -185,6 +185,60 @@ class TestPricing(unittest.TestCase):
         self.assertLess(many.freight_ratio, one.freight_ratio)
 
 
+class TestSchemaMigration(unittest.TestCase):
+    """REGRESSION: `CREATE TABLE IF NOT EXISTS` is a no-op on an existing table,
+    so columns added to SCHEMA never reached databases already in the field --
+    and a later CREATE INDEX on such a column made the database impossible to
+    even OPEN. Columns are now reconciled against SCHEMA before it runs."""
+
+    def setUp(self):
+        self.tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        self.path = self.tmp.name
+        c = sqlite3.connect(self.path)
+        # Exactly the shape shipped before customers/order_lines existed.
+        c.executescript("""
+            CREATE TABLE orders (order_id TEXT PRIMARY KEY, created_at TEXT,
+                customer_zip TEXT, status TEXT, lines_json TEXT, quote_json TEXT,
+                total_usd REAL, carrier TEXT, tracking TEXT);
+            CREATE TABLE products (product_id TEXT PRIMARY KEY, name TEXT);
+            INSERT INTO orders (order_id,status) VALUES ('OLD-1','PLACED');
+            INSERT INTO products VALUES ('P9','Legacy');""")
+        c.commit(); c.close()
+
+    def tearDown(self):
+        os.unlink(self.path)
+
+    def test_old_database_still_opens(self):
+        dbmod.connect(self.path).close()      # threw before the fix
+
+    def test_missing_columns_are_added(self):
+        conn = dbmod.connect(self.path)
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(orders)")}
+        self.assertIn("customer_id", cols)
+        self.assertIn("batch_id", cols)
+        conn.close()
+
+    def test_existing_rows_survive(self):
+        conn = dbmod.connect(self.path)
+        self.assertEqual(conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0], 1)
+        self.assertEqual(conn.execute("SELECT COUNT(*) FROM products").fetchone()[0], 1)
+        conn.close()
+
+    def test_migration_is_idempotent(self):
+        dbmod.connect(self.path).close()
+        conn = dbmod.connect(self.path)
+        self.assertEqual(dbmod._migrate(conn), [])
+        conn.close()
+
+    def test_parser_never_yields_a_malformed_column(self):
+        # A comment containing a comma once split mid-sentence and its tail was
+        # read as a column name, producing invalid ALTER TABLE statements.
+        for table, cols in dbmod._expected_columns(dbmod.SCHEMA).items():
+            for name, _ in cols:
+                self.assertTrue(name.replace("_", "").isalnum(),
+                                f"{table}.{name} is not a valid column name")
+
+
 class TestStockGate(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)

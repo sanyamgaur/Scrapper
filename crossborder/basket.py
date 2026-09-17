@@ -22,6 +22,13 @@ It is NOT "customers also bought". It is freight arithmetic:
    suggestion: it becomes a short, a refund and an apology. So only in-stock,
    low-stockout-risk, compliance-ALLOWED SKUs are ever suggested.
 
+   Note what the risk half of that is worth TODAY: with no availability history,
+   an in-stock SKU cannot score above ~0.39 against a 0.60 threshold, so the
+   risk filter currently excludes nothing and the in-stock flag is doing all the
+   work. It starts discriminating on its own once stock_checks accumulates. It
+   is documented here rather than removed, because the guard is correct and
+   silently inert is exactly how a safety check gets mistaken for protection.
+
 4. ONE DARK STORE. Blinkit serves a basket from a single merchant. An add-on
    from the other dark store silently creates a SECOND order with a second
    delivery fee, which can cost more than the add-on earns. Same-merchant
