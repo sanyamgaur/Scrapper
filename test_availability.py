@@ -327,6 +327,46 @@ def test_was_out_filter():
     print("  filters                     ok")
 
 
+def test_interval_reuses_limiter():
+    """--interval must carry the token bucket across cycles, and each cycle
+    must diff against the previous one."""
+    d = tempfile.mkdtemp()
+    con = make_db(os.path.join(d, "t.db"),
+                  [("k1", "Kept", 10.0, 1, "cat")], [("k1", SHELF_A)])
+    # --strategy shelf: with a single watched product, auto would route it to
+    # search, and this test is about the shelf leg across cycles.
+    args = make_args(["--all", "--strategy", "shelf",
+                      "--interval", "0.01", "--max-runs", "3"])
+    c = FakeChecker(SESSION, con, args)
+
+    cycles = [page([("k1", "Kept", 10.0, False)]),    # goes out of stock
+              page([("k1", "Kept", 10.0, False)]),    # unchanged
+              page([("k1", "Kept", 12.0, True)])]     # back, dearer
+    watch = c.load_watchlist()
+    shelf_jobs, _, _ = c.plan(watch)
+
+    bucket = c.bucket
+    seen_events = []
+    for payload in cycles:
+        c.install({SHELF_A: [payload]}, {})
+        _, evs = ca.run_one(c, con, args, watch, shelf_jobs, [], set())
+        seen_events.append({e[3] for e in evs})
+        assert c.bucket is bucket, "a cycle replaced the rate limiter"
+
+    assert seen_events[0] == {OUT_OF_STOCK}, seen_events
+    assert seen_events[1] == set(), seen_events
+    assert seen_events[2] == {BACK_IN_STOCK, PRICE_UP}, seen_events
+
+    runs = con.execute("SELECT COUNT(*) FROM availability_runs").fetchone()[0]
+    assert runs == 3, runs
+    # history is per-run, so the whole trajectory is queryable afterwards
+    hist = [r[0] for r in con.execute(
+        "SELECT in_stock FROM availability WHERE product_id='k1' ORDER BY run_id")]
+    assert hist == [0, 0, 1], hist
+    con.close()
+    print("  interval loop               ok")
+
+
 if __name__ == "__main__":
     print("availability checker, offline:")
     test_diff_events()
@@ -337,4 +377,5 @@ if __name__ == "__main__":
     test_plan()
     test_persist_and_report()
     test_was_out_filter()
+    test_interval_reuses_limiter()
     print("\nALL ASSERTIONS PASSED")

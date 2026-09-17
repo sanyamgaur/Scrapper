@@ -154,6 +154,43 @@ Events are `out_of_stock`, `back_in_stock`, `price_up`, `price_down`,
 `out_of_stock`: a product the API stops returning entirely is a different fact
 from one it returns and marks unavailable.
 
+### How fresh can it be?
+
+This is polling, not push. Blinkit has no webhook and no public stock feed, so
+"real time" means "how often can you afford to ask" — and that is set by the
+rate limit (~0.635 req/s sustained, measured), which makes it a function of how
+many SKUs you watch, not of the code. Costed with `--dry-run` against the
+31,366-product Delhi catalogue:
+
+| watchlist | listing reqs | search reqs | one check takes |
+|---|---|---|---|
+| 5 SKUs | 5 | 2 | ~8s |
+| 20 SKUs | 7 | 7 | ~11s |
+| one shelf (170 SKUs) | 6 | 0 | ~9s |
+| one brand (255 SKUs) | 45 | 22 | ~71s |
+| everything last seen out of stock (18,336) | 674 | 40 | ~18 min |
+| everything (31,366) | 694 | 23 | ~18 min |
+
+(The two legs run on separate buckets concurrently, so a check costs the slower
+leg, not the sum.)
+
+So: **a focused watchlist can be checked every 30 seconds and is effectively
+live. The whole catalogue has a floor of ~18 minutes.** If you need
+second-by-second truth on 31k SKUs, scraping cannot give it to you at any
+cadence — nothing here changes that.
+
+For anything faster than a few minutes use `--interval` rather than cron:
+
+```bash
+python check_availability.py --session session_delhi.json --db blinkit.db \
+       --watch skus.txt --interval 30
+```
+
+One process keeps one rate limiter, so the learned refill rate and the current
+token count carry across checks. A fresh process per check — cron every minute —
+starts each time assuming a full burst the server may not have, and walks
+straight into 429s.
+
 ### Running it on a schedule
 
 Availability in quick commerce moves through the day, so a check is worth

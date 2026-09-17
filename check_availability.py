@@ -473,6 +473,14 @@ def build_av_parser():
                     help="write --report as JSON instead of CSV")
     ap.add_argument("--dry-run", action="store_true",
                     help="print the plan and estimated requests, check nothing")
+    ap.add_argument("--interval", type=float, metavar="SECONDS",
+                    help="keep running, starting a new check every SECONDS. "
+                         "Preferred over cron for anything faster than a few "
+                         "minutes: one process keeps one rate limiter, so the "
+                         "learned refill rate and token count carry over "
+                         "instead of resetting on every check.")
+    ap.add_argument("--max-runs", type=int,
+                    help="with --interval, stop after this many checks")
     ap.set_defaults(verify_deep=False)
     return ap
 
@@ -510,10 +518,38 @@ def main():
         con.close()
         return
 
+    cycle = 0
+    while True:
+        cycle += 1
+        run_one(c, con, args, watch, shelf_jobs, search_jobs, unknown)
+        if c.stop:
+            print("STOPPED: auth expired. Re-run discover.py, then this again.",
+                  file=sys.stderr)
+            break
+        if not args.interval:
+            break
+        if args.max_runs and cycle >= args.max_runs:
+            break
+        wait = max(0.0, args.interval - (time.time() - c.cycle_started))
+        if wait:
+            time.sleep(wait)
+    con.close()
+
+
+def run_one(c, con, args, watch, shelf_jobs, search_jobs, unknown):
+    """One check cycle. Safe to call repeatedly on the same checker -- and
+    should be, under --interval: the token bucket lives on the checker, so
+    reusing it carries the learned refill rate and the current token count
+    across cycles. A fresh process per check (cron every minute, say) instead
+    assumes a full burst every time the server may not actually have, and
+    walks straight into 429s."""
+    c.state = {}
+    c.cycle_started = time.time()
+    req0, r429_0 = c.n_req, c.n_429
+
     prev_run, prev_state = baseline_state(con, c.location)
-    started = int(time.time())
     asyncio.run(c.run_check(shelf_jobs, search_jobs, unknown))
-    run_id, events = c.persist(watch, prev_state, started)
+    run_id, events = c.persist(watch, prev_state, int(c.cycle_started))
 
     seen = sum(1 for s in c.state.values() if s["seen"])
     instock = sum(1 for s in c.state.values() if s["in_stock"])
@@ -521,8 +557,10 @@ def main():
     for e in events:
         by_ev[e[3]] = by_ev.get(e[3], 0) + 1
 
-    print("\nrun %d | %d watched | %d found | %d in stock | %d requests (%d 429)"
-          % (run_id, len(watch), seen, instock, c.n_req, c.n_429))
+    print("\n[%s] run %d | %d watched | %d found | %d in stock | "
+          "%d requests (%d 429) | %.0fs"
+          % (time.strftime("%H:%M:%S"), run_id, len(watch), seen, instock,
+             c.n_req - req0, c.n_429 - r429_0, time.time() - c.cycle_started))
     print("compared against %s"
           % ("run %d" % prev_run if prev_run else "the catalogue snapshot"))
     if by_ev:
@@ -538,12 +576,13 @@ def main():
         print("  no changes since the last check")
 
     if args.report:
-        n = write_report(con, run_id, args.report, args.report_json)
-        print("report -> %s (%d rows)" % (args.report, n))
-    if c.stop:
-        print("STOPPED: auth expired. Re-run discover.py, then this again.",
-              file=sys.stderr)
-    con.close()
+        path = args.report
+        if args.interval:
+            base, _, ext = path.rpartition(".")
+            path = "%s-%d.%s" % (base or path, run_id, ext or "csv")
+        n = write_report(con, run_id, path, args.report_json)
+        print("report -> %s (%d rows)" % (path, n))
+    return run_id, events
 
 
 if __name__ == "__main__":
