@@ -60,6 +60,9 @@ python make_catalog_page.py --db blinkit.db --session session_delhi.json
 
 # 7. Emit the structured dataset (see "Structured dataset" below)
 python export_dataset.py --db blinkit.db --out dataset
+
+# 8. Re-check stock later (see "Availability checks" below)
+python check_availability.py --session session_delhi.json --db blinkit.db --all
 ```
 
 ## Images
@@ -88,6 +91,96 @@ python download_images.py --db blinkit.db --out-dir images --concurrency 24
 This adds a `product_images` table (`product_id, location, url, local_path,
 content_type, n_bytes, status, error, fetched_at`) so failures are visible
 and re-run cleanly (`--redo-errors` to retry the ones that errored).
+
+## Availability checks
+
+`crawl.py` finds products. `check_availability.py` re-checks ones you already
+have, records what changed, and is cheap enough to run on a schedule.
+
+```bash
+# everything, compared against the last check (or the catalogue snapshot)
+python check_availability.py --session session_delhi.json --db blinkit.db --all
+
+# just a watchlist, and write a report
+python check_availability.py --session session_delhi.json --db blinkit.db \
+       --watch skus.txt --report today.csv
+
+# only things that were out of stock -- catches restocks
+python check_availability.py --session session_delhi.json --db blinkit.db --was-out
+
+# what would this cost? plan it without spending a request
+python check_availability.py --session session_delhi.json --db blinkit.db \
+       --all --dry-run
+```
+
+`--watch` takes a bare id-per-line file or any CSV with a `product_id` column,
+so `dataset/products.csv` works as-is. `--brand`, `--shelf` and `--category`
+filter the catalogue instead.
+
+**It does not have its own endpoint, and does not need one.** Stock state comes
+back from `/v1/layout/listing_widgets` along with everything else, ~41 products
+per request — so this checks the *shelves* the watched products sit on and
+reads their state out of the response. Two things follow, and they are most of
+the script:
+
+- **A shelf walk stops as soon as every watched product on it has been seen.**
+  Watching one SKU that sits on page 2 of a nine-page shelf costs two requests,
+  not nine.
+- **A shelf holding one or two watched products is poor value** — a whole walk
+  to learn one fact. Those go to `/v1/layout/search` instead, one request each,
+  on the endpoint's *separate* rate bucket, so they cost nothing from the
+  listing budget and run concurrently with it. `--strategy auto` (the default)
+  picks per shelf at `--shelf-threshold`, default 3.
+
+Measured on the 31,366-product Delhi catalogue:
+
+| | requests |
+|---|---|
+| full re-crawl (`crawl.py`) | 1,649 |
+| check every product | ≤694 listing + 23 search |
+| check one brand (255 SKUs) | ≤45 listing + 22 search |
+
+Results go to three tables, and `products` is never modified — it stays the
+baseline snapshot:
+
+| table | what it holds |
+|---|---|
+| `availability_runs` | one row per run: counts, strategy, requests, 429s |
+| `availability` | one row per product per run: in_stock, price, mrp, whether it was returned at all |
+| `availability_events` | one row per transition, with before and after |
+
+Events are `out_of_stock`, `back_in_stock`, `price_up`, `price_down`,
+`disappeared` and `reappeared`. `disappeared` is deliberately distinct from
+`out_of_stock`: a product the API stops returning entirely is a different fact
+from one it returns and marks unavailable.
+
+### Running it on a schedule
+
+Availability in quick commerce moves through the day, so a check is worth
+running a few times daily rather than once. The catalogue itself changes much
+more slowly — re-crawl weekly to pick up genuinely new SKUs.
+
+```cron
+# every 3 hours: re-check stock, append a dated report
+0 */3 * * * cd /path/to/Scrapper && .venv/bin/python check_availability.py \
+    --session session_delhi.json --db blinkit.db --all \
+    --report reports/$(date +\%F-\%H).csv >> logs/availability.log 2>&1
+
+# Sunday 04:00: full re-crawl, to find products that did not exist before
+0 4 * * 0 cd /path/to/Scrapper && .venv/bin/python crawl.py \
+    --session session_delhi.json --db blinkit.db --with-search >> logs/crawl.log 2>&1
+```
+
+The session expires. When it does the script stops and says so, and the fix is
+to re-run `discover.py` — so keep an eye on the log, or have cron re-run
+`discover.py` before the weekly crawl.
+
+To alert rather than just log, query the events table after a run:
+
+```sql
+SELECT product_id, event, prev, curr FROM availability_events
+WHERE run_id = (SELECT MAX(run_id) FROM availability_runs);
+```
 
 ## Structured dataset
 
