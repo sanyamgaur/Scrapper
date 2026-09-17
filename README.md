@@ -92,6 +92,30 @@ This adds a `product_images` table (`product_id, location, url, local_path,
 content_type, n_bytes, status, error, fetched_at`) so failures are visible
 and re-run cleanly (`--redo-errors` to retry the ones that errored).
 
+## One command: crawl everything, then check it
+
+`run_pipeline.py` chains `discover.py` (only if no session exists yet),
+`crawl.py` (no `--limit-cats` -- every leaf), and `check_availability.py` (no
+`--limit` -- every product), and prints a plain in-stock/out-of-stock summary
+at the end:
+
+```bash
+python run_pipeline.py --lat 28.6139 --lon 77.2090
+```
+
+It does not reimplement any of the three steps -- it runs them as real
+subprocesses so their own progress output streams through unchanged, and
+fails loudly with the underlying script's own error if any step does. Expect
+~45 minutes for the crawl and ~15-20 minutes for the check on a full
+catalogue; that is the rate limit, not this script (see "How fresh can it
+be?" below).
+
+Already have a session and a crawled db and just want to re-check stock:
+
+```bash
+python run_pipeline.py --skip-crawl
+```
+
 ## Availability checks
 
 `crawl.py` finds products. `check_availability.py` re-checks ones you already
