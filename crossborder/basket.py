@@ -94,7 +94,15 @@ class BasketAdvice:
 
 
 def billed_weight_g(chargeable_g: float) -> float:
-    """Mirror the carrier's rounding so headroom is computed, not guessed."""
+    """Generic carrier rounding: 0.5 kg steps below 2 kg, 1 kg above.
+
+    This is the FALLBACK. Real headroom comes from the quote the customer is
+    actually being charged on (see `advise`), because the shipping engine may
+    legitimately declare a heavier weight than this rule predicts when a rate
+    card is non-monotonic. Using this rule alone understated headroom by 500 g
+    on a real 500 g cart -- safe for margin, but it hid exactly the free
+    capacity the panel exists to surface.
+    """
     kg = chargeable_g / 1000.0
     step = 0.5 if kg <= 2.0 else 1.0
     return math.ceil(kg / step) * step * 1000.0
@@ -117,7 +125,16 @@ class BasketBuilder:
         lc, quote = self.pricing.price_cart(lines, handling=handling,
                                             carrier_code=carrier_code)
         chargeable = quote.weight.chargeable_g
-        billed = billed_weight_g(chargeable)
+
+        # Headroom must be measured against the carrier the customer is actually
+        # quoted, not a generic rounding rule. price_cart picks `carrier_code`
+        # when given and the cheapest option otherwise; mirror that exactly, or
+        # the panel promises free weight on one carrier and bills it on another.
+        chosen = None
+        if quote.options:
+            chosen = next((o for o in quote.options if o.carrier_code == carrier_code),
+                          quote.cheapest)
+        billed = (chosen.chargeable_kg * 1000.0) if chosen else billed_weight_g(chargeable)
         headroom = max(0.0, billed - chargeable)
         ratio = lc.freight_ratio
         target = self.cfg["target_freight_ratio"]
@@ -133,8 +150,8 @@ class BasketBuilder:
                                        cart_goods_inr, cart_supers)
 
         if headroom >= 50 and suggestions:
-            headline = (f"You have {headroom:.0f} g of shipping headroom already paid for. "
-                        f"Adding these ships free.")
+            headline = (f"You have {headroom:.0f} g of shipping capacity already paid "
+                        f"for. These add no shipping cost — you pay only for the item.")
         elif not viable:
             headline = (f"Shipping is {ratio:.1f}x the value of these goods. "
                         f"Adding a few dense items makes this basket worth sending.")
@@ -218,7 +235,8 @@ class BasketBuilder:
             except Exception:
                 continue
 
-            reason = ("ships free in your existing weight allowance" if fits_free
+            reason = ("no extra shipping — fits the weight you already paid for"
+                      if fits_free
                       else f"high value for its weight (₹{density:.0f}/g)")
             if not same_merchant:
                 reason += " — from a different store, may ship separately"

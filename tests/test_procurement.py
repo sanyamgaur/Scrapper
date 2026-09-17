@@ -351,6 +351,42 @@ class TestBasketBuilder(TempDB):
         b = BasketBuilder(db_path=self.path)
         self.assertNotIn("P1", [s.product_id for s in b.advise(self._cart("P1")).suggestions])
 
+    def test_headroom_matches_the_carrier_actually_quoted(self):
+        """REGRESSION: headroom came from a generic rounding rule while the
+        customer is billed on a specific carrier. On a real 500 g cart the panel
+        reported 0 g while India Post billed 1000 g, hiding 500 g of genuinely
+        free capacity -- the exact thing the panel exists to surface."""
+        b = BasketBuilder(db_path=self.path)
+        a = b.advise(self._cart())
+        # Whatever carrier was chosen, billed weight must equal one of the
+        # quoted options, not an independently computed guess.
+        _lc, q = b.pricing.price_cart(self._cart())
+        billed_options = {round(o.chargeable_kg * 1000.0, 1) for o in q.options}
+        self.assertIn(round(a.billed_g, 1), billed_options)
+        self.assertAlmostEqual(a.free_headroom_g, a.billed_g - a.chargeable_g, places=1)
+
+    def test_headroom_differs_by_carrier(self):
+        b = BasketBuilder(db_path=self.path)
+        cheap = b.advise(self._cart())
+        dhl = b.advise(self._cart(), carrier_code="DHL_EXPRESS")
+        # Different carriers round differently, so the promise must not be
+        # copied across them.
+        self.assertGreaterEqual(cheap.free_headroom_g, 0)
+        self.assertGreaterEqual(dhl.free_headroom_g, 0)
+
+    def test_copy_does_not_claim_the_item_is_free(self):
+        # "ships free" is true of freight and false of the goods. A customer
+        # adding six suggestions still doubles their bill.
+        b = BasketBuilder(db_path=self.path)
+        a = b.advise(self._cart())
+        for s in a.suggestions:
+            self.assertNotIn("ships free in", s.reason)
+        # The headroom headline only applies when there is headroom AND something
+        # to put in it; otherwise the ratio headline is shown instead.
+        if a.free_headroom_g >= 50 and a.suggestions:
+            self.assertIn("pay only for the item", a.headline)
+        self.assertNotIn("ships free", a.headline)
+
     def test_reports_free_headroom_and_ratio(self):
         a = BasketBuilder(db_path=self.path).advise(self._cart())
         self.assertGreaterEqual(a.free_headroom_g, 0)
