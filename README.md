@@ -191,6 +191,66 @@ token count carry across checks. A fresh process per check — cron every minute
 starts each time assuming a full burst the server may not have, and walks
 straight into 429s.
 
+### The continuous engine
+
+`check_availability.py` answers "what is the state now?". `availability_engine.py`
+keeps answering it, forever, and spends its request budget where freshness is
+worth the most.
+
+```bash
+python availability_engine.py --session session_delhi.json --db blinkit.db \
+       --all --hot hot_skus.txt --events-out events.jsonl
+```
+
+It runs two legs at once, on the two independent rate buckets:
+
+- **The shelf leg** sweeps the catalogue, choosing shelves by
+  `value / cost`, where value is the summed `weight x staleness x volatility`
+  of the watched SKUs on a shelf and cost is the number of pages that shelf
+  *actually* took last time (learned, not assumed — early stop makes the paper
+  estimate pessimistic). Volatility rises when a SKU flips stock and decays
+  over `--half-life`, so attention follows churn instead of a fixed rota.
+- **The search leg** re-checks the `--hot` set one SKU per request. This is
+  what actually delivers freshness, and it is worth understanding why the
+  shelf leg alone does not: one hot SKU on an 800-product shelf is outvoted by
+  its 799 cold neighbours, so its shelf never wins on value-per-request. Search
+  costs one request regardless of which shelf a SKU lives on, and it spends the
+  search bucket, which the sweep is not using.
+
+Simulated against the real 31,366-SKU catalogue for one hour at the measured
+0.635 req/s per bucket:
+
+| hot set | hot p50 | hot worst | whole catalogue p50 | worst |
+|---|---|---|---|---|
+| 5 SKUs | **3s** | 6s | 7.0m | 60m |
+| 20 SKUs | **14s** | 30s | 6.9m | 60m |
+| 50 SKUs | **39s** | 77s | 7.3m | 60m |
+| 200 SKUs | 2.1m | 5.1m | 6.7m | 60m |
+| 500 SKUs | 3.7m | 13m | 7.1m | 60m |
+| none (sweep only) | — | — | 7.0m | 60m |
+
+So: **a few dozen SKUs can be kept within seconds of live, indefinitely, while
+the entire catalogue keeps sweeping behind them.** Widen the hot set and its
+freshness degrades linearly — it is one request per SKU per refresh, and there
+are only ~0.635 of those per second.
+
+State lives in `availability_live` (current reading, check count, flip count)
+and every transition is appended to `availability_events` and streamed as JSON
+lines to stdout and `--events-out`:
+
+```json
+{"ts": 1789654067, "product_id": "481234", "event": "out_of_stock",
+ "prev": {"in_stock": 1, "price": 28.0, "seen": 1},
+ "curr": {"in_stock": 0, "price": 28.0, "seen": 1}}
+```
+
+The status line reports measured staleness percentiles rather than the cadence
+you asked for, because the two are not the same number:
+
+```
+[engine] 12.3m up | 31366 SKUs | hot p50 38s max 71s | freshness p50 6.9m p90 17.2m max 41m | 87 events | 470 req (0.63/s, 0 x429) | rate 0.68/s
+```
+
 ### Running it on a schedule
 
 Availability in quick commerce moves through the day, so a check is worth

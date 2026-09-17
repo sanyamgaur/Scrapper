@@ -246,7 +246,12 @@ class AvailabilityChecker(SearchMixin, Crawler):
                 "in_stock": None if p["in_stock"] is None else int(p["in_stock"]),
                 "price": p["price"], "mrp": p["mrp"], "seen": 1, "via": via}
 
-    async def check_shelf(self, client, shelf, wanted):
+    async def walk_shelf(self, client, shelf, wanted):
+        """Page a shelf until every watched product on it has been seen.
+
+        Returns (found_by_id, pages_spent). Split out from check_shelf so the
+        continuous engine can reuse the walk and its early stop without
+        inheriting check_shelf's write into self.state."""
         uuid, gid = shelf
         key = "avail:%s:%s" % (uuid, gid)
         body = {"collection_group_id": gid, "collection_uuid": uuid}
@@ -254,6 +259,7 @@ class AvailabilityChecker(SearchMixin, Crawler):
         offset = 0
         found = {}
         outstanding = set(wanted)
+        pages = 0
 
         for page in range(self.args.max_pages):
             if self.stop:
@@ -263,6 +269,7 @@ class AvailabilityChecker(SearchMixin, Crawler):
             if data is None:
                 break
             self.n_pages_av += 1
+            pages += 1
             prods = extract_products(data, {})
             for p in prods:
                 if p["product_id"] in outstanding:
@@ -283,6 +290,10 @@ class AvailabilityChecker(SearchMixin, Crawler):
                          "offset": str(offset), "limit": str(limit),
                          "page_index": str(page + 1)})
 
+        return found, pages
+
+    async def check_shelf(self, client, shelf, wanted):
+        found, _pages = await self.walk_shelf(client, shelf, wanted)
         for pid in wanted:
             self._record(pid, found, "shelf")
         return len(found)
