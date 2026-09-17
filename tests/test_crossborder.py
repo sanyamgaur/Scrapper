@@ -84,6 +84,32 @@ class TestCompliance(unittest.TestCase):
         self.assertEqual(self.v("Amul Salted Butter", group="Butter & More",
                                 sup="Grocery & Kitchen"), "BLOCKED")
 
+    def test_dish_named_masala_is_not_meat_or_dairy(self):
+        """REGRESSION: a spice mix named for the dish it seasons contains no
+        meat or dairy. Blocking them deleted 115 listable SKUs -- 65 chicken
+        masalas and 50 paneer masalas."""
+        self.assertEqual(self.v("Alaina Chicken Korma Masala", group="Powdered Spices",
+                                sup="Grocery & Kitchen"), "ALLOWED")
+        self.assertEqual(self.v("Catch Shahi Paneer Masala", group="Powdered Spices",
+                                sup="Grocery & Kitchen"), "ALLOWED")
+        # ...while actual meat and actual dairy still block.
+        self.assertEqual(self.v("Fresh Chicken Curry Cut", cat="Chicken, Meat & Fish",
+                                sup="Grocery & Kitchen"), "BLOCKED")
+        self.assertEqual(self.v("Amul Cheese Slices", group="Cheese",
+                                sup="Grocery & Kitchen"), "BLOCKED")
+
+    def test_food_rules_do_not_fire_on_decor(self):
+        """REGRESSION: Household Essentials holds no food. A wine-bottle cork
+        light, a Disney Frozen umbrella and a fish showpiece were all blocked by
+        food rules."""
+        for nm, grp in [("Warm White LED Wine Bottle Cork String Light", "Decorative Lights"),
+                        ("Citizen Disney Frozen Umbrella", "Lifestyle Accessories"),
+                        ("Vrindavan Udyog Fish Showpiece", "Home Decor")]:
+            v = self.e.classify(P(nm, group=grp, cat="Home & Lifestyle",
+                                  sup="Household Essentials"))
+            self.assertNotEqual(v.verdict, "BLOCKED",
+                                f"{nm} blocked by {v.primary.rule_id}")
+
     def test_plural_exception_regression(self):
         # REGRESSION: a trailing \b made the except_pattern miss "Cheese Balls".
         self.assertEqual(self.v("Kurkure Cheese Balls", group="Chips & Wafers",

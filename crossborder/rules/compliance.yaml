@@ -45,6 +45,11 @@ keyword_rules:
   - id: KW-MEAT-001
     priority: 100
     pattern: '\b(chicken|mutton|lamb|goat meat|pork|bacon|ham|sausage|salami|pepperoni|keema|kheema|meat|beef|turkey breast)\b'
+    # Household Essentials holds no food: a "Chicken Showpiece" is decor.
+    scope_not_super: ["Household Essentials"]
+    # A masala NAMED for the dish it seasons contains no meat. "Chicken Korma
+    # Masala" is ground spice; blocking it deleted 65 listable SKUs.
+    except_pattern: '\b(masala|seasoning|curry powder|spice mix|marinade|gravy mix|rub|flavou?r|instant mix|noodle)\b'
     verdict: BLOCKED
     dimension: US_IMPORT
     reason: "Meat and poultry products from India are prohibited entry. India is not USDA-recognized as free of FMD/HPAI, so APHIS bars commercial and personal meat imports."
@@ -53,6 +58,8 @@ keyword_rules:
   - id: KW-SEAFOOD-002
     priority: 100
     pattern: '\b(fish|prawn|shrimp|crab|lobster|squid|pomfret|rohu|surmai|basa|tilapia|seafood|anchov)\w*'
+    scope_not_super: ["Household Essentials"]
+    except_pattern: '\b(masala|seasoning|curry powder|spice mix|showpiece|toy|tank|bowl|net|shaped|print)\b'
     verdict: BLOCKED
     dimension: US_IMPORT
     reason: "Seafood imports require an FDA-registered facility, HACCP compliance and NOAA/SIMP entry filing. Not viable as a per-parcel retail item."
@@ -78,7 +85,7 @@ keyword_rules:
     dimension: TEMPERATURE
     reason: "Fresh/chilled dairy requires unbroken cold chain and carries APHIS dairy restrictions. Cannot survive 4-10 day air transit."
     authority: "9 CFR 94.16 (milk products); FDA 21 CFR 1240.61 (pasteurization)"
-    except_pattern: '\b(cheese\s*(ball|puff|corn|nacho|cracker|flavou?r|masala|popcorn|dip|sauce|spread|slice pizza)s?|flavou?red cheese|cream\s*(biscuit|roll|wafer|cracker|filled)s?|milk\s*(powder|solids|chocolate|bar|drink|shake)s?|condensed milk|milkmaid|soya milk|almond milk|oat milk|coconut milk|peanut butter|cocoa butter|shea butter|butter\s*(cookie|biscuit|naan|chicken|paneer|masala|scotch)s?)'
+    except_pattern: '\b(cheese\s*(ball|puff|corn|nacho|cracker|flavou?r|masala|popcorn|dip|sauce|spread|slice pizza)s?|flavou?red cheese|cream\s*(biscuit|roll|wafer|cracker|filled)s?|milk\s*(powder|solids|chocolate|bar|drink|shake)s?|condensed milk|milkmaid|soya milk|almond milk|oat milk|coconut milk|peanut butter|cocoa butter|shea butter|butter\s*(cookie|biscuit|naan|chicken|paneer|masala|scotch)s?|paneer\s*(masala|tikka|butter masala|mix)|(shahi|matar|palak|kadai|tikka) paneer|cheese\s*[&+]|cheese (and|n) )'
 
   - id: KW-MILKPOWDER-011
     priority: 94
@@ -141,6 +148,9 @@ keyword_rules:
   - id: KW-ALCOHOL-032
     priority: 100
     pattern: '\b(beer|wine|whisky|whiskey|vodka|rum|gin|brandy|liqueur|alcohol(ic)? beverage|tequila)\b'
+    scope_not_super: ["Household Essentials"]
+    # Glassware, openers, racks and cork lights are not alcohol.
+    except_pattern: '\b(opener|corkscrew|glass|glasses|rack|chiller|stopper|charm|decanter|coaster|light|lamp|string|holder|bag|shaped)\b'
     verdict: BLOCKED
     dimension: US_IMPORT
     reason: "Alcoholic beverages require a TTB importer basic permit, state-level licensing and excise tax. Carriers refuse alcohol on consumer parcels."
@@ -243,6 +253,9 @@ keyword_rules:
   - id: KW-FROZEN-061
     priority: 97
     pattern: '\b(frozen|chilled|refrigerated|keep refrigerated)\b'
+    # "Disney Frozen" is a film. Non-food aisles cannot hold a cold chain item.
+    scope_not_super: ["Household Essentials", "Beauty & Personal Care"]
+    except_pattern: '\b(disney frozen|frozen (umbrella|watch|bottle|doll|toy|print|theme|bag|lunch))\b'
     verdict: BLOCKED
     dimension: TEMPERATURE
     reason: "Frozen and chilled goods need an unbroken cold chain that consumer air parcel service does not provide."
