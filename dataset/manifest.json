@@ -1,0 +1,69 @@
+{
+  "dataset": "blinkit-darkstore-catalog",
+  "generated_at": "2026-09-17T06:01:08Z",
+  "store": {
+    "address": "3, Rashtrapati Bhavan Rd, Central Secretariat, Kartavya Path, New Delhi, Delhi 110011, India",
+    "eta": "Delivery in 11 minutes",
+    "lat": 28.6139,
+    "lon": 77.209
+  },
+  "currency": "INR",
+  "files": {
+    "products.jsonl": "One nested JSON object per product.",
+    "products.csv": "Flat typed view with derived columns.",
+    "images.csv": "One row per image asset.",
+    "taxonomy.csv": "Shelf tree with product counts.",
+    "product_taxonomy.csv": "Product-to-shelf many-to-many.",
+    "brands.csv": "Per-brand rollup."
+  },
+  "schema": {
+    "product_id": "Blinkit's own SKU id. Unique per store, stable across runs.",
+    "pack": "Parsed from the free-text `unit` field. kind is weight|volume|count|mixed, or null when the text did not parse (raw is always kept). Measured on this catalog, effectively every null is a book SKU: Blinkit puts the author or publisher in the unit field for books ('Ruskin Bond', 'Maple Press'), so a null kind on a Books shelf is a byline, not a missing pack size.",
+    "pack.net_g": "Total net grams in the pack, multipacks and combos summed.",
+    "pack.net_ml": "Total net millilitres in the pack.",
+    "pack.pieces": "Total countable pieces (pc, set, pair, sheet, ...).",
+    "pricing.price": "What this darkstore charges, INR.",
+    "pricing.mrp": "Printed maximum retail price, INR. Null when not advertised.",
+    "pricing.unit_price": "price normalized per kg / per litre / per piece.",
+    "availability.in_stock": "As the store served it at scrape time.",
+    "images": "Image assets from Blinkit's CDN. asset_id is the CDN filename, usable as a dedup key. local_path is set only after download_images.py has run.",
+    "taxonomy": "Every shelf the product sits on. A product can sit on several.",
+    "provenance": "Which endpoint the row came from, which store, and when. Inventory is per-darkstore: another pin is a different catalog."
+  },
+  "stats": {
+    "products": 31366,
+    "with_image": 31366,
+    "with_local_image": 0,
+    "with_price": 31366,
+    "with_mrp": 24795,
+    "discounted": 24795,
+    "in_stock": 13030,
+    "brands": 4263,
+    "shelves": 276,
+    "pack_kinds": {
+      "weight": 8820,
+      "count": 16911,
+      "volume": 5020,
+      "mixed": 111,
+      "unparsed": 504
+    },
+    "pack_parsed_pct": 98.39,
+    "price_percentiles": {
+      "p10": 69.0,
+      "p50": 279.0,
+      "p90": 1100.0,
+      "min": 1.0,
+      "max": 61079.0
+    },
+    "products_per_super_category": {
+      "Household Essentials": 13543,
+      "Beauty & Personal Care": 7272,
+      "Grocery & Kitchen": 5549,
+      "Snacks & Drinks": 5002
+    },
+    "scraped_at_range": [
+      "2026-09-16T17:24:45Z",
+      "2026-09-16T18:07:57Z"
+    ]
+  }
+}

@@ -1,0 +1,277 @@
+super_category,category,shelf,n_products
+Beauty & Personal Care,Baby Care,Baby Food,39
+Beauty & Personal Care,Baby Care,Baby Gear,2
+Beauty & Personal Care,Baby Care,Baby Oral Care,15
+Beauty & Personal Care,Baby Care,Baby Shampoo & Soaps,26
+Beauty & Personal Care,Baby Care,Baby Toys & Gifts,130
+Beauty & Personal Care,Baby Care,Clothes & Accessories,136
+Beauty & Personal Care,Baby Care,Diaper & Wipes,105
+Beauty & Personal Care,Baby Care,Feeding Essentials,58
+Beauty & Personal Care,Baby Care,Health &  Hygiene,44
+Beauty & Personal Care,Baby Care,Mom Care Needs,3
+Beauty & Personal Care,Baby Care,Skin & Hair Care,40
+Beauty & Personal Care,Bath & Body,Bath & Beauty Gifts,64
+Beauty & Personal Care,Bath & Body,Bathing Soaps,89
+Beauty & Personal Care,Bath & Body,Body Treatment & Roll On,12
+Beauty & Personal Care,Bath & Body,Conditioner,24
+Beauty & Personal Care,Bath & Body,Face Cleaning,1
+Beauty & Personal Care,Bath & Body,Fragrance & Talc,722
+Beauty & Personal Care,Bath & Body,Handwash,57
+Beauty & Personal Care,Bath & Body,Oral Care,153
+Beauty & Personal Care,Bath & Body,Shampoo,51
+Beauty & Personal Care,Bath & Body,Shower Gels & Scrubs,111
+Beauty & Personal Care,Beauty & Cosmetics,Bath & Beauty Gifts,139
+Beauty & Personal Care,Beauty & Cosmetics,Beauty Accessories,562
+Beauty & Personal Care,Beauty & Cosmetics,Beauty E-Card,20
+Beauty & Personal Care,Beauty & Cosmetics,"Bindi, Bangles & Others",65
+Beauty & Personal Care,Beauty & Cosmetics,Blush & Highlighter,56
+Beauty & Personal Care,Beauty & Cosmetics,Cleansers & Toners,2
+Beauty & Personal Care,Beauty & Cosmetics,Foundation & Compact,116
+Beauty & Personal Care,Beauty & Cosmetics,Kajal & Eyeliners,241
+Beauty & Personal Care,Beauty & Cosmetics,Lipstick & Gloss ,14
+Beauty & Personal Care,Beauty & Cosmetics,Nail Paints & Accessories,472
+Beauty & Personal Care,Beauty & Cosmetics,Primer & Concealer,64
+Beauty & Personal Care,Feminine Hygiene,Hair Removal,27
+Beauty & Personal Care,Feminine Hygiene,Intimate Wash & Wipes,16
+Beauty & Personal Care,Feminine Hygiene,Period Panty,39
+Beauty & Personal Care,Feminine Hygiene,Sanitary Pads,90
+Beauty & Personal Care,Feminine Hygiene,Tampons & Menstrual Cups,5
+Beauty & Personal Care,Hair,Conditioner,15
+Beauty & Personal Care,Hair,Hair Accessories,518
+Beauty & Personal Care,Hair,Hair Colour,196
+Beauty & Personal Care,Hair,Hair Oil & Cream,266
+Beauty & Personal Care,Hair,Hair Serums,3
+Beauty & Personal Care,Hair,Hair Styling,104
+Beauty & Personal Care,Hair,Shampoo,93
+Beauty & Personal Care,Health & Pharma,Adult Diapers,35
+Beauty & Personal Care,Health & Pharma,Bandaid & Wound Care,110
+Beauty & Personal Care,Health & Pharma,"Cough, Cold & Flu",73
+Beauty & Personal Care,Health & Pharma,Eye & Ear Care,4
+Beauty & Personal Care,Health & Pharma,Hangover Cure,1
+Beauty & Personal Care,Health & Pharma,Health & Ortho Supports,77
+Beauty & Personal Care,Health & Pharma,Health & Wellness E-Cards,25
+Beauty & Personal Care,Health & Pharma,Masks & Sanitizers,59
+Beauty & Personal Care,Health & Pharma,Oral Care,14
+Beauty & Personal Care,Health & Pharma,Protein Supplements,241
+Beauty & Personal Care,Health & Pharma,Stomach & Digestive Care,66
+Beauty & Personal Care,Health & Pharma,Vitamins & Supplements,176
+Beauty & Personal Care,Sexual Wellness,Adult Games,22
+Beauty & Personal Care,Sexual Wellness,Condoms,57
+Beauty & Personal Care,Sexual Wellness,Enhancers,18
+Beauty & Personal Care,Sexual Wellness,Lubricants,20
+Beauty & Personal Care,Sexual Wellness,Massagers,112
+Beauty & Personal Care,Sexual Wellness,Test Kits,2
+Beauty & Personal Care,Skin & Face,Acne & Blackhead Fixers,53
+Beauty & Personal Care,Skin & Face,Body Lotions & Oils,38
+Beauty & Personal Care,Skin & Face,Face Cleaning,153
+Beauty & Personal Care,Skin & Face,Face Masks & Packs,188
+Beauty & Personal Care,Skin & Face,Face Moisturisers,55
+Beauty & Personal Care,Skin & Face,"Face Oil, Serum & Essence",209
+Beauty & Personal Care,Skin & Face,Lip & Eye Care,172
+Beauty & Personal Care,Skin & Face,Men's Grooming,91
+Beauty & Personal Care,Skin & Face,Sunscreen,84
+Beauty & Personal Care,Skin & Face,Toners & Mists,51
+Beauty & Personal Care,Skin & Face,Women's Grooming,61
+Grocery & Kitchen,"Atta, Rice & Dal",Atta,66
+Grocery & Kitchen,"Atta, Rice & Dal","Besan, Sooji & Maida",22
+Grocery & Kitchen,"Atta, Rice & Dal",Dal,139
+Grocery & Kitchen,"Atta, Rice & Dal",Millet & Other Flours,84
+Grocery & Kitchen,"Atta, Rice & Dal",Organic,8
+Grocery & Kitchen,"Atta, Rice & Dal","Poha, Daliya & Other Grains",32
+Grocery & Kitchen,"Atta, Rice & Dal","Rajma, Chhole & Others",76
+Grocery & Kitchen,"Atta, Rice & Dal",Rice,133
+Grocery & Kitchen,"Atta, Rice & Dal",Summer Specials,5
+Grocery & Kitchen,Bakery & Biscuits,Baking Ingredients,63
+Grocery & Kitchen,Bakery & Biscuits,Biscuit Gift Pack,7
+Grocery & Kitchen,Bakery & Biscuits,Cakes & Rolls,124
+Grocery & Kitchen,Bakery & Biscuits,Cookies,174
+Grocery & Kitchen,Bakery & Biscuits,Cream Biscuits,69
+Grocery & Kitchen,Bakery & Biscuits,Glucose & Marie,20
+Grocery & Kitchen,Bakery & Biscuits,Healthy & Digestive,43
+Grocery & Kitchen,Bakery & Biscuits,Rusks & Wafers,78
+Grocery & Kitchen,Bakery & Biscuits,Sweet & Salty,27
+Grocery & Kitchen,"Chicken, Meat & Fish",Chicken,39
+Grocery & Kitchen,"Chicken, Meat & Fish",Eggs,47
+Grocery & Kitchen,"Chicken, Meat & Fish",Exotic Meat,1
+Grocery & Kitchen,"Chicken, Meat & Fish",Fish & Seafood,14
+Grocery & Kitchen,"Chicken, Meat & Fish",Fresh Meat,3
+Grocery & Kitchen,"Chicken, Meat & Fish",Frozen Non-Veg Snacks,99
+Grocery & Kitchen,"Chicken, Meat & Fish",Mutton,4
+Grocery & Kitchen,"Chicken, Meat & Fish",Plant Based Meat,3
+Grocery & Kitchen,"Chicken, Meat & Fish","Sausage, Salami & Ham",49
+Grocery & Kitchen,"Dairy, Bread & Eggs",Batter,25
+Grocery & Kitchen,"Dairy, Bread & Eggs",Bread & Pav,185
+Grocery & Kitchen,"Dairy, Bread & Eggs",Cheese & Butter,91
+Grocery & Kitchen,"Dairy, Bread & Eggs",Cream & Whitener,19
+Grocery & Kitchen,"Dairy, Bread & Eggs",Curd & Yogurt,106
+Grocery & Kitchen,"Dairy, Bread & Eggs",Lassi & Milkshakes,137
+Grocery & Kitchen,"Dairy, Bread & Eggs",Milk,38
+Grocery & Kitchen,"Dairy, Bread & Eggs",Paneer & Tofu,38
+Grocery & Kitchen,"Dairy, Bread & Eggs",Soy Milk & More,45
+Grocery & Kitchen,Dry Fruits & Cereals,Corn Flakes & Kids Cereals,32
+Grocery & Kitchen,Dry Fruits & Cereals,Dates,40
+Grocery & Kitchen,Dry Fruits & Cereals,Dry Fruit Gift Packs,45
+Grocery & Kitchen,Dry Fruits & Cereals,Dry Fruits,430
+Grocery & Kitchen,Dry Fruits & Cereals,Dry Fruits Snacks,42
+Grocery & Kitchen,Dry Fruits & Cereals,Muesli & Granola,38
+Grocery & Kitchen,Dry Fruits & Cereals,Oats & Daliya,61
+Grocery & Kitchen,Dry Fruits & Cereals,Organic & Premium,11
+Grocery & Kitchen,Dry Fruits & Cereals,Seeds,76
+Grocery & Kitchen,Dry Fruits & Cereals,Vermicelli & Poha,26
+Grocery & Kitchen,Kitchenware & Appliances,Barware,21
+Grocery & Kitchen,Kitchenware & Appliances,Bottles & Flasks,165
+Grocery & Kitchen,Kitchenware & Appliances,Cookware & Sets,84
+Grocery & Kitchen,Kitchenware & Appliances,Cutting & Chopping,52
+Grocery & Kitchen,Kitchenware & Appliances,Dining & Serveware,125
+Grocery & Kitchen,Kitchenware & Appliances,Kitchen Accessories,321
+Grocery & Kitchen,Kitchenware & Appliances,Kitchen Appliances,179
+Grocery & Kitchen,Kitchenware & Appliances,Lunch Boxes,46
+Grocery & Kitchen,Kitchenware & Appliances,Mugs & Glasses,100
+Grocery & Kitchen,Kitchenware & Appliances,Storage & Containers,122
+Grocery & Kitchen,Kitchenware & Appliances,Tissues & Disposables,151
+Grocery & Kitchen,"Oil, Ghee & Masala",Cow Ghee,44
+Grocery & Kitchen,"Oil, Ghee & Masala",Desi Ghee,37
+Grocery & Kitchen,"Oil, Ghee & Masala",Gravy Mixes & Pastes,2
+Grocery & Kitchen,"Oil, Ghee & Masala",Herbs & Seasoning,38
+Grocery & Kitchen,"Oil, Ghee & Masala",Oil,145
+Grocery & Kitchen,"Oil, Ghee & Masala",Organic,90
+Grocery & Kitchen,"Oil, Ghee & Masala",Powdered Spices,273
+Grocery & Kitchen,"Oil, Ghee & Masala","Salt, Sugar & Jaggery",109
+Grocery & Kitchen,"Oil, Ghee & Masala",Whole Spices,205
+Grocery & Kitchen,Vegetables & Fruits,All,29
+Grocery & Kitchen,Vegetables & Fruits,Coriander & Others,1
+Grocery & Kitchen,Vegetables & Fruits,Exotics,70
+Grocery & Kitchen,Vegetables & Fruits,Flowers & Leaves,60
+Grocery & Kitchen,Vegetables & Fruits,Fresh Fruits,9
+Grocery & Kitchen,Vegetables & Fruits,Fresh Vegetables,54
+Grocery & Kitchen,Vegetables & Fruits,Freshly Cut & Sprouts,5
+Grocery & Kitchen,Vegetables & Fruits,Frozen Veg,27
+Grocery & Kitchen,Vegetables & Fruits,Hydroponic,1
+Grocery & Kitchen,Vegetables & Fruits,Seasonal,20
+Grocery & Kitchen,Vegetables & Fruits,Trusted Organics,50
+Household Essentials,Cleaners & Repellents,Cleaning Tools,179
+Household Essentials,Cleaners & Repellents,Detergent Powder & Bars,53
+Household Essentials,Cleaners & Repellents,Dishwashing Accessories,46
+Household Essentials,Cleaners & Repellents,Dishwashing Gels & Bars,50
+Household Essentials,Cleaners & Repellents,Floor Cleaners,104
+Household Essentials,Cleaners & Repellents,Garbage Bags,2
+Household Essentials,Cleaners & Repellents,Household Appliance Cleaners,15
+Household Essentials,Cleaners & Repellents,Laundry Additives,36
+Household Essentials,Cleaners & Repellents,Liquid Detergents,57
+Household Essentials,Cleaners & Repellents,Machine & Car Care,14
+Household Essentials,Cleaners & Repellents,Repellents & Disinfectants,155
+Household Essentials,Cleaners & Repellents,Toilet Cleaners,53
+Household Essentials,Electronics,Batteries,20
+Household Essentials,Electronics,Chargers & Cables,204
+Household Essentials,Electronics,Decorative Lights,175
+Household Essentials,Electronics,Earphones & Headsets,323
+Household Essentials,Electronics,Electronics E-Card,16
+Household Essentials,Electronics,Extension Cables & Accessories,105
+Household Essentials,Electronics,Home Appliances,726
+Household Essentials,Electronics,Kitchen Appliances,26
+Household Essentials,Electronics,Laptop & Mobile Phones,27
+Household Essentials,Electronics,Mobile & Computer,339
+Household Essentials,Electronics,Music Instruments & Accessories,49
+Household Essentials,Electronics,Smart Watches,49
+Household Essentials,Electronics,Speakers,87
+Household Essentials,Electronics,Trimmers & Hair Appliances,128
+Household Essentials,Home & Lifestyle,Bathroom Essentials,220
+Household Essentials,Home & Lifestyle,Bedsheets & Towels,340
+Household Essentials,Home & Lifestyle,Decorative Lights,240
+Household Essentials,Home & Lifestyle,E-Gift Cards,12
+Household Essentials,Home & Lifestyle,Fresheners,16
+Household Essentials,Home & Lifestyle,Gardening,71
+Household Essentials,Home & Lifestyle,Home Decor,523
+Household Essentials,Home & Lifestyle,Home Needs,846
+Household Essentials,Home & Lifestyle,Innerwear,343
+Household Essentials,Home & Lifestyle,Jewellery,1609
+Household Essentials,Home & Lifestyle,Lifestyle Accessories,1279
+Household Essentials,Home & Lifestyle,Party & Festive Needs,869
+Household Essentials,Home & Lifestyle,Plants & Bouquets,19
+Household Essentials,Home & Lifestyle,Pooja Needs,861
+Household Essentials,Home & Lifestyle,Socks & Handkerchiefs,172
+Household Essentials,Home & Lifestyle,Tissues & Disposables,386
+Household Essentials,Stationery & Games,Arts & Crafts,221
+Household Essentials,Stationery & Games,Bags & School Needs,372
+Household Essentials,Stationery & Games,Books & Magazines,627
+Household Essentials,Stationery & Games,Children's Books,2
+Household Essentials,Stationery & Games,Files & Office Needs,125
+Household Essentials,Stationery & Games,Gift Wraps & Bags,210
+Household Essentials,Stationery & Games,Glue & Tape,109
+Household Essentials,Stationery & Games,Notebooks & Diaries,86
+Household Essentials,Stationery & Games,Pens & Pencils,180
+Household Essentials,Stationery & Games,Shoe Polish & Brush,34
+Household Essentials,Stationery & Games,Sports & Gym,284
+Household Essentials,Stationery & Games,Toys & Games,449
+Snacks & Drinks,Chips & Namkeen,Bhujia & Mixtures,140
+Snacks & Drinks,Chips & Namkeen,Chips & Wafers,454
+Snacks & Drinks,Chips & Namkeen,Gift Packs,3
+Snacks & Drinks,Chips & Namkeen,Healthy Snacks,52
+Snacks & Drinks,Chips & Namkeen,Nachos,40
+Snacks & Drinks,Chips & Namkeen,Namkeen Snacks,172
+Snacks & Drinks,Chips & Namkeen,Papad & Fryums,30
+Snacks & Drinks,Chips & Namkeen,Popcorn,61
+Snacks & Drinks,Chips & Namkeen,Premium,13
+Snacks & Drinks,Drinks & Juices,Beverages Gift Packs,4
+Snacks & Drinks,Drinks & Juices,Coconut Water,36
+Snacks & Drinks,Drinks & Juices,Concentrates & Syrups,50
+Snacks & Drinks,Drinks & Juices,Energy Drinks,57
+Snacks & Drinks,Drinks & Juices,Fruit Juices,143
+Snacks & Drinks,Drinks & Juices,Hydration Drinks,68
+Snacks & Drinks,Drinks & Juices,Mango Drinks,12
+Snacks & Drinks,Drinks & Juices,Premium,4
+Snacks & Drinks,Drinks & Juices,Soda & Mixers,290
+Snacks & Drinks,Drinks & Juices,Soft Drinks,135
+Snacks & Drinks,Drinks & Juices,Water & Ice Cubes,41
+Snacks & Drinks,Drinks & Juices,Zero Sugar Drinks,58
+Snacks & Drinks,Ice Creams & More,Cakes & Others,38
+Snacks & Drinks,Ice Creams & More,Cassata & Sandwich,24
+Snacks & Drinks,Ice Creams & More,Cones,50
+Snacks & Drinks,Ice Creams & More,Gourmet,21
+Snacks & Drinks,Ice Creams & More,Guilt-Free,1
+Snacks & Drinks,Ice Creams & More,Single Serve Cups,119
+Snacks & Drinks,Ice Creams & More,Sticks,113
+Snacks & Drinks,Ice Creams & More,Tubs,126
+Snacks & Drinks,Instant Food,Dessert & Cake Mixes,26
+Snacks & Drinks,Instant Food,Energy Bars,12
+Snacks & Drinks,Instant Food,Frozen Veg Snacks,192
+Snacks & Drinks,Instant Food,Noodles,191
+Snacks & Drinks,Instant Food,Organic & Premium,12
+Snacks & Drinks,Instant Food,Pasta,67
+Snacks & Drinks,Instant Food,Ready to Eat,97
+Snacks & Drinks,Instant Food,Soup,18
+Snacks & Drinks,Paan Corner,Ashtrays,1
+Snacks & Drinks,Paan Corner,Hookah Needs,14
+Snacks & Drinks,Paan Corner,Lighters,12
+Snacks & Drinks,Paan Corner,Mouth Fresheners & Gums,90
+Snacks & Drinks,Paan Corner,Non-Tobacco Blends,2
+Snacks & Drinks,Paan Corner,Paan Masala,6
+Snacks & Drinks,Paan Corner,Rolling Needs,38
+Snacks & Drinks,Paan Corner,Smoking Cessation,26
+Snacks & Drinks,Sauces & Spreads,Asian Sauces,36
+Snacks & Drinks,Sauces & Spreads,Chutney & Pickle ,115
+Snacks & Drinks,Sauces & Spreads,Chyawanprash & Honey,33
+Snacks & Drinks,Sauces & Spreads,Cooking Sauces,65
+Snacks & Drinks,Sauces & Spreads,Dips & Salad Dressings,61
+Snacks & Drinks,Sauces & Spreads,Jam & Spreads,64
+Snacks & Drinks,Sauces & Spreads,Mayonnaise,3
+Snacks & Drinks,Sauces & Spreads,Peanut Butter,33
+Snacks & Drinks,Sauces & Spreads,Premium,8
+Snacks & Drinks,Sauces & Spreads,Syrups,6
+Snacks & Drinks,Sauces & Spreads,Tomato Ketchup,30
+Snacks & Drinks,Sweets & Chocolates,Candies & Gum,105
+Snacks & Drinks,Sweets & Chocolates,Chocolate Gift Pack,85
+Snacks & Drinks,Sweets & Chocolates,Chocolate Packs,80
+Snacks & Drinks,Sweets & Chocolates,Chocolates,309
+Snacks & Drinks,Sweets & Chocolates,Energy Bars,102
+Snacks & Drinks,Sweets & Chocolates,Indian Sweets,278
+Snacks & Drinks,Sweets & Chocolates,Premium,1
+Snacks & Drinks,"Tea, Coffee & Milk Drinks",Bags & Premixes,1
+Snacks & Drinks,"Tea, Coffee & Milk Drinks",Coffee,100
+Snacks & Drinks,"Tea, Coffee & Milk Drinks",Cold Coffee & Ice Tea,105
+Snacks & Drinks,"Tea, Coffee & Milk Drinks",Green Tea,56
+Snacks & Drinks,"Tea, Coffee & Milk Drinks",Herbal Infusion,23
+Snacks & Drinks,"Tea, Coffee & Milk Drinks",Hot Chocolate,5
+Snacks & Drinks,"Tea, Coffee & Milk Drinks",Milk Drinks,47
+Snacks & Drinks,"Tea, Coffee & Milk Drinks",Premium,4
+Snacks & Drinks,"Tea, Coffee & Milk Drinks",Tea,88

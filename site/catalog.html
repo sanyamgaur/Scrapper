@@ -191,6 +191,16 @@
   tbody tr { border-bottom: 1px solid var(--line-soft); }
   tbody tr:hover { background: var(--surface); }
   td { padding: 9px 10px; vertical-align: top; }
+  .thumb {
+    width: 44px; height: 44px; border-radius: 4px; object-fit: contain;
+    background: var(--raised); border: 1px solid var(--line-soft);
+    display: block;
+  }
+  .thumb.ph {
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; color: var(--faint);
+  }
+  td.img { padding-right: 4px; width: 44px; }
   .pname { font-weight: 500; line-height: 1.35; }
   .pbrand {
     font-size: 11.5px; color: var(--muted); margin-top: 2px;
@@ -290,6 +300,7 @@
     <table>
       <thead>
         <tr>
+          <th aria-label="Image"></th>
           <th>Product</th>
           <th>Shelf</th>
           <th class="num">Pack</th>
@@ -320,8 +331,8 @@
   var ROWS = C.rows, PL = C.placements, BR = C.brands;
   var PAGE = 120, shown = PAGE, view = ROWS;
 
-  // rows: [id, name, brandIdx, unit, price, mrp, inStock, [placementIdx...]]
-  var ID = 0, NAME = 1, BRAND = 2, UNIT = 3, PRICE = 4, MRP = 5, STOCK = 6, PLACE = 7;
+  // rows: [id, name, brandIdx, unit, price, mrp, inStock, [placementIdx...], image, localImage]
+  var ID = 0, NAME = 1, BRAND = 2, UNIT = 3, PRICE = 4, MRP = 5, STOCK = 6, PLACE = 7, IMG = 8;
 
   var rupee = function (n) {
     if (n === null || n === undefined) return "";
@@ -362,7 +373,9 @@
     ["Discounted", st.discounted.toLocaleString("en-IN"),
       Math.round(st.discounted / st.products * 100) + "% of catalog"],
     ["In stock", st.in_stock.toLocaleString("en-IN"),
-      Math.round(st.in_stock / st.products * 100) + "% of catalog"]
+      Math.round(st.in_stock / st.products * 100) + "% of catalog"],
+    ["With images", (st.with_images || 0).toLocaleString("en-IN"),
+      Math.round((st.with_images || 0) / st.products * 100) + "% of catalog"]
   ];
   document.getElementById("stats").innerHTML = cells.map(function (c) {
     return '<div class="stat"><dt>' + c[0] + "</dt><dd>" + c[1] +
@@ -465,7 +478,11 @@
     for (var i = 0; i < n; i++) {
       var r = view[i], d = off(r), pl = r[PLACE];
       var first = PL[pl[0]];
-      html += "<tr><td>" +
+      html += "<tr><td class=\"img\">" + (r[IMG]
+          ? '<img class="thumb" src="' + esc(r[IMG]) + '" alt="" loading="lazy" ' +
+            'decoding="async" onerror="this.outerHTML=\'<div class=&quot;thumb ph&quot;>—</div>\'">'
+          : '<div class="thumb ph">—</div>') +
+        "</td><td>" +
         '<div class="pname">' + esc(r[NAME]) + "</div>" +
         '<div class="pbrand">' + (esc(BR[r[BRAND]]) || "—") + "</div>" +
         '</td><td><div class="shelf">' + esc(first[1]) + " › <b>" + esc(first[2]) + "</b>" +
@@ -522,7 +539,10 @@
     "<b>MRP</b> is the printed maximum retail price; the <b>Off</b> column is the gap " +
     "between it and what the store is actually charging. A product can sit on more " +
     "than one shelf — <span class=\"more\">+1</span> marks that, and it filters " +
-    "under all of them. Generated " + stamp(C.generated_at) + ".";
+    "under all of them. Thumbnails are hotlinked straight from Blinkit’s own CDN — " +
+    "the listing API hands back an image URL with every product at no extra request, " +
+    "so there was no reason to slow the crawl down fetching bytes inline; a dash means " +
+    "the store didn’t serve one for that SKU. Generated " + stamp(C.generated_at) + ".";
 
   function esc(v) {
     return String(v === null || v === undefined ? "" : v)

@@ -43,6 +43,22 @@ def first(d, keys):
     return None
 
 
+def image_url(v):
+    """Normalize whatever the IMAGE_KEYS lookup returned into an absolute URL.
+
+    Blinkit serves images protocol-relative ("//cdn...") from some snippet
+    types and absolute from others; the API itself is never hit for this, it
+    is already sitting in the same listing payload as the price and name.
+    """
+    if not v or not isinstance(v, str):
+        return v
+    if v.startswith("//"):
+        return "https:" + v
+    if v.startswith("/"):
+        return "https://cdn.grofers.com" + v
+    return v
+
+
 def money(v):
     """'₹1,299.00' / '1299' / 1299 -> 1299.0"""
     if v is None:
@@ -106,7 +122,7 @@ def extract_products(obj, ctx=None, out=None, depth=0):
                         round((mrp - price) / mrp * 100, 2)
                         if mrp and price and mrp > price else None
                     ),
-                    "image": first(merged, IMAGE_KEYS),
+                    "image": image_url(first(merged, IMAGE_KEYS)),
                     "in_stock": _stock_bool(merged, stock_raw),
                     "stock_raw": stock_raw,
                     "merchant_id": merged.get("merchant_id"),

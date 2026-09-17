@@ -51,7 +51,315 @@ python crawl.py --session session_delhi.json --db blinkit.db \
 
 # 4. Deeper search sweep for SKUs outside the category tree
 python sweep_search.py --session session_delhi.json --db blinkit.db --depth 2
+
+# 5. Optional: pull the actual image bytes down (see "Images" below)
+python download_images.py --db blinkit.db --out-dir images
+
+# 6. Build the browsable catalog page
+python make_catalog_page.py --db blinkit.db --session session_delhi.json
+
+# 7. Emit the structured dataset (see "Structured dataset" below)
+python export_dataset.py --db blinkit.db --out dataset
+
+# 8. Re-check stock later (see "Availability checks" below)
+python check_availability.py --session session_delhi.json --db blinkit.db --all
 ```
+
+## Images
+
+The listing API hands back an image URL with every product already -- it
+rides along in the same payload as the name and price, at zero extra
+requests. `blinkit_parse.py` lifts it out (`IMAGE_KEYS`), normalizes
+protocol-relative URLs (`//cdn...`) to `https://`, and `crawl.py` writes it
+straight into `products.image`. It is in the CSV export and the DB from the
+very first crawl -- nothing extra to run.
+
+`download_images.py` is a separate, optional step for when you want the
+actual bytes on disk (an offline archive, a training set, whatever) instead
+of just the URL. It is deliberately not part of `crawl.py`: fetching an image
+is one request per *image*, with none of the 15-90-products-per-call
+leverage the listing crawl is built around, and inlining it would turn a
+crawl that spends ~1 request per dozens of products into one that spends 1+
+request per product. So it runs afterward, against the CDN (a different host
+with its own limits, not blinkit.com's API bucket), resume-safe the same way
+`crawl.py` is -- rerun it and it only fetches what is missing:
+
+```bash
+python download_images.py --db blinkit.db --out-dir images --concurrency 24
+```
+
+This adds a `product_images` table (`product_id, location, url, local_path,
+content_type, n_bytes, status, error, fetched_at`) so failures are visible
+and re-run cleanly (`--redo-errors` to retry the ones that errored).
+
+## One command: crawl everything, then check it
+
+`run_pipeline.py` chains `discover.py` (only if no session exists yet),
+`crawl.py` (no `--limit-cats` -- every leaf), and `check_availability.py` (no
+`--limit` -- every product), and prints a plain in-stock/out-of-stock summary
+at the end:
+
+```bash
+python run_pipeline.py --lat 28.6139 --lon 77.2090
+```
+
+It does not reimplement any of the three steps -- it runs them as real
+subprocesses so their own progress output streams through unchanged, and
+fails loudly with the underlying script's own error if any step does. Expect
+~45 minutes for the crawl and ~15-20 minutes for the check on a full
+catalogue; that is the rate limit, not this script (see "How fresh can it
+be?" below).
+
+Already have a session and a crawled db and just want to re-check stock:
+
+```bash
+python run_pipeline.py --skip-crawl
+```
+
+## Availability checks
+
+`crawl.py` finds products. `check_availability.py` re-checks ones you already
+have, records what changed, and is cheap enough to run on a schedule.
+
+It reads the DB, so it needs one. If `blinkit.db` is missing or empty but a
+crawl CSV survived, `rebuild_db.py` restores it -- including the
+`collection_uuid` / `collection_group_id` pairs, which the CSV does not carry
+but which can be recovered by joining the session file on the shelf names:
+
+```bash
+python rebuild_db.py --csv inventory_delhi.csv --session session_delhi.json \
+       --db blinkit.db
+```
+
+That is recovery, not a substitute for crawling: it cannot restore the
+multi-shelf placements, and its stock flags are as old as the CSV.
+
+```bash
+# everything, compared against the last check (or the catalogue snapshot)
+python check_availability.py --session session_delhi.json --db blinkit.db --all
+
+# just a watchlist, and write a report
+python check_availability.py --session session_delhi.json --db blinkit.db \
+       --watch skus.txt --report today.csv
+
+# only things that were out of stock -- catches restocks
+python check_availability.py --session session_delhi.json --db blinkit.db --was-out
+
+# what would this cost? plan it without spending a request
+python check_availability.py --session session_delhi.json --db blinkit.db \
+       --all --dry-run
+```
+
+`--watch` takes a bare id-per-line file or any CSV with a `product_id` column,
+so `dataset/products.csv` works as-is. `--brand`, `--shelf` and `--category`
+filter the catalogue instead.
+
+**It does not have its own endpoint, and does not need one.** Stock state comes
+back from `/v1/layout/listing_widgets` along with everything else, ~41 products
+per request — so this checks the *shelves* the watched products sit on and
+reads their state out of the response. Two things follow, and they are most of
+the script:
+
+- **A shelf walk stops as soon as every watched product on it has been seen.**
+  Watching one SKU that sits on page 2 of a nine-page shelf costs two requests,
+  not nine.
+- **A shelf holding one or two watched products is poor value** — a whole walk
+  to learn one fact. Those go to `/v1/layout/search` instead, one request each,
+  on the endpoint's *separate* rate bucket, so they cost nothing from the
+  listing budget and run concurrently with it. `--strategy auto` (the default)
+  picks per shelf at `--shelf-threshold`, default 3.
+
+Measured on the 31,366-product Delhi catalogue:
+
+| | requests |
+|---|---|
+| full re-crawl (`crawl.py`) | 1,649 |
+| check every product | ≤694 listing + 23 search |
+| check one brand (255 SKUs) | ≤45 listing + 22 search |
+
+Results go to three tables, and `products` is never modified — it stays the
+baseline snapshot:
+
+| table | what it holds |
+|---|---|
+| `availability_runs` | one row per run: counts, strategy, requests, 429s |
+| `availability` | one row per product per run: in_stock, price, mrp, whether it was returned at all |
+| `availability_events` | one row per transition, with before and after |
+
+Events are `out_of_stock`, `back_in_stock`, `price_up`, `price_down`,
+`disappeared` and `reappeared`. `disappeared` is deliberately distinct from
+`out_of_stock`: a product the API stops returning entirely is a different fact
+from one it returns and marks unavailable.
+
+### How fresh can it be?
+
+This is polling, not push. Blinkit has no webhook and no public stock feed, so
+"real time" means "how often can you afford to ask" — and that is set by the
+rate limit (~0.635 req/s sustained, measured), which makes it a function of how
+many SKUs you watch, not of the code. Costed with `--dry-run` against the
+31,366-product Delhi catalogue:
+
+| watchlist | listing reqs | search reqs | one check takes |
+|---|---|---|---|
+| 5 SKUs | 5 | 2 | ~8s |
+| 20 SKUs | 7 | 7 | ~11s |
+| one shelf (170 SKUs) | 6 | 0 | ~9s |
+| one brand (255 SKUs) | 45 | 22 | ~71s |
+| everything last seen out of stock (18,336) | 674 | 40 | ~18 min |
+| everything (31,366) | 694 | 23 | ~18 min |
+
+(The two legs run on separate buckets concurrently, so a check costs the slower
+leg, not the sum.)
+
+So: **a focused watchlist can be checked every 30 seconds and is effectively
+live. The whole catalogue has a floor of ~18 minutes.** If you need
+second-by-second truth on 31k SKUs, scraping cannot give it to you at any
+cadence — nothing here changes that.
+
+For anything faster than a few minutes use `--interval` rather than cron:
+
+```bash
+python check_availability.py --session session_delhi.json --db blinkit.db \
+       --watch skus.txt --interval 30
+```
+
+One process keeps one rate limiter, so the learned refill rate and the current
+token count carry across checks. A fresh process per check — cron every minute —
+starts each time assuming a full burst the server may not have, and walks
+straight into 429s.
+
+### The continuous engine
+
+`check_availability.py` answers "what is the state now?". `availability_engine.py`
+keeps answering it, forever, and spends its request budget where freshness is
+worth the most.
+
+```bash
+python availability_engine.py --session session_delhi.json --db blinkit.db \
+       --all --hot hot_skus.txt --events-out events.jsonl
+```
+
+It runs two legs at once, on the two independent rate buckets:
+
+- **The shelf leg** sweeps the catalogue, choosing shelves by
+  `value / cost`, where value is the summed `weight x staleness x volatility`
+  of the watched SKUs on a shelf and cost is the number of pages that shelf
+  *actually* took last time (learned, not assumed — early stop makes the paper
+  estimate pessimistic). Volatility rises when a SKU flips stock and decays
+  over `--half-life`, so attention follows churn instead of a fixed rota.
+- **The search leg** re-checks the `--hot` set one SKU per request. This is
+  what actually delivers freshness, and it is worth understanding why the
+  shelf leg alone does not: one hot SKU on an 800-product shelf is outvoted by
+  its 799 cold neighbours, so its shelf never wins on value-per-request. Search
+  costs one request regardless of which shelf a SKU lives on, and it spends the
+  search bucket, which the sweep is not using.
+
+Simulated against the real 31,366-SKU catalogue for one hour at the measured
+0.635 req/s per bucket:
+
+| hot set | hot p50 | hot worst | whole catalogue p50 | worst |
+|---|---|---|---|---|
+| 5 SKUs | **3s** | 6s | 7.0m | 60m |
+| 20 SKUs | **14s** | 30s | 6.9m | 60m |
+| 50 SKUs | **39s** | 77s | 7.3m | 60m |
+| 200 SKUs | 2.1m | 5.1m | 6.7m | 60m |
+| 500 SKUs | 3.7m | 13m | 7.1m | 60m |
+| none (sweep only) | — | — | 7.0m | 60m |
+
+So: **a few dozen SKUs can be kept within seconds of live, indefinitely, while
+the entire catalogue keeps sweeping behind them.** Widen the hot set and its
+freshness degrades linearly — it is one request per SKU per refresh, and there
+are only ~0.635 of those per second.
+
+State lives in `availability_live` (current reading, check count, flip count)
+and every transition is appended to `availability_events` and streamed as JSON
+lines to stdout and `--events-out`:
+
+```json
+{"ts": 1789654067, "product_id": "481234", "event": "out_of_stock",
+ "prev": {"in_stock": 1, "price": 28.0, "seen": 1},
+ "curr": {"in_stock": 0, "price": 28.0, "seen": 1}}
+```
+
+The status line reports measured staleness percentiles rather than the cadence
+you asked for, because the two are not the same number:
+
+```
+[engine] 12.3m up | 31366 SKUs | hot p50 38s max 71s | freshness p50 6.9m p90 17.2m max 41m | 87 events | 470 req (0.63/s, 0 x429) | rate 0.68/s
+```
+
+### Running it on a schedule
+
+Availability in quick commerce moves through the day, so a check is worth
+running a few times daily rather than once. The catalogue itself changes much
+more slowly — re-crawl weekly to pick up genuinely new SKUs.
+
+```cron
+# every 3 hours: re-check stock, append a dated report
+0 */3 * * * cd /path/to/Scrapper && .venv/bin/python check_availability.py \
+    --session session_delhi.json --db blinkit.db --all \
+    --report reports/$(date +\%F-\%H).csv >> logs/availability.log 2>&1
+
+# Sunday 04:00: full re-crawl, to find products that did not exist before
+0 4 * * 0 cd /path/to/Scrapper && .venv/bin/python crawl.py \
+    --session session_delhi.json --db blinkit.db --with-search >> logs/crawl.log 2>&1
+```
+
+The session expires. When it does the script stops and says so, and the fix is
+to re-run `discover.py` — so keep an eye on the log, or have cron re-run
+`discover.py` before the weekly crawl.
+
+To alert rather than just log, query the events table after a run:
+
+```sql
+SELECT product_id, event, prev, curr FROM availability_events
+WHERE run_id = (SELECT MAX(run_id) FROM availability_runs);
+```
+
+## Structured dataset
+
+`crawl.py` writes one wide, flat row per SKU. That is fine for a spreadsheet and
+weak as an interface, so `export_dataset.py` reshapes it into a typed, nested
+record set under `dataset/`:
+
+| file | what it is |
+|---|---|
+| `products.jsonl` | one nested JSON object per product — identity, pack, pricing, availability, images, taxonomy, provenance |
+| `products.csv` | the flat view, typed, with the derived columns |
+| `images.csv` | one row per image asset (`product_id`, url, CDN `asset_id`, local path) |
+| `taxonomy.csv` | the shelf tree with product counts |
+| `product_taxonomy.csv` | the product-to-shelf many-to-many |
+| `brands.csv` | per-brand rollup |
+| `manifest.json` | data dictionary, provenance, summary stats |
+
+It reads the DB, or a crawl CSV directly if you no longer have the DB:
+
+```bash
+python export_dataset.py --db blinkit.db --out dataset
+python export_dataset.py --csv inventory_delhi.csv --out dataset
+```
+
+The part that is real work rather than reshaping is `unit`. Blinkit ships pack
+size as free text — `500 g`, `2 x 1 ltr`, `100 ml + 1 pc`, `1 pair` — and as a
+string you cannot sort, filter or compare by it. It gets parsed into
+`(kind, count, size, uom)` and normalized to net grams / net millilitres /
+pieces, which is what makes `price_per_kg` comparable across a shelf.
+**98.4%** of this catalog parses. Anything that does not is reported as
+`kind: null` with `pack.raw` preserved, never guessed at — and measured on the
+real data, essentially every null is a book, because Blinkit puts the author or
+publisher in the unit field for book SKUs (`Ruskin Bond`, `Maple Press`).
+
+## Catalog page
+
+`make_catalog_page.py` reads the DB into `site/catalog_data.js`, and
+`site/catalog.html` is a static, filterable ledger over it (search, department
+and shelf filters, brand, sort, in-stock/discounted toggles) -- open it
+directly in a browser, no server needed. Each row now carries a thumbnail,
+hotlinked straight from Blinkit's own CDN using the URL already sitting in
+the DB (`--out-dir` files from `download_images.py` are not needed for this --
+the page never re-downloads anything, it just points `<img>` at the CDN and
+lazy-loads as you scroll). A product the store didn't give an image for shows
+a dash instead of a broken-image icon.
 
 Other cities: rerun `discover.py` with new coordinates into a new session file,
 then crawl into the **same** DB — the `location` column keeps stores apart.
