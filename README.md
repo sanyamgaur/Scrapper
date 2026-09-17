@@ -97,6 +97,19 @@ and re-run cleanly (`--redo-errors` to retry the ones that errored).
 `crawl.py` finds products. `check_availability.py` re-checks ones you already
 have, records what changed, and is cheap enough to run on a schedule.
 
+It reads the DB, so it needs one. If `blinkit.db` is missing or empty but a
+crawl CSV survived, `rebuild_db.py` restores it -- including the
+`collection_uuid` / `collection_group_id` pairs, which the CSV does not carry
+but which can be recovered by joining the session file on the shelf names:
+
+```bash
+python rebuild_db.py --csv inventory_delhi.csv --session session_delhi.json \
+       --db blinkit.db
+```
+
+That is recovery, not a substitute for crawling: it cannot restore the
+multi-shelf placements, and its stock flags are as old as the CSV.
+
 ```bash
 # everything, compared against the last check (or the catalogue snapshot)
 python check_availability.py --session session_delhi.json --db blinkit.db --all
