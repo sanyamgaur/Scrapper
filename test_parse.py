@@ -25,6 +25,12 @@ PAYLOAD = {
           "price": 20,
           "mrp": 20,
           "out_of_stock": True
+      }},
+      {"widget_type": "product_card_snippet_type_2", "data": {
+          "identity": {"id": 55221},
+          "name": {"text": "Britannia Good Day"},
+          "price": 30,
+          "image": "//cdn.grofers.com/protocol-relative.jpg"
       }}
     ],
     "pagination": {"has_more": True, "offset": 20},
@@ -37,10 +43,14 @@ for r in rows:
     r.pop("raw")
     print(json.dumps(r, ensure_ascii=False))
 print("pagination:", find_pagination(PAYLOAD))
-assert len(rows) == 2, "expected 2 products, got %d" % len(rows)
+assert len(rows) == 3, "expected 3 products, got %d" % len(rows)
 assert rows[0]["price"] == 28.0 and rows[0]["mrp"] == 30.0
 assert rows[0]["discount_pct"] == 6.67
 assert rows[0]["brand"] == "Amul" and rows[0]["unit"] == "500 ml"
 assert rows[0]["in_stock"] is True and rows[1]["in_stock"] is False
 assert rows[0]["l0_cat"] == 14
+assert rows[0]["image"] == "https://cdn.grofers.com/milk.jpg"
+assert rows[1]["image"] is None
+assert rows[2]["image"] == "https://cdn.grofers.com/protocol-relative.jpg", \
+    "protocol-relative image URL should be normalized to https"
 print("\nALL ASSERTIONS PASSED")

@@ -35,11 +35,20 @@ def build(db, out, session_path=None):
     if orphan == len(plist):
         plist.append(["Search only", "Outside the category tree", "Search results"])
 
+    has_local_images = bool(con.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' "
+        "AND name='product_images'").fetchone())
+    local_img = {}
+    if has_local_images:
+        for r in con.execute(
+                "SELECT product_id, local_path FROM product_images WHERE status='ok'"):
+            local_img[r["product_id"]] = r["local_path"]
+
     brands, blist = {}, []
     rows = []
     prices = []
     for r in con.execute("""SELECT product_id, name, brand, unit, price, mrp,
-                                   discount_pct, in_stock
+                                   discount_pct, in_stock, image
                             FROM products ORDER BY name"""):
         pl = by_product.get(r["product_id"]) or [orphan]
         b = (r["brand"] or "").strip()
@@ -52,6 +61,7 @@ def build(db, out, session_path=None):
         rows.append([
             r["product_id"], r["name"] or "", bi, r["unit"] or "",
             r["price"], r["mrp"], 1 if r["in_stock"] else 0, sorted(set(pl)),
+            r["image"] or "", local_img.get(r["product_id"]) or "",
         ])
 
     leaves = con.execute(
@@ -87,6 +97,7 @@ def build(db, out, session_path=None):
             "median_price": round(statistics.median(prices), 0) if prices else 0,
             "discounted": discounted,
             "in_stock": sum(1 for r in rows if r[6]),
+            "with_images": sum(1 for r in rows if r[8]),
         },
     }
     with open(out, "w") as f:

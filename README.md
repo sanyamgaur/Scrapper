@@ -51,7 +51,52 @@ python crawl.py --session session_delhi.json --db blinkit.db \
 
 # 4. Deeper search sweep for SKUs outside the category tree
 python sweep_search.py --session session_delhi.json --db blinkit.db --depth 2
+
+# 5. Optional: pull the actual image bytes down (see "Images" below)
+python download_images.py --db blinkit.db --out-dir images
+
+# 6. Build the browsable catalog page
+python make_catalog_page.py --db blinkit.db --session session_delhi.json
 ```
+
+## Images
+
+The listing API hands back an image URL with every product already -- it
+rides along in the same payload as the name and price, at zero extra
+requests. `blinkit_parse.py` lifts it out (`IMAGE_KEYS`), normalizes
+protocol-relative URLs (`//cdn...`) to `https://`, and `crawl.py` writes it
+straight into `products.image`. It is in the CSV export and the DB from the
+very first crawl -- nothing extra to run.
+
+`download_images.py` is a separate, optional step for when you want the
+actual bytes on disk (an offline archive, a training set, whatever) instead
+of just the URL. It is deliberately not part of `crawl.py`: fetching an image
+is one request per *image*, with none of the 15-90-products-per-call
+leverage the listing crawl is built around, and inlining it would turn a
+crawl that spends ~1 request per dozens of products into one that spends 1+
+request per product. So it runs afterward, against the CDN (a different host
+with its own limits, not blinkit.com's API bucket), resume-safe the same way
+`crawl.py` is -- rerun it and it only fetches what is missing:
+
+```bash
+python download_images.py --db blinkit.db --out-dir images --concurrency 24
+```
+
+This adds a `product_images` table (`product_id, location, url, local_path,
+content_type, n_bytes, status, error, fetched_at`) so failures are visible
+and re-run cleanly (`--redo-errors` to retry the ones that errored).
+
+## Catalog page
+
+`make_catalog_page.py` reads the DB into `site/catalog_data.js`, and
+`site/catalog.html` is a static, filterable ledger over it (search, department
+and shelf filters, brand, sort, in-stock/discounted toggles) -- open it
+directly in a browser, no server needed. Each row now carries a thumbnail,
+hotlinked straight from Blinkit's own CDN using the URL already sitting in
+the DB (`--out-dir` files from `download_images.py` are not needed for this --
+the page never re-downloads anything, it just points `<img>` at the CDN and
+lazy-loads as you scroll). A product the store didn't give an image for shows
+a dash instead of a broken-image icon.
 
 Other cities: rerun `discover.py` with new coordinates into a new session file,
 then crawl into the **same** DB — the `location` column keeps stores apart.
