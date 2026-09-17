@@ -1,0 +1,201 @@
+"""Live stock engine: never sell a US customer something Blinkit no longer has.
+
+The failure this prevents is the expensive one. A US customer pays USD 50, and
+only when your India operator opens the Blinkit app does anyone discover the
+SKU is gone. Now you owe a refund, you have burned the customer, and you have
+paid the payment-gateway fee twice.
+
+Two layers, because Blinkit's rate limit (~0.635 req/s) makes checking 31k SKUs
+continuously impossible:
+
+  1. FRESHNESS TIERS. A SKU's required staleness depends on what it is to the
+     business, not on when it was last seen. Items in live carts and hot sellers
+     are re-checked in seconds; the long tail is swept over hours. This is the
+     scheduler already built in availability_engine.py, driven by a value/cost
+     ranking.
+
+  2. HARD GATE AT CHECKOUT. Whatever the cache says, the moment an order is
+     placed every line is re-verified against Blinkit synchronously. A cached
+     reading is a merchandising signal; only a fresh reading may take money.
+
+Availability is boolean, not a quantity. Blinkit's listing API exposes an
+in-stock flag, not an inventory count, so any "12 left" on your storefront
+would be fabricated. The engine reports confidence tiers instead.
+"""
+
+from __future__ import annotations
+
+import time
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Callable, Optional
+
+from .db import connect, DB_PATH
+
+# How old a reading may be before it stops being trusted, by tier.
+FRESHNESS = {
+    "CART":    60,       # something is in a live cart right now
+    "HOT":     900,      # top sellers / watchlist
+    "LISTED":  21600,    # anything currently listed: 6 hours
+    "TAIL":    172800,   # everything else: 48 hours
+}
+
+
+class StockState(str, Enum):
+    IN_STOCK = "IN_STOCK"
+    OUT_OF_STOCK = "OUT_OF_STOCK"
+    STALE = "STALE"            # last reading too old to sell on
+    UNKNOWN = "UNKNOWN"        # never checked
+
+
+@dataclass
+class StockReading:
+    product_id: str
+    state: StockState
+    in_stock: Optional[bool]
+    price_inr: Optional[float]
+    age_seconds: Optional[float]
+    tier: str = "LISTED"
+    source: str = "cache"
+
+    @property
+    def sellable(self) -> bool:
+        return self.state is StockState.IN_STOCK
+
+    def as_dict(self) -> dict:
+        d = self.__dict__.copy()
+        d["state"] = self.state.value
+        d["sellable"] = self.sellable
+        return d
+
+
+@dataclass
+class OrderGate:
+    """Result of the checkout gate. `accepted` is the only field that matters
+    to the payment flow; the rest explains a rejection to the customer."""
+    accepted: bool
+    readings: list[StockReading] = field(default_factory=list)
+    blocked: list[dict] = field(default_factory=list)
+    price_changes: list[dict] = field(default_factory=list)
+
+    def as_dict(self) -> dict:
+        return {
+            "accepted": self.accepted,
+            "readings": [r.as_dict() for r in self.readings],
+            "blocked": self.blocked,
+            "price_changes": self.price_changes,
+        }
+
+
+class StockEngine:
+    """Cache-backed availability with a synchronous gate at checkout.
+
+    `live_check` is the seam to the real Blinkit client. In production it is
+    check_availability.py's shelf-walk (it jumps straight to the shelf a SKU is
+    known to sit on and stops the instant it finds it, so a single-SKU check is
+    1-2 requests, not a crawl). Left as None, the engine serves cache only and
+    refuses to gate an order on stale data rather than guessing.
+    """
+
+    def __init__(self, db_path=DB_PATH,
+                 live_check: Optional[Callable[[list[str]], dict[str, dict]]] = None,
+                 price_tolerance_pct: float = 12.0):
+        self.db_path = db_path
+        self.live_check = live_check
+        self.price_tolerance_pct = price_tolerance_pct
+
+    # -- cache ---------------------------------------------------------------
+
+    def read(self, product_id: str, tier: str = "LISTED") -> StockReading:
+        conn = connect(self.db_path)
+        row = conn.execute("""
+            SELECT in_stock, price_inr,
+                   (julianday('now') - julianday(checked_at)) * 86400.0 AS age
+            FROM stock_checks WHERE product_id=? ORDER BY checked_at DESC LIMIT 1
+        """, (product_id,)).fetchone()
+        if row is None:
+            # Fall back to the crawl snapshot, aged from its scrape timestamp.
+            p = conn.execute("SELECT in_stock, price_inr, scraped_at FROM products "
+                             "WHERE product_id=?", (product_id,)).fetchone()
+            conn.close()
+            if p is None:
+                return StockReading(product_id, StockState.UNKNOWN, None, None, None, tier)
+            age = time.time() - (p["scraped_at"] or 0)
+            state = StockState.STALE if age > FRESHNESS[tier] else (
+                StockState.IN_STOCK if p["in_stock"] else StockState.OUT_OF_STOCK)
+            return StockReading(product_id, state, bool(p["in_stock"]),
+                                p["price_inr"], age, tier, source="crawl")
+        conn.close()
+        age = row["age"]
+        if age is not None and age > FRESHNESS[tier]:
+            state = StockState.STALE
+        else:
+            state = StockState.IN_STOCK if row["in_stock"] else StockState.OUT_OF_STOCK
+        return StockReading(product_id, state, bool(row["in_stock"]),
+                            row["price_inr"], age, tier)
+
+    def record(self, product_id: str, in_stock: bool,
+               price_inr: Optional[float] = None, source: str = "live") -> None:
+        conn = connect(self.db_path)
+        conn.execute("INSERT INTO stock_checks (product_id,in_stock,price_inr,source) "
+                     "VALUES (?,?,?,?)", (product_id, int(in_stock), price_inr, source))
+        conn.commit()
+        conn.close()
+
+    # -- the gate ------------------------------------------------------------
+
+    def gate_order(self, lines: list[tuple[str, int]],
+                   quoted_prices: Optional[dict[str, float]] = None) -> OrderGate:
+        """Verify every line before taking money. Fails closed.
+
+        A STALE or UNKNOWN reading blocks the order exactly like an explicit
+        out-of-stock. Selling on an unverified reading is the same mistake as
+        selling something you know is gone, only harder to explain afterwards.
+        """
+        quoted_prices = quoted_prices or {}
+        pids = [p for p, _ in lines]
+
+        # Refresh synchronously where a live client exists.
+        if self.live_check:
+            try:
+                fresh = self.live_check(pids)
+                for pid, info in fresh.items():
+                    self.record(pid, bool(info.get("in_stock")),
+                                info.get("price_inr"), source="gate")
+            except Exception:
+                pass   # fall through to cache; stale readings then block below
+
+        readings, blocked, changes = [], [], []
+        for pid, qty in lines:
+            r = self.read(pid, tier="CART")
+            readings.append(r)
+            if r.state is StockState.OUT_OF_STOCK:
+                blocked.append({"product_id": pid, "reason": "out_of_stock",
+                                "message": "This item just went out of stock on the India side."})
+            elif r.state in (StockState.STALE, StockState.UNKNOWN):
+                blocked.append({"product_id": pid, "reason": "unverified",
+                                "message": "We could not confirm live availability. "
+                                           "Not charging you for an item we cannot promise."})
+            # A large INR move between quote and checkout breaks the landed-cost
+            # maths, so surface it rather than silently absorbing the loss.
+            q = quoted_prices.get(pid)
+            if q and r.price_inr:
+                delta = (r.price_inr - q) / q * 100.0
+                if abs(delta) > self.price_tolerance_pct:
+                    changes.append({"product_id": pid, "quoted_inr": q,
+                                    "current_inr": r.price_inr, "delta_pct": round(delta, 1)})
+
+        return OrderGate(accepted=not blocked, readings=readings,
+                         blocked=blocked, price_changes=changes)
+
+    # -- merchandising -------------------------------------------------------
+
+    def badge(self, product_id: str) -> str:
+        """What the storefront shows. Never invent a quantity we do not have."""
+        r = self.read(product_id, tier="LISTED")
+        return {
+            StockState.IN_STOCK: "In stock",
+            StockState.OUT_OF_STOCK: "Out of stock",
+            StockState.STALE: "Checking availability",
+            StockState.UNKNOWN: "Checking availability",
+        }[r.state]

@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.venv/
+crossborder.db
+crossborder.db-wal
+crossborder.db-shm
+blinkit.db
+blinkit.db-wal
+blinkit.db-shm

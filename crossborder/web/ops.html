@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Listability Ops</title>
+<style>
+  :root{
+    --bg:#fbfaf8; --panel:#fff; --ink:#1a1a1a; --muted:#6b6b6b; --line:#e6e3dd;
+    --accent:#c2410c; --ok:#15803d; --warn:#a16207; --bad:#b91c1c; --info:#1d4ed8;
+    --radius:10px; --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 14px rgba(0,0,0,.04);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#14130f; --panel:#1e1c18; --ink:#f2efe9; --muted:#a09a90; --line:#302d27;
+    --accent:#fb923c; --ok:#4ade80; --warn:#fbbf24; --bad:#f87171; --info:#93c5fd;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+  }}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  header{background:var(--panel);border-bottom:1px solid var(--line);padding:15px 16px}
+  .wrap{max-width:1180px;margin:0 auto}
+  h1{margin:0;font-size:18px;letter-spacing:-.02em}
+  .sub{font-size:12.5px;color:var(--muted);margin-top:3px}
+  a.back{float:right;font-size:12px;color:var(--muted);text-decoration:none;
+    border:1px solid var(--line);padding:6px 10px;border-radius:7px}
+  main{max-width:1180px;margin:0 auto;padding:18px 16px 80px}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+  .tile{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:13px 15px;box-shadow:var(--shadow)}
+  .tile .k{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .tile .v{font-size:25px;font-weight:700;margin-top:3px;letter-spacing:-.02em}
+  .tile .d{font-size:11.5px;color:var(--muted)}
+  .v.ok{color:var(--ok)} .v.warn{color:var(--warn)} .v.bad{color:var(--bad)}
+  .bar{display:flex;height:10px;border-radius:5px;overflow:hidden;margin:14px 0 6px;border:1px solid var(--line)}
+  .bar div{height:100%}
+  .legend{display:flex;gap:16px;font-size:12px;color:var(--muted);flex-wrap:wrap;margin-bottom:22px}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}
+  h2{font-size:15px;margin:24px 0 4px}
+  .hint{font-size:12.5px;color:var(--muted);margin-bottom:11px}
+  table{width:100%;border-collapse:collapse;background:var(--panel);
+    border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);background:var(--bg)}
+  tr:last-child td{border-bottom:none}
+  .n{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .pill{font-size:10.5px;padding:2px 6px;border-radius:5px;font-weight:600;white-space:nowrap}
+  .p-US_IMPORT{background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)}
+  .p-HAZMAT{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+  .p-TEMPERATURE{background:color-mix(in srgb,var(--info) 15%,transparent);color:var(--info)}
+  .p-FUNCTIONAL,.p-DUTY,.p-FRAGILITY,.p-PERISHABLE,.p-IP_RISK,.p-null{
+    background:color-mix(in srgb,var(--muted) 15%,transparent);color:var(--muted)}
+  .samples{font-size:11.5px;color:var(--muted);margin-top:3px;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .reason{font-size:11.5px;color:var(--muted);margin-top:3px}
+  button{font:inherit;cursor:pointer;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600}
+  .clear{border:1px solid var(--ok);background:transparent;color:var(--ok)}
+  .kill{border:1px solid var(--bad);background:transparent;color:var(--bad)}
+  .clear:hover{background:var(--ok);color:#fff} .kill:hover{background:var(--bad);color:#fff}
+  .acts{display:flex;gap:6px}
+  .tabs{display:flex;gap:6px;margin-bottom:11px}
+  .tab{padding:6px 13px;border:1px solid var(--line);background:var(--panel);border-radius:7px;font-size:12.5px}
+  .tab.on{border-color:var(--accent);color:var(--accent)}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);
+    color:var(--bg);padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;
+    transition:opacity .25s;pointer-events:none;box-shadow:var(--shadow)}
+  .toast.on{opacity:1}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <a class="back" href="/">&larr; Storefront</a>
+  <h1>Listability Ops</h1>
+  <div class="sub">Compliance, shippability and the review queue</div>
+</div></header>
+
+<main>
+  <div class="tiles" id="tiles"></div>
+  <div class="bar" id="bar"></div>
+  <div class="legend" id="legend"></div>
+
+  <h2>Review queue</h2>
+  <div class="hint" id="qhint"></div>
+  <div class="tabs">
+    <button class="tab on" data-s="PENDING">Pending</button>
+    <button class="tab" data-s="CLEARED">Cleared</button>
+    <button class="tab" data-s="KILLED">Killed</button>
+  </div>
+  <table><thead><tr>
+    <th style="width:70px">SKUs</th><th>Shelf &amp; why it is held</th>
+    <th style="width:105px">Dimension</th><th style="width:150px">Decision</th>
+  </tr></thead><tbody id="queue"></tbody></table>
+
+  <h2>What we refuse to sell</h2>
+  <div class="hint">Grouped by the rule that blocked it, with the legal basis. This is the
+    view to hand a customs broker.</div>
+  <table><thead><tr>
+    <th style="width:70px">SKUs</th><th>Rule &amp; basis</th><th>Examples</th>
+  </tr></thead><tbody id="blocked"></tbody></table>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
+let status = 'PENDING';
+
+function toast(m){
+  const t = $('#toast'); t.textContent = m; t.classList.add('on');
+  setTimeout(() => t.classList.remove('on'), 2200);
+}
+
+async function summary(){
+  const d = await (await fetch('/api/ops/summary')).json();
+  const v = d.verdicts, tot = d.total_products;
+  const a = v.ALLOWED || 0, r = v.REVIEW || 0, b = v.BLOCKED || 0;
+  $('#tiles').innerHTML = `
+    <div class="tile"><div class="k">Catalogue</div><div class="v">${tot.toLocaleString()}</div>
+      <div class="d">scraped from Blinkit</div></div>
+    <div class="tile"><div class="k">Listable now</div><div class="v ok">${a.toLocaleString()}</div>
+      <div class="d">${(a/tot*100).toFixed(1)}% live on the storefront</div></div>
+    <div class="tile"><div class="k">Held for review</div><div class="v warn">${r.toLocaleString()}</div>
+      <div class="d">${d.queue.PENDING || 0} decisions to clear them</div></div>
+    <div class="tile"><div class="k">Blocked</div><div class="v bad">${b.toLocaleString()}</div>
+      <div class="d">legally or physically unshippable</div></div>
+    <div class="tile"><div class="k">Orders</div><div class="v">${d.orders}</div>
+      <div class="d">placed through the gate</div></div>`;
+
+  $('#bar').innerHTML =
+    `<div style="width:${a/tot*100}%;background:var(--ok)"></div>
+     <div style="width:${r/tot*100}%;background:var(--warn)"></div>
+     <div style="width:${b/tot*100}%;background:var(--bad)"></div>`;
+  $('#legend').innerHTML = d.dimensions.map(x =>
+    `<span><i style="background:var(--muted)"></i>${esc(x.dimension)} &middot; ${x.n.toLocaleString()}</span>`).join('');
+  $('#qhint').innerHTML = `<b>${d.pending_review_skus.toLocaleString()} SKUs</b> are held behind
+    <b>${d.queue.PENDING || 0} pending decisions</b>. Clearing a row clears every SKU in it,
+    which is what makes a 21,000-item queue workable.`;
+}
+
+async function queue(){
+  const d = await (await fetch('/api/ops/queue?status=' + status)).json();
+  if(!d.clusters.length){
+    $('#queue').innerHTML = `<tr><td colspan="4" style="color:var(--muted)">Nothing here.</td></tr>`;
+    return;
+  }
+  $('#queue').innerHTML = d.clusters.map(c => `
+    <tr>
+      <td class="n">${c.sku_count.toLocaleString()}</td>
+      <td><b>${esc(c.group_name || 'Unshelved')}</b>
+        <span style="color:var(--muted);font-size:11px">&middot; ${esc(c.rule_id)}</span>
+        <div class="reason">${esc(c.reason || '')}</div>
+        <div class="samples">${esc(c.sample_names || '')}</div></td>
+      <td><span class="pill p-${esc(c.dimension || 'null')}">${esc(c.dimension || 'unknown')}</span></td>
+      <td><div class="acts">
+        ${status !== 'CLEARED' ? `<button class="clear" data-id="${esc(c.cluster_id)}" data-d="CLEARED">Clear</button>` : ''}
+        ${status !== 'KILLED' ? `<button class="kill" data-id="${esc(c.cluster_id)}" data-d="KILLED">Kill</button>` : ''}
+      </div></td>
+    </tr>`).join('');
+
+  document.querySelectorAll('#queue button').forEach(b => b.onclick = async () => {
+    const r = await fetch('/api/ops/decide', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cluster_id: b.dataset.id, decision: b.dataset.d, reviewer: 'ops' })
+    });
+    const d = await r.json();
+    toast(`${b.dataset.d === 'CLEARED' ? 'Listed' : 'Blocked'} ${d.skus_affected.toLocaleString()} SKUs`);
+    summary(); queue();
+  });
+}
+
+async function blocked(){
+  const d = await (await fetch('/api/ops/blocked')).json();
+  $('#blocked').innerHTML = d.rules.map(r => `
+    <tr><td class="n">${r.n.toLocaleString()}</td>
+      <td><b>${esc(r.primary_rule)}</b><div class="reason">${esc(r.reason)}</div>
+        <div class="samples" style="color:var(--info)">${esc(r.authority)}</div></td>
+      <td class="samples">${esc(r.samples)}</td></tr>`).join('');
+}
+
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
+  t.classList.add('on'); status = t.dataset.s; queue();
+});
+
+summary(); queue(); blocked();
+</script>
+</body>
+</html>
