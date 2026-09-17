@@ -574,6 +574,7 @@ def run_one(c, con, args, watch, shelf_jobs, search_jobs, unknown):
     assumes a full burst every time the server may not actually have, and
     walks straight into 429s."""
     c.state = {}
+    c.n_unchecked = 0
     c.cycle_started = time.time()
     req0, r429_0 = c.n_req, c.n_429
 
@@ -587,10 +588,20 @@ def run_one(c, con, args, watch, shelf_jobs, search_jobs, unknown):
     for e in events:
         by_ev[e[3]] = by_ev.get(e[3], 0) + 1
 
-    print("\n[%s] run %d | %d watched | %d found | %d in stock | "
+    print("\n[%s] run %d | %d watched | %d checked | %d in stock | "
           "%d requests (%d 429) | %.0fs"
           % (time.strftime("%H:%M:%S"), run_id, len(watch), seen, instock,
              c.n_req - req0, c.n_429 - r429_0, time.time() - c.cycle_started))
+    if c.n_unchecked:
+        # Saying "no changes" when nothing was reached is the same lie as
+        # reporting those products missing -- quieter, but still reassurance
+        # the run did not earn.
+        print("  WARNING: %d of %d watched products could not be checked -- "
+              "no answer from the API. Their state below is unknown, not "
+              "unchanged." % (c.n_unchecked, len(watch)))
+        if not seen:
+            print("  NOTHING was checked this run. Check the network, and "
+                  "re-run discover.py if the session has expired.")
     print("compared against %s"
           % ("run %d" % prev_run if prev_run else "the catalogue snapshot"))
     if by_ev:
@@ -602,7 +613,7 @@ def run_one(c, con, args, watch, shelf_jobs, search_jobs, unknown):
             print("    %-14s %-9s %s -> %s" % (e[3], e[1], e[4], e[5]))
         if len(events) > 15:
             print("    ... %d more (see availability_events)" % (len(events) - 15))
-    else:
+    elif seen:
         print("  no changes since the last check")
 
     if args.report:

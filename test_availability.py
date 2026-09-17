@@ -350,6 +350,43 @@ def test_network_down_reports_nothing():
     print("  network down -> no events   ok")
 
 
+def test_unchecked_is_reported_not_silently_passed():
+    """A run that reached nothing must say so, not print "no changes".
+
+    Second instance of the same bug class as the fabricated disappearances:
+    reassurance the run did not earn."""
+    d = tempfile.mkdtemp()
+    con = make_db(os.path.join(d, "t.db"),
+                  [("p1", "One", 10.0, 1, "cat")], [("p1", SHELF_A)])
+    args = make_args(["--all", "--strategy", "shelf"])
+    c = FakeChecker(SESSION, con, args)
+    c.install({}, {})
+    watch = c.load_watchlist()
+    shelf_jobs, _, _ = c.plan(watch)
+
+    import io, contextlib
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        ca.run_one(c, con, args, watch, shelf_jobs, [], set())
+    out = buf.getvalue()
+    assert "could not be checked" in out, out
+    assert "NOTHING was checked" in out, out
+    assert "no changes since the last check" not in out, out
+    assert c.n_unchecked == 1
+
+    # and a run that DOES reach everything still says "no changes" when quiet
+    c2 = FakeChecker(SESSION, con, args)
+    c2.install({SHELF_A: [page([("p1", "One", 10.0, True)])]}, {})
+    buf2 = io.StringIO()
+    with contextlib.redirect_stdout(buf2):
+        ca.run_one(c2, con, args, watch, shelf_jobs, [], set())
+    out2 = buf2.getvalue()
+    assert "no changes since the last check" in out2, out2
+    assert "could not be checked" not in out2, out2
+    con.close()
+    print("  unchecked is reported       ok")
+
+
 def test_partial_walk_is_not_absence():
     """If page 1 answers but page 2 fails, products not yet seen are unknown."""
     d = tempfile.mkdtemp()
@@ -436,6 +473,7 @@ if __name__ == "__main__":
     test_persist_and_report()
     test_network_down_reports_nothing()
     test_partial_walk_is_not_absence()
+    test_unchecked_is_reported_not_silently_passed()
     test_was_out_filter()
     test_interval_reuses_limiter()
     print("\nALL ASSERTIONS PASSED")
