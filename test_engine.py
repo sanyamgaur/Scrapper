@@ -28,9 +28,10 @@ def args_for(extra=()):
 class FakeEngine(Engine):
     """Engine whose shelf walk returns canned products and costs canned pages."""
 
-    def install(self, shelf_state, pages=1):
+    def install(self, shelf_state, pages=1, ok=True):
         self.shelf_state = shelf_state      # shelf -> {pid: (price, in_stock)}
         self.pages = pages
+        self.walk_ok = ok
         self.walks = []
 
     async def walk_shelf(self, client, shelf, wanted):
@@ -45,7 +46,7 @@ class FakeEngine(Engine):
                 price, in_stock = state[pid]
                 found[pid] = {"product_id": pid, "price": price, "mrp": None,
                               "in_stock": in_stock}
-        return found, self.pages
+        return found, self.pages, self.walk_ok
 
 
 def test_scheduler_prefers_value_per_request():
@@ -265,6 +266,43 @@ def test_search_worker_refreshes_stalest_hot():
     print("  search worker (hot set)     ok")
 
 
+def test_engine_blind_when_network_down():
+    """Found by running the engine for real with the network blocked: it
+    reported every hot SKU as 'disappeared' and claimed 1s freshness, having
+    never reached Blinkit once. A blind engine must emit nothing and must not
+    advance last_checked."""
+    d = tempfile.mkdtemp()
+    con = make_db(os.path.join(d, "t.db"),
+                  [("p1", "One", 10.0, 1, "cat"), ("p2", "Two", 20.0, 1, "cat")],
+                  [("p1", SHELF_A), ("p2", SHELF_A)])
+    con.executescript(ae.LIVE_SCHEMA)
+    e, a = _engine(con, ["--all"])
+
+    e.install({}, ok=False)          # every walk learns nothing
+    watch = {"p1": {"name": "One", "shelves": [SHELF_A]},
+             "p2": {"name": "Two", "shelves": [SHELF_A]}}
+    e.load_live(watch)
+    e.open_run(2)
+    sched = Scheduler({"p1": SHELF_A, "p2": SHELF_A},
+                      {"p1": 1.0, "p2": 1.0}, {SHELF_A: 10}, 90, 3600.0)
+    before = dict(sched.last_checked)
+
+    a.workers = 1
+    a.run_for = 0.4
+    a.status_every = 999
+    asyncio.run(e.serve(sched, watch, set()))
+
+    assert e.n_events == 0, "a blind engine must not emit events"
+    assert e.n_ok == 0 and e.n_fail > 0, (e.n_ok, e.n_fail)
+    assert sched.last_checked == before, "freshness must not advance on failure"
+    n = con.execute("SELECT COUNT(*) FROM availability_events").fetchone()[0]
+    assert n == 0, n
+    # and it backed off rather than hot-looping through the whole budget
+    assert e.n_fail < 20, "should back off when nothing is answering: %d" % e.n_fail
+    con.close()
+    print("  blind engine emits nothing  ok  (%d failures, backed off)" % e.n_fail)
+
+
 def test_human_and_pct():
     assert human(45) == "45s"
     assert human(600) == "10.0m"
@@ -284,5 +322,6 @@ if __name__ == "__main__":
     test_live_state_and_events()
     test_engine_gives_hot_skus_more_freshness()
     test_search_worker_refreshes_stalest_hot()
+    test_engine_blind_when_network_down()
     test_human_and_pct()
     print("\nALL ASSERTIONS PASSED")

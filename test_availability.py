@@ -190,8 +190,11 @@ def test_missing_product():
                   [("gone", "Gone Product", 10.0, 1, "cat")], [("gone", SHELF_A)])
     args = make_args(["--all"])
     c = FakeChecker(SESSION, con, args)
-    # the shelf no longer lists it
-    c.install({SHELF_A: [page([("other", "Other", 5.0, True)])]}, {})
+    # The shelf no longer lists it, and then ends. The trailing empty page is
+    # what the real API returns at the end of a shelf, and it is what makes
+    # this a completed walk -- i.e. a genuine absence rather than an
+    # inconclusive one.
+    c.install({SHELF_A: [page([("other", "Other", 5.0, True)]), page([])]}, {})
     run(c, {SHELF_A: {"gone"}}, [])
     assert c.state["gone"]["seen"] == 0
     assert c.state["gone"]["in_stock"] is None
@@ -310,6 +313,61 @@ def test_persist_and_report():
     print("  persist + events + report   ok")
 
 
+def test_network_down_reports_nothing():
+    """A failed request must never look like an absent product.
+
+    Found by actually running the engine with the network blocked: the walk
+    returned an empty result, which was indistinguishable from "the shelf does
+    not list it", so every watched SKU was reported as disappeared."""
+    d = tempfile.mkdtemp()
+    con = make_db(os.path.join(d, "t.db"),
+                  [("p1", "One", 10.0, 1, "cat"), ("p2", "Two", 20.0, 1, "cat")],
+                  [("p1", SHELF_A), ("p2", SHELF_A)])
+    args = make_args(["--all", "--strategy", "shelf"])
+    c = FakeChecker(SESSION, con, args)
+    c.install({}, {})               # every request returns None
+
+    run(c, {SHELF_A: {"p1", "p2"}}, [])
+    assert c.state == {}, c.state            # nothing recorded at all
+    assert c.n_unchecked == 2, c.n_unchecked
+
+    # and so persist produces no events, rather than two false ones
+    watch = c.load_watchlist()
+    _, prev = ca.baseline_state(con, LOC)
+    _run_id, events = c.persist(watch, prev, 1700000000)
+    assert events == [], events
+
+    # the walk itself reports the failure
+    found, pages, ok = asyncio.run(c.walk_shelf(None, SHELF_A, {"p1"}))
+    assert ok is False and found == {}, (ok, found)
+
+    # a search that returns nothing is equally not an absence
+    c2 = FakeChecker(SESSION, con, make_args(["--all"]))
+    c2.install({}, {})
+    run(c2, {}, [("p1", "One")])
+    assert c2.state == {} and c2.n_unchecked == 1
+    con.close()
+    print("  network down -> no events   ok")
+
+
+def test_partial_walk_is_not_absence():
+    """If page 1 answers but page 2 fails, products not yet seen are unknown."""
+    d = tempfile.mkdtemp()
+    prods = [("a%d" % i, "A%d" % i, 1.0, 1, "cat") for i in range(200)]
+    con = make_db(os.path.join(d, "t.db"), prods,
+                  [(p[0], SHELF_A) for p in prods])
+    c = FakeChecker(SESSION, con, make_args(["--all", "--strategy", "shelf"]))
+    # one good page of 90, then failure
+    c.install({SHELF_A: [page([(p[0], p[1], 1.0, True) for p in prods[:90]])]}, {})
+    found, pages, ok = asyncio.run(
+        c.walk_shelf(None, SHELF_A, {"a5", "a150"}))
+    assert "a5" in found                 # seen on the page that worked
+    assert "a150" not in found           # would have been on the page that did not
+    assert ok is False, "an unresolved product after a failure is not an absence"
+    con.close()
+    print("  partial walk not absence    ok")
+
+
 def test_was_out_filter():
     d = tempfile.mkdtemp()
     con = make_db(os.path.join(d, "t.db"),
@@ -376,6 +434,8 @@ if __name__ == "__main__":
     test_search_leg()
     test_plan()
     test_persist_and_report()
+    test_network_down_reports_nothing()
+    test_partial_walk_is_not_absence()
     test_was_out_filter()
     test_interval_reuses_limiter()
     print("\nALL ASSERTIONS PASSED")

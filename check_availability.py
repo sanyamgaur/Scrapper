@@ -151,6 +151,7 @@ class AvailabilityChecker(SearchMixin, Crawler):
             self.init_search(session, con)
         self.state = {}          # product_id -> current reading
         self.n_pages_av = 0
+        self.n_unchecked = 0     # watched but never successfully answered for
 
     # -- what to check ------------------------------------------------------
     def load_watchlist(self):
@@ -249,9 +250,16 @@ class AvailabilityChecker(SearchMixin, Crawler):
     async def walk_shelf(self, client, shelf, wanted):
         """Page a shelf until every watched product on it has been seen.
 
-        Returns (found_by_id, pages_spent). Split out from check_shelf so the
-        continuous engine can reuse the walk and its early stop without
-        inheriting check_shelf's write into self.state."""
+        Returns (found_by_id, pages_spent, ok). Split out from check_shelf so
+        the continuous engine can reuse the walk and its early stop without
+        inheriting check_shelf's write into self.state.
+
+        `ok` is the difference between "the shelf does not list this product"
+        and "we never got an answer". A failed request ends the walk with an
+        empty `found`, which is indistinguishable from a genuine absence unless
+        the caller is told. Reporting a product missing because the network was
+        down -- or the session expired -- is worse than reporting nothing at
+        all, so callers must check this before concluding anything."""
         uuid, gid = shelf
         key = "avail:%s:%s" % (uuid, gid)
         body = {"collection_group_id": gid, "collection_uuid": uuid}
@@ -260,13 +268,17 @@ class AvailabilityChecker(SearchMixin, Crawler):
         found = {}
         outstanding = set(wanted)
         pages = 0
+        ok = True
 
         for page in range(self.args.max_pages):
             if self.stop:
+                ok = False
                 break
             url = listing_url(page, offset, limit)
             data = await self.post(client, url, body, key)
             if data is None:
+                # No answer: whatever is still outstanding is unknown, not absent.
+                ok = not outstanding
                 break
             self.n_pages_av += 1
             pages += 1
@@ -290,10 +302,15 @@ class AvailabilityChecker(SearchMixin, Crawler):
                          "offset": str(offset), "limit": str(limit),
                          "page_index": str(page + 1)})
 
-        return found, pages
+        return found, pages, ok
 
     async def check_shelf(self, client, shelf, wanted):
-        found, _pages = await self.walk_shelf(client, shelf, wanted)
+        found, _pages, ok = await self.walk_shelf(client, shelf, wanted)
+        if not ok:
+            # Record nothing. An unchecked product must not be reported as
+            # missing; persist() counts these separately.
+            self.n_unchecked += len(wanted)
+            return 0
         for pid in wanted:
             self._record(pid, found, "shelf")
         return len(found)
@@ -302,12 +319,14 @@ class AvailabilityChecker(SearchMixin, Crawler):
         key = "avail-search:%s" % pid
         url = "%s?q=%s&search_type=type_to_search" % (SEARCH_URL, quote_plus(name or ""))
         data = await self.post_search(client, url, {}, key)
+        if data is None:
+            self.n_unchecked += 1
+            return 0
         found = {}
-        if data is not None:
-            for p in extract_products(data, {}):
-                if p["product_id"] == pid:
-                    found[pid] = p
-                    break
+        for p in extract_products(data, {}):
+            if p["product_id"] == pid:
+                found[pid] = p
+                break
         self._record(pid, found, "search")
         return 1 if found else 0
 

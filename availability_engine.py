@@ -182,6 +182,31 @@ class Engine(AvailabilityChecker):
         self.n_events = 0
         self.started = time.time()
         self.shutdown = False
+        self.n_ok = 0
+        self.n_fail = 0
+        self.consecutive_fail = 0
+        self.warned_blind = False
+
+    def note_success(self):
+        self.n_ok += 1
+        self.consecutive_fail = 0
+
+    def note_failure(self):
+        self.n_fail += 1
+        self.consecutive_fail += 1
+        if self.consecutive_fail in (5, 50, 500) or (
+                self.consecutive_fail == 20 and not self.n_ok):
+            print("[engine] WARNING: %d consecutive failed checks%s. Stock state "
+                  "is NOT being updated -- check the network and re-run "
+                  "discover.py if the session has expired."
+                  % (self.consecutive_fail,
+                     ", and nothing has ever succeeded" if not self.n_ok else ""),
+                  file=sys.stderr, flush=True)
+
+    def backoff(self):
+        """Back off when the endpoint is not answering, so a dead network does
+        not become a hot loop burning the rate budget on doomed requests."""
+        return min(30.0, 0.5 * 2 ** min(self.consecutive_fail, 6))
 
     # -- state --------------------------------------------------------------
     def load_live(self, watch):
@@ -287,14 +312,24 @@ class Engine(AvailabilityChecker):
             sched.inflight.add(shelf)
             try:
                 wanted = set(sched.shelf_skus[shelf])
-                found, pages = await self.walk_shelf(client, shelf, wanted)
+                found, pages, ok = await self.walk_shelf(client, shelf, wanted)
+                if not ok:
+                    # Nothing was learned. Applying here would report every
+                    # watched product on the shelf as disappeared, and marking
+                    # it checked would claim a freshness we do not have, so the
+                    # shelf stays stale and climbs back up the queue.
+                    self.note_failure()
+                    await asyncio.sleep(self.backoff())
+                    continue
                 now = time.time()
                 for pid in wanted:
                     self.apply(pid, found.get(pid), now, sched)
                 sched.mark_walked(shelf, pages, now)
+                self.note_success()
             except Exception as e:
                 self._err("engine:%s" % (shelf,), -2, repr(e))
-                sched.mark_walked(shelf, None, time.time())
+                self.note_failure()
+                await asyncio.sleep(self.backoff())
             finally:
                 sched.inflight.discard(shelf)
 
@@ -327,11 +362,18 @@ class Engine(AvailabilityChecker):
                         if p["product_id"] == pid:
                             product = p
                             break
+                if data is None:
+                    self.note_failure()
+                    await asyncio.sleep(self.backoff())
+                    continue
                 now = time.time()
                 self.apply(pid, product, now, sched)
                 sched.last_checked[pid] = now
+                self.note_success()
             except Exception as e:
                 self._err("engine-search:%s" % pid, -2, repr(e))
+                self.note_failure()
+                await asyncio.sleep(self.backoff())
 
     async def status_loop(self, sched, hot):
         while not self.shutdown and not self.stop:
@@ -355,9 +397,13 @@ class Engine(AvailabilityChecker):
             parts.insert(2, "hot p50 %s max %s" % (human(pct(hot_s, .5)),
                                                    human(hot_s[-1])))
         parts += ["%d events" % self.n_events,
+                  "%d ok / %d failed" % (self.n_ok, self.n_fail),
                   "%d req (%.2f/s, %d x429)" % (self.n_req,
                                                 self.n_req / max(el, 1), self.n_429),
                   "rate %.2f/s" % self.bucket.rate]
+        if not self.n_ok:
+            parts = ["NO SUCCESSFUL CHECKS YET -- freshness below is meaningless",
+                     "%s up" % human(el), "%d failed" % self.n_fail]
         print("[engine] " + " | ".join(parts), file=sys.stderr, flush=True)
 
     async def serve(self, sched, watch, hot):
