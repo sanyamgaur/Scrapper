@@ -57,6 +57,9 @@ python download_images.py --db blinkit.db --out-dir images
 
 # 6. Build the browsable catalog page
 python make_catalog_page.py --db blinkit.db --session session_delhi.json
+
+# 7. Emit the structured dataset (see "Structured dataset" below)
+python export_dataset.py --db blinkit.db --out dataset
 ```
 
 ## Images
@@ -85,6 +88,39 @@ python download_images.py --db blinkit.db --out-dir images --concurrency 24
 This adds a `product_images` table (`product_id, location, url, local_path,
 content_type, n_bytes, status, error, fetched_at`) so failures are visible
 and re-run cleanly (`--redo-errors` to retry the ones that errored).
+
+## Structured dataset
+
+`crawl.py` writes one wide, flat row per SKU. That is fine for a spreadsheet and
+weak as an interface, so `export_dataset.py` reshapes it into a typed, nested
+record set under `dataset/`:
+
+| file | what it is |
+|---|---|
+| `products.jsonl` | one nested JSON object per product — identity, pack, pricing, availability, images, taxonomy, provenance |
+| `products.csv` | the flat view, typed, with the derived columns |
+| `images.csv` | one row per image asset (`product_id`, url, CDN `asset_id`, local path) |
+| `taxonomy.csv` | the shelf tree with product counts |
+| `product_taxonomy.csv` | the product-to-shelf many-to-many |
+| `brands.csv` | per-brand rollup |
+| `manifest.json` | data dictionary, provenance, summary stats |
+
+It reads the DB, or a crawl CSV directly if you no longer have the DB:
+
+```bash
+python export_dataset.py --db blinkit.db --out dataset
+python export_dataset.py --csv inventory_delhi.csv --out dataset
+```
+
+The part that is real work rather than reshaping is `unit`. Blinkit ships pack
+size as free text — `500 g`, `2 x 1 ltr`, `100 ml + 1 pc`, `1 pair` — and as a
+string you cannot sort, filter or compare by it. It gets parsed into
+`(kind, count, size, uom)` and normalized to net grams / net millilitres /
+pieces, which is what makes `price_per_kg` comparable across a shelf.
+**98.4%** of this catalog parses. Anything that does not is reported as
+`kind: null` with `pack.raw` preserved, never guessed at — and measured on the
+real data, essentially every null is a book, because Blinkit puts the author or
+publisher in the unit field for book SKUs (`Ruskin Bond`, `Maple Press`).
 
 ## Catalog page
 
