@@ -31,6 +31,10 @@ packaging:
   fragile_extra_g: 180     # reinforced packing when FRAGILE_PACK is flagged
   insulated_extra_g: 420   # foil liner + gel pack when INSULATED_PACK is flagged
   min_billable_g: 500      # carriers round tiny parcels up to a floor
+  # No physical retail item weighs nothing. A 1 g sachet of saffron still
+  # ships as a box. Without this floor, value-per-gram goes to infinity and
+  # the basket builder ranks packaging as the ideal product.
+  min_item_g: 18
 
 # Fallback weights for SKUs sold by count, where the pack string gives a piece
 # count but no mass. Keyed by Blinkit group, then category, then a global

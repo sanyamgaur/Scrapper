@@ -125,9 +125,11 @@ class ShippingEngine:
         piece count x a per-shelf default -> a global default. Each fallback is
         less accurate, so `was_estimated` propagates into quote confidence.
         """
+        floor = self.pkg.get("min_item_g", 18)
         pack = parse_pack(product.get("unit"))
         if pack.billable_g:
-            return pack.billable_g, False
+            # Net content weight ignores the jar, box and label it ships in.
+            return max(pack.billable_g, floor), False
 
         pieces = pack.pieces or 1
 
@@ -135,7 +137,7 @@ class ShippingEngine:
         # 220 g, not 100 retail units. Check this before any shelf default.
         cw = self.pw.get("by_piece_word", {}).get((pack.piece_word or "").lower())
         if cw is not None:
-            return min(cw * pieces, self.pw["sanity_ceiling_g"]), True
+            return min(max(cw * pieces, floor), self.pw["sanity_ceiling_g"]), True
 
         # Otherwise fall back to a per-shelf default. That default is the
         # weight of one typical RETAIL PACK on that shelf, and "10 pcs" is the
@@ -147,7 +149,7 @@ class ShippingEngine:
             or self.pw["by_category"].get(product.get("category_name"))
             or self.pw["default"]
         )
-        return min(pack_g, self.pw["sanity_ceiling_g"]), True
+        return min(max(pack_g, floor), self.pw["sanity_ceiling_g"]), True
 
     def cart_weight(self, lines: list[tuple[dict, int]],
                     handling: Optional[list[str]] = None,
@@ -196,11 +198,32 @@ class ShippingEngine:
         step = 0.5 if chargeable_kg <= 2.0 else 1.0
         billed_kg = math.ceil(chargeable_kg / step) * step
 
-        slab = next((s for s in carrier["slabs"] if billed_kg <= s["up_to_kg"]), None)
-        if slab is None:
+        def cost_at(kg: float) -> Optional[float]:
+            slab = next((s for s in carrier["slabs"] if kg <= s["up_to_kg"]), None)
+            if slab is None:
+                return None
+            return slab["base_inr"] + slab["per_kg_inr"] * kg
+
+        base_cost = cost_at(billed_kg)
+        if base_cost is None:
             return None
 
-        freight = slab["base_inr"] + slab["per_kg_inr"] * billed_kg
+        # Published rate cards are not always monotonic: with DHL's table a
+        # 1.0 kg parcel bills at a flat 3400 while 1.5 kg bills at 1850/kg =
+        # 2775, so declaring MORE weight costs LESS. A shipper is always free
+        # to declare up, so quote the cheapest legal billing weight rather than
+        # charging a customer for an inversion in the carrier's own table.
+        freight = base_cost
+        declared_kg = billed_kg
+        probe = billed_kg
+        while probe <= carrier["max_kg"]:
+            probe += (0.5 if probe < 2.0 else 1.0)
+            c = cost_at(probe)
+            if c is None:
+                break
+            if c < freight:
+                freight, declared_kg = c, probe
+        billed_kg = declared_kg
         fuel = freight * carrier["fuel_surcharge_pct"] / 100.0
         total_inr = freight + fuel
         total_usd = total_inr / self.usd_inr
