@@ -31,6 +31,13 @@ def main(argv=None):
     p.add_argument("--note", default="")
     p = sub.add_parser("explain"); p.add_argument("product_id")
     p = sub.add_parser("quote"); p.add_argument("lines", nargs="+", metavar="PID:QTY")
+    p = sub.add_parser("risk"); p.add_argument("--top", type=int, default=15)
+    p = sub.add_parser("batch"); p.add_argument("date"); p.add_argument("--operator", default="ops")
+    p = sub.add_parser("picksheet"); p.add_argument("batch_id")
+    p = sub.add_parser("reconcile"); p.add_argument("batch_id")
+    p = sub.add_parser("packout"); p.add_argument("batch_id")
+    sub.add_parser("restock")
+    p = sub.add_parser("drift"); p.add_argument("--limit", type=int, default=None)
     p = sub.add_parser("serve"); p.add_argument("--port", type=int, default=8000)
     p.add_argument("--host", default="127.0.0.1")
     sub.add_parser("stats")
@@ -132,10 +139,85 @@ def main(argv=None):
             print(f"  ! {w}")
         c.close()
 
+    elif a.cmd == "risk":
+        from .stockout_risk import StockoutRiskEngine
+        from .db import connect
+        e = StockoutRiskEngine()
+        out = e.score_all()
+        print(f"CRITICAL {out.get('CRITICAL',0):,}  HIGH {out.get('HIGH',0):,}  "
+              f"NORMAL {out.get('NORMAL',0):,}   confidence={out['confidence']} "
+              f"({out['history_runs']} history runs)")
+        c = connect()
+        print("\nhighest risk listable SKUs:")
+        for r in c.execute("""SELECT p.name, p.group_name, p.in_stock, s.score, s.bucket
+                FROM stockout_risk s JOIN products p USING(product_id)
+                JOIN classifications cl USING(product_id)
+                WHERE cl.verdict='ALLOWED' ORDER BY s.score DESC LIMIT ?""", (a.top,)):
+            print(f"  {r['score']:.2f} {r['bucket']:8} {r['name'][:38]:40} "
+                  f"stock={r['in_stock']}")
+        c.close()
+
+    elif a.cmd == "batch":
+        from .procurement import ProcurementEngine
+        try:
+            b = ProcurementEngine().build_batch(a.date, operator=a.operator)
+        except ValueError as e:
+            print(e, file=sys.stderr); return 1
+        print(f"{b['batch_id']}: {b['n_orders']} orders -> {b['n_lines']} lines "
+              f"-> {b.get('n_carts',0)} cart(s)")
+        for c in b.get("carts", []):
+            print(f"  cart {c['cart_no']}  store {c['merchant_id']}  "
+                  f"{c['n_lines']} lines  INR {c['value_inr']:,.0f}")
+
+    elif a.cmd == "picksheet":
+        from .operator import OperatorFlow
+        s_ = OperatorFlow().pick_sheet(a.batch_id)
+        print(f"{s_['batch_id']}  {s_['done']}/{s_['total']} done")
+        for c in s_["carts"]:
+            print(f"\n  CART {c['cart_no']} - store {c['merchant_id']} - "
+                  f"INR {c['value_inr']:,.0f}")
+            for l in c["lines"]:
+                mark = "x" if l["state"] != "PENDING" else " "
+                print(f"   [{mark}] x{l['qty']:<2} {l['name'][:40]:42} "
+                      f"INR{l['expected_inr']:7.0f}  {l['risk_bucket']}")
+                if l["priority_note"]:
+                    print(f"        {l['priority_note']}")
+                print(f"        {l['product_url']}")
+
+    elif a.cmd == "reconcile":
+        from .procurement import ProcurementEngine
+        r = ProcurementEngine().reconcile(a.batch_id)
+        print(f"{r['orders_complete']} complete, {r['orders_short']} short")
+        if r["short"]:
+            print("  short:", ", ".join(r["short"]))
+
+    elif a.cmd == "packout":
+        from .procurement import ProcurementEngine
+        for b in ProcurementEngine().packout(a.batch_id)["bins"]:
+            flag = "" if b["complete"] else "  [SHORT]"
+            st = b["ship_to"]
+            print(f"{b['order_id']} -> {st.get('name')}, {st.get('city')} "
+                  f"{st.get('zip5')}  {len(b['items'])} items  "
+                  f"{b['weight_g']:.0f}g{flag}")
+            for i in b["items"]:
+                print(f"    {i['qty_filled']}/{i['qty']}  {i['name'][:44]}")
+
+    elif a.cmd == "restock":
+        from .restock import RestockEngine
+        e = RestockEngine()
+        print(e.detect())
+        for c in e.ready():
+            print(f"  {c.product_id}  {c.name[:40]:42} {c.reason}")
+
+    elif a.cmd == "drift":
+        from .pricedrift import PriceDriftEngine
+        print(PriceDriftEngine().sweep(limit=a.limit))
+
     elif a.cmd == "serve":
         import uvicorn
         print(f"storefront  http://{a.host}:{a.port}/")
         print(f"ops         http://{a.host}:{a.port}/ops")
+        print(f"operator    http://{a.host}:{a.port}/operator?batch=PB-YYYY-MM-DD")
         uvicorn.run("crossborder.api:app", host=a.host, port=a.port)
 
     elif a.cmd == "stats":

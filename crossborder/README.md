@@ -4,11 +4,18 @@ Four engines that turn 31,366 scraped Indian SKUs into a US storefront you can
 actually operate, plus the web app that runs them.
 
 ```
-crawl (existing) ──► ingest ──► classify ──► [review queue] ──► storefront
-                                   │                               │
-                                   └── LLM tail                    ├── shipping quote
-                                                                   ├── landed cost
-                                                                   └── stock gate ──► order
+crawl ──► ingest ──► classify ──► [review queue] ──► storefront
+              │          └── LLM tail                    │
+              │                                          ├── shipping quote
+              │                                          ├── landed cost
+              │                                          ├── basket builder
+              │                                          └── stock gate ──► ORDER
+              │                                                              │
+  risk score ─┴──────────────────────────────────────────► daily batch ◄─────┘
+                                                                │
+                            split by dark store ──► pick sheet ──► operator buys
+                                                                │
+                                          reconcile ──► pack-out ──► US parcel
 ```
 
 ## Quick start
@@ -104,6 +111,90 @@ A per-SKU queue of 20,826 items is one nobody will ever work. Clustering by
 cover 59%** of the queue. Clearing "Jewellery / KW-JEWELLERY-081" moves 829 SKUs
 in one click.
 
+## The fulfilment half
+
+### 5. Daily procurement batching (`procurement.py`)
+
+A day's US orders become a handful of Blinkit baskets, then come back apart into
+per-customer parcels. Four things make that work:
+
+- **Consolidation with a ledger.** Three customers ordering the same peanuts
+  become ONE line of qty 3, while `batch_allocations` records which unit belongs
+  to whom. Without that ledger a short has no owner.
+- **Split by dark store first.** A Blinkit basket is served by one merchant, and
+  the listable catalogue spans merchants 34280 (3,700 SKUs) and 36778 (2,396).
+  A day's batch is essentially never one order.
+- **Risk-first pick order.** Lines are bought in descending stockout risk,
+  weighted by the USD revenue riding on them.
+- **Completeness-first shorts.** When 2 of 3 units arrive they go to the orders
+  closest to whole. One shippable order plus one refund beats three half-orders,
+  none of which can move.
+
+### 6. Stockout risk (`stockout_risk.py`)
+
+**There is no availability history on day one, and this engine says so.** Every
+score carries a confidence, and with zero history it reports `low` — a ranking
+hint, not a prediction. What it can use immediately: the current in-stock flag,
+the shelf's own out-of-stock base rate (18% on Toys & Games, 92% on Baby Toys &
+Gifts — a genuinely strong prior), and discount depth. Flip frequency and restock
+latency switch on as `stock_checks` accumulates. Weights renormalize over
+whatever signals exist, so a missing signal never silently drags a score toward
+"safe". Every score is explainable: `CRITICAL (0.91, low confidence): currently
+out of stock +0.40, shelf base rate +0.23`.
+
+### 7. Back-in-stock relisting (`restock.py`)
+
+Three gates between "Blinkit has it" and "put it on the site": a **stability
+hold** (in stock for ten minutes means nothing), **flap suppression** (a SKU
+oscillating several times a day is noise, not news), and a **re-check against
+compliance and viability**. Relisting is recommended, never automatic —
+`auto_relist` defaults to false. Waitlist notification is capped: telling 200
+people an item is back when a handful of units exist manufactures 194 complaints.
+
+### 8. Smart basket builder (`basket.py`)
+
+The highest-leverage engine, because a single cheap SKU is commercially dead
+(6.8x freight ratio) while an eight-item basket is healthy (2.7x, 30.8% margin).
+Not "customers also bought" — freight arithmetic:
+
+- **Free headroom.** Carriers bill on rounded weight, so a 1.05 kg cart already
+  bills at 1.5 kg and the next 450 g ship for nothing. This is the best
+  suggestion available: more goods, identical freight.
+- **Value density.** Goods value per gram. The catalogue spans 25,000× (saffron
+  ₹615/g to erasers ₹0.025/g), so this genuinely discriminates.
+- **Procurement-aware.** Only in-stock, low-risk SKUs — a suggestion that fails
+  procurement costs more than no suggestion.
+- **One dark store.** A cross-merchant add-on silently creates a second Blinkit
+  order with a second delivery fee.
+- **Relevance guard.** Pure arithmetic recommends a $197 watch beside ₹93 of
+  chana. A suggestion may not exceed 1.5× the cart's own goods value.
+
+### 9. Price drift (`pricedrift.py`)
+
+Two thresholds, because they protect different things. **List drift** uses the
+greater of $3 or 5% — $3 alone is 12% on a $25 item but 2.5% on a $120 one.
+**Quote drift** (what a named customer was promised) is held strictly tighter,
+and the engine *enforces* that invariant in code rather than trusting the YAML.
+Drops never block an order; only rises drive the ladder:
+`IGNORED → REPRICE → DELISTED` (when a rise pushes the SKU past viability).
+
+## Why order placement is not automated
+
+Placing a Blinkit order needs an authenticated consumer account, a cart write
+endpoint, a saved address, and a payment authorization. The project holds none
+of them — `session_delhi.json` carries only geolocation, Cloudflare and analytics
+cookies, and `discover.py` captures three **read** templates. The payment factor
+is the hard blocker: Indian card and UPI payments require RBI-mandated 2FA
+delivered to a human's device by design.
+
+So `operator.py` builds the job down to a few taps instead: a risk-ordered pick
+sheet with a deep link per line (`/prn/<slug>/prid/<id>`, constructible from
+stored fields, with a search fallback), and **three API-free confirmations** —
+a typed **price attestation** that catches the wrong-pack-size mis-pick before
+it is paid for, a **bill reconciliation** that must balance before the run
+closes, and a **physical intake** count at the hub. `ProcurementBackend` is the
+seam where a genuine partner API attaches without redesigning any of it.
+
 ## Files
 
 | File | Role |
@@ -117,6 +208,13 @@ in one click.
 | `db.py` / `ingest.py` / `classify_run.py` | persistence and pipeline |
 | `api.py` | FastAPI backend |
 | `web/storefront.html`, `web/ops.html` | customer and ops UIs |
+| `procurement.py` | daily batching, consolidation, reconciliation, pack-out |
+| `stockout_risk.py` | risk scoring with honest confidence |
+| `restock.py` | back-in-stock detection, relist bucket, waitlist |
+| `basket.py` | freight-aware basket builder |
+| `pricedrift.py` | deadband drift monitor |
+| `operator.py` | pick sheet, deep links, the three confirmations |
+| `web/operator.html` | mobile buy sheet for the Delhi operator |
 | `rules/*.yaml` | **all policy lives here, not in code** |
 
 ## Caveats

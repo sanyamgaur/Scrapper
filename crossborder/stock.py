@@ -99,9 +99,21 @@ class StockEngine:
 
     def __init__(self, db_path=DB_PATH,
                  live_check: Optional[Callable[[list[str]], dict[str, dict]]] = None,
-                 price_tolerance_pct: float = 12.0):
+                 price_tolerance_pct: Optional[float] = None):
         self.db_path = db_path
         self.live_check = live_check
+        # Quote tolerance is policy, not a constant. It lives in
+        # rules/procurement.yaml alongside the list-price deadband so the two
+        # cannot drift apart into competing rules.
+        if price_tolerance_pct is None:
+            try:
+                import yaml
+                from pathlib import Path as _P
+                _cfg = yaml.safe_load(
+                    (_P(__file__).parent / "rules" / "procurement.yaml").read_text())
+                price_tolerance_pct = _cfg["price_drift"]["quote_tolerance_pct"]
+            except Exception:
+                price_tolerance_pct = 8.0
         self.price_tolerance_pct = price_tolerance_pct
 
     # -- cache ---------------------------------------------------------------

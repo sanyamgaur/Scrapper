@@ -24,10 +24,16 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 
+from .basket import BasketBuilder
 from .db import connect, DB_PATH
+from .operator import OperatorFlow
+from .pricedrift import PriceDriftEngine
 from .pricing import PricingEngine
+from .procurement import ProcurementEngine
+from .restock import RestockEngine
 from .shipping import ShippingEngine
 from .stock import StockEngine
+from .stockout_risk import StockoutRiskEngine
 
 app = FastAPI(title="Cross-border Catalogue API", version="0.1.0")
 
@@ -35,6 +41,12 @@ WEB = Path(__file__).parent / "web"
 pricing = PricingEngine()
 shipping = ShippingEngine(usd_inr=pricing.usd_inr)
 stock = StockEngine()
+basket = BasketBuilder(pricing=pricing)
+procurement = ProcurementEngine()
+operator = OperatorFlow()
+restock = RestockEngine()
+risk = StockoutRiskEngine()
+drift = PriceDriftEngine(pricing=pricing)
 
 
 # ---------------------------------------------------------------- models ----
@@ -53,6 +65,49 @@ class OrderRequest(BaseModel):
     lines: list[CartLine]
     carrier: Optional[str] = None
     customer_zip: str = ""
+    email: str = ""
+    name: str = ""
+    address1: str = ""
+    city: str = ""
+    state: str = ""
+
+
+class BasketRequest(BaseModel):
+    lines: list[CartLine]
+    carrier: Optional[str] = None
+
+
+class BatchRequest(BaseModel):
+    batch_date: str
+    operator: str = "ops"
+
+
+class MarkLineRequest(BaseModel):
+    batch_id: str
+    product_id: str
+    state: str
+    qty_bought: Optional[int] = None
+    actual_inr: Optional[float] = None
+    actor: str = "operator"
+
+
+class AttestRequest(BaseModel):
+    batch_id: str
+    product_id: str
+    shown_inr: float
+
+
+class BillRequest(BaseModel):
+    batch_id: str
+    cart_no: int
+    bill_total_inr: float
+
+
+class RelistDecision(BaseModel):
+    product_id: str
+    decision: str
+    actor: str = "ops"
+    note: str = ""
 
 
 class DecisionRequest(BaseModel):
@@ -199,11 +254,34 @@ def order(req: OrderRequest) -> JSONResponse:
                                carrier_code=req.carrier)
     oid = f"ORD-{uuid.uuid4().hex[:10].upper()}"
     conn = connect()
-    conn.execute("""INSERT INTO orders (order_id,customer_zip,status,lines_json,
-                    quote_json,total_usd,carrier) VALUES (?,?,?,?,?,?,?)""",
-                 (oid, req.customer_zip, "STOCK_CONFIRMED",
+
+    # A shipping label needs a person, not a zip code. Orders placed without
+    # customer details are still accepted, but they are recorded as such rather
+    # than silently producing an unshippable order later.
+    cid = None
+    if req.email:
+        cid = f"CUST-{uuid.uuid5(uuid.NAMESPACE_DNS, req.email).hex[:10].upper()}"
+        conn.execute("""INSERT INTO customers
+            (customer_id,email,name,ship_name,line1,city,state,zip5)
+            VALUES (?,?,?,?,?,?,?,?)
+            ON CONFLICT(customer_id) DO UPDATE SET
+                name=excluded.name, ship_name=excluded.ship_name,
+                line1=excluded.line1, city=excluded.city,
+                state=excluded.state, zip5=excluded.zip5""",
+            (cid, req.email, req.name, req.name, req.address1,
+             req.city, req.state, req.customer_zip))
+
+    conn.execute("""INSERT INTO orders (order_id,customer_id,customer_zip,status,
+                    lines_json,quote_json,total_usd,carrier)
+                    VALUES (?,?,?,?,?,?,?,?)""",
+                 (oid, cid, req.customer_zip, "STOCK_CONFIRMED",
                   json.dumps([{"product_id": p["product_id"], "qty": q} for p, q in lines]),
                   json.dumps(lc.as_dict()), lc.list_price_usd, lc.carrier))
+
+    # Normalized lines: a physical unit cannot be allocated against a JSON blob.
+    conn.executemany("""INSERT OR REPLACE INTO order_lines
+        (order_id,product_id,qty,unit_price_inr) VALUES (?,?,?,?)""",
+        [(oid, p["product_id"], q, p.get("price_inr")) for p, q in lines])
     conn.commit(); conn.close()
     return JSONResponse({"accepted": True, "order_id": oid,
                          "total_usd": lc.list_price_usd, "carrier": lc.carrier,
@@ -294,6 +372,137 @@ def ops_blocked(limit: int = Query(100, le=500)) -> dict:
     return {"rules": rows}
 
 
+# ------------------------------------------------------------- basket ------
+
+@app.post("/api/basket/advise")
+def basket_advise(req: BasketRequest) -> dict:
+    """Freight-aware add-on suggestions for a cart."""
+    got = _fetch([l.product_id for l in req.lines])
+    lines = [(got[l.product_id], l.qty) for l in req.lines if l.product_id in got]
+    if not lines:
+        raise HTTPException(400, "no valid lines")
+    handling = _handling_for([p for p, _ in lines])
+    return basket.advise(lines, handling=handling, carrier_code=req.carrier).as_dict()
+
+
+# -------------------------------------------------------- procurement ------
+
+@app.post("/api/ops/batch/build")
+def batch_build(req: BatchRequest) -> dict:
+    try:
+        return procurement.build_batch(req.batch_date, operator=req.operator)
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+
+
+@app.get("/api/ops/batch/{batch_id}/picksheet")
+def batch_picksheet(batch_id: str) -> dict:
+    return operator.pick_sheet(batch_id)
+
+
+@app.post("/api/ops/batch/mark")
+def batch_mark(req: MarkLineRequest) -> dict:
+    try:
+        return procurement.mark_line(req.batch_id, req.product_id, req.state,
+                                     qty_bought=req.qty_bought,
+                                     actual_inr=req.actual_inr, actor=req.actor)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/api/ops/batch/attest")
+def batch_attest(req: AttestRequest) -> dict:
+    try:
+        return operator.attest_price(req.batch_id, req.product_id, req.shown_inr)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+
+
+@app.post("/api/ops/batch/bill")
+def batch_bill(req: BillRequest) -> dict:
+    """The Blinkit bill must balance against attested lines before a run closes."""
+    return operator.reconcile_bill(req.batch_id, req.cart_no, req.bill_total_inr)
+
+
+@app.post("/api/ops/batch/{batch_id}/reconcile")
+def batch_reconcile(batch_id: str) -> dict:
+    try:
+        return procurement.reconcile(batch_id)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+
+
+@app.get("/api/ops/batch/{batch_id}/packout")
+def batch_packout(batch_id: str) -> dict:
+    return procurement.packout(batch_id)
+
+
+@app.get("/api/ops/batches")
+def batches() -> dict:
+    conn = connect()
+    rows = [dict(r) for r in conn.execute(
+        "SELECT * FROM procurement_batches ORDER BY batch_date DESC LIMIT 30")]
+    conn.close()
+    return {"batches": rows}
+
+
+# --------------------------------------------------------------- risk ------
+
+@app.post("/api/ops/risk/score")
+def risk_score() -> dict:
+    return risk.score_all()
+
+
+@app.get("/api/ops/risk")
+def risk_list(bucket: str = "CRITICAL", limit: int = Query(50, le=300)) -> dict:
+    conn = connect()
+    rows = [dict(r) for r in conn.execute("""
+        SELECT s.*, p.name, p.group_name, p.in_stock FROM stockout_risk s
+        JOIN products p USING(product_id)
+        JOIN classifications c USING(product_id)
+        WHERE s.bucket=? AND c.verdict='ALLOWED'
+        ORDER BY s.score DESC LIMIT ?""", (bucket, limit))]
+    conn.close()
+    return {"bucket": bucket, "items": rows}
+
+
+# ------------------------------------------------------------ restock ------
+
+@app.post("/api/ops/restock/detect")
+def restock_detect() -> dict:
+    return restock.detect()
+
+
+@app.get("/api/ops/restock")
+def restock_list(limit: int = Query(50, le=300)) -> dict:
+    return {"candidates": [c.as_dict() for c in restock.ready(limit)]}
+
+
+@app.post("/api/ops/restock/decide")
+def restock_decide(req: RelistDecision) -> dict:
+    try:
+        return restock.decide(req.product_id, req.decision, req.actor, req.note)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+# -------------------------------------------------------- price drift ------
+
+@app.post("/api/ops/drift/sweep")
+def drift_sweep(limit: Optional[int] = None) -> dict:
+    return drift.sweep(limit=limit)
+
+
+@app.get("/api/ops/drift")
+def drift_list(limit: int = Query(50, le=300)) -> dict:
+    conn = connect()
+    rows = [dict(r) for r in conn.execute("""
+        SELECT d.*, p.name FROM price_drift d JOIN products p USING(product_id)
+        WHERE d.action != 'IGNORED' ORDER BY d.detected_at DESC LIMIT ?""", (limit,))]
+    conn.close()
+    return {"drift": rows}
+
+
 # ------------------------------------------------------------------ pages ---
 
 @app.get("/")
@@ -304,3 +513,8 @@ def storefront():
 @app.get("/ops")
 def ops_page():
     return FileResponse(WEB / "ops.html")
+
+
+@app.get("/operator")
+def operator_page():
+    return FileResponse(WEB / "operator.html")
