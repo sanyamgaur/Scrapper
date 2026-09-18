@@ -162,7 +162,12 @@ SORT_SQL = {
     # by value-per-gram it surfaced ball pens. Absolute rupee saving favours
     # substantial products with real markdowns, in whatever department they
     # happen to sit, and "biggest savings" is a claim the data can back.
-    "relevance":  ("p.in_stock DESC, "
+    # `cat_rank` is the item's position within its own category, so ordering by
+    # it round-robins the departments: the first screen shows the best saving
+    # from each category rather than 48 Home & Lifestyle rows. Savings still
+    # decide the order WITHIN each pass, so nothing is promoted on merit it
+    # does not have. Only this sort interleaves; the explicit sorts stay pure.
+    "relevance":  ("p.in_stock DESC, p.cat_rank, "
                    "(COALESCE(p.mrp_inr,0) - p.price_inr) DESC, "
                    "COALESCE(p.discount_pct,0) DESC, p.name"),
     "price_asc":  "p.in_stock DESC, p.price_inr ASC",
@@ -210,10 +215,19 @@ def catalog(q: str = "", category: str = "", group: str = "", brand: str = "",
         FROM products p JOIN classifications c USING(product_id)
         WHERE {clause}"""
 
+    # Category rank is computed AFTER variant collapse, so a department is not
+    # given extra slots by its own duplicates.
+    ranked = f"""
+        SELECT d.*, ROW_NUMBER() OVER (
+                 PARTITION BY d.category_name
+                 ORDER BY (COALESCE(d.mrp_inr,0) - d.price_inr) DESC,
+                          COALESCE(d.discount_pct,0) DESC, d.name) AS cat_rank
+        FROM ({dedup}) d WHERE d.rn = 1"""
+
     total = conn.execute(
-        f"SELECT COUNT(*) FROM ({dedup}) p WHERE p.rn = 1", args).fetchone()[0]
+        f"SELECT COUNT(*) FROM ({ranked}) p", args).fetchone()[0]
     rows = conn.execute(
-        f"SELECT * FROM ({dedup}) p WHERE p.rn = 1 ORDER BY {order} LIMIT ? OFFSET ?",
+        f"SELECT * FROM ({ranked}) p ORDER BY {order} LIMIT ? OFFSET ?",
         args + [limit, offset]).fetchall()
     conn.close()
 
