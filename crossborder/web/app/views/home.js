@@ -1,13 +1,14 @@
 import { api } from "../api.js";
-import { $, $$, esc, usd, productCard, skeletonGrid, icon } from "../ui.js";
+import { $, $$, esc, usd, productCard, skeletonGrid, icon, deptIcon } from "../ui.js";
 import { wireCards } from "./catalog.js";
 
 /* Curated rails. Each is a real query against the catalogue rather than a
-   hand-picked list, so they stay correct as stock and prices move. */
-/* Rails span the WHOLE catalogue, not just the food end of it. Only 33% of
-   listable SKUs are food; Home & Lifestyle (2,923) and Stationery & Games
-   (1,024) are the two largest departments by a distance. An earlier version
-   showed six food rails and described a shop this catalogue is not. */
+   hand-picked list, so they stay correct as stock and prices move.
+
+   Rails span the WHOLE catalogue, not just the food end of it. Only 33% of
+   listable SKUs are food; Home & Lifestyle and Stationery & Games are the two
+   largest departments by a distance. An earlier version showed six food rails
+   and described a shop this catalogue is not. */
 const RAILS = [
   { key: "deals",  title: "Biggest savings today",
     sub: "Ranked by what you actually save against Indian MRP, across every department.",
@@ -34,6 +35,14 @@ const RAILS = [
     params: { category: "Tea, Coffee & Milk Drinks", in_stock_only: true, limit: 20 } },
 ];
 
+/* Trust row: what the SERVICE promises, never a number pulled off a database
+   row count. Counts age the moment stock moves; these claims don't. */
+const TRUST = [
+  { ic: "box",   t: "Bought after you order — nothing sits in a warehouse" },
+  { ic: "check", t: "Duty & customs already included in the price you see" },
+  { ic: "cart",  t: "You choose the carrier: days matter as much as dollars" },
+];
+
 export function render() {
   return `
     <section class="hero">
@@ -42,42 +51,40 @@ export function render() {
           <h1>India's shelves,<br><em>delivered to your door.</em></h1>
           <p>Snacks and spices, bedding and kitchenware, stationery and skincare —
              we buy it from real Delhi shops the day you order, consolidate it,
-             and ship it to you in the US. No warehouse, no substitutions you
-             didn't ask for.</p>
+             and ship it to you in the US. No substitutions you didn't ask for.</p>
           <div class="hero-cta">
             <a class="btn btn-pri" href="#/c">Browse everything</a>
             <a class="btn" href="#/c?sort=value&in_stock_only=1">Cheapest things to ship</a>
           </div>
-          <div class="hero-stats" id="hero-stats"></div>
+          <div class="trust-row">
+            ${TRUST.map(t => `
+              <div><span class="ic">${icon(t.ic)}</span><span>${esc(t.t)}</span></div>`).join("")}
+          </div>
         </div>
       </div>
     </section>
 
     <div class="wrap">
-      <div class="depts" id="depts"></div>
+      <section style="margin-bottom:40px">
+        <div class="section-h"><h2 class="h2">Shop by department</h2></div>
+        <div class="depts" id="depts"></div>
+      </section>
       <div id="rails">${skeletonGrid(6)}</div>
     </div>`;
 }
 
 export async function mount(_params, nav) {
-  // Department tiles
+  // Department tiles — in catalogue order, so no department is implied to
+  // matter more than another.
   try {
     const f = await api.facets();
-    // No thumb on the scale: departments in the order the catalogue actually
-    // has them. Forcing food to the front described a shop that does not exist.
     const top = f.categories.filter(c => c.name).slice(0, 8);
     $("#depts").innerHTML = top.map((c, i) => `
       <a class="dept" href="#/c?category=${encodeURIComponent(c.name)}" style="--d:${i * 37}">
+        <span class="dept-ic">${deptIcon(c.name)}</span>
         <span class="dept-n">${esc(c.name)}</span>
-        <span class="dept-c">${c.n.toLocaleString()} items</span>
+        <span class="dept-go">${icon("back")}</span>
       </a>`).join("");
-
-    const live = await api.catalog({ in_stock_only: true, limit: 1 });
-    const total = f.categories.reduce((n, c) => n + c.n, 0);
-    $("#hero-stats").innerHTML = `
-      <div><b>${live.total.toLocaleString()}</b><span>in stock in Delhi today</span></div>
-      <div><b>${total.toLocaleString()}</b><span>products in the catalogue</span></div>
-      <div><b>3–21</b><span>days to your door</span></div>`;
   } catch { $("#depts").innerHTML = ""; }
 
   // Rails, loaded together so the page settles in one paint.

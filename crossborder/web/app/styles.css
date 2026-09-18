@@ -133,10 +133,16 @@ button,input,select,textarea{font:inherit;color:inherit}
 .nav-wrap::after{content:"";position:absolute;right:0;top:0;bottom:10px;width:44px;
   pointer-events:none;background:linear-gradient(to right,transparent,var(--surface))}
 
-/* Honest expectation-setting, in the chrome rather than buried in a FAQ. */
-.ticker{background:var(--accent-soft);border-bottom:1px solid var(--accent-line);
-  font-size:12.5px;color:var(--accent);padding:7px 0;text-align:center}
-.ticker b{font-weight:700}
+/* Honest expectation-setting, in the chrome rather than buried in a FAQ.
+   A charcoal strip rather than a tinted, bordered band: the earlier version
+   read as a promo banner, not a policy statement. */
+.ticker{background:var(--ink);color:var(--bg);font-size:12.5px;padding:9px 0}
+.ticker .wrap{display:flex;align-items:center;justify-content:center;gap:8px}
+.ticker svg{width:14px;height:14px;color:var(--accent);flex:none}
+.ticker b{font-weight:600;color:var(--accent)}
+:root[data-theme="dark"] .ticker{background:var(--surface-2);color:var(--ink-2)}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .ticker{
+  background:var(--surface-2);color:var(--ink-2)} }
 
 /* On a phone the brand, search and cart cannot share one row: the search input
    collapsed to a circle because flex ran out of width, and at 768px it was a
@@ -146,7 +152,8 @@ button,input,select,textarea{font:inherit;color:inherit}
   .brand{order:1;flex:1;font-size:17px}
   .hdr-acts{order:2}
   .search{order:3;flex:0 0 100%;width:100%}
-  .ticker{font-size:11.5px;padding:6px 0}
+  .ticker{font-size:11px;padding:7px 0}
+  .ticker span.opt{display:none}
 }
 
 /* ------------------------------------------------------------------ grid -- */
@@ -163,8 +170,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 .card .shot{aspect-ratio:1;background:#fff;display:flex;align-items:center;
   justify-content:center;padding:14px;position:relative}
 .card .shot img{max-height:100%;object-fit:contain;mix-blend-mode:multiply}
-:root[data-theme="dark"] .card .shot img,
-@media (prefers-color-scheme:dark){ .card .shot img{mix-blend-mode:normal} }
+:root[data-theme="dark"] .card .shot img{mix-blend-mode:normal}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .card .shot img{
+  mix-blend-mode:normal} }
 /* Placeholder when a CDN image is missing or blocked — better than a void. */
 /* Monogram placeholder. A tinted gradient keyed to the product id, so a missing
    image reads as a designed state rather than a hole in the grid. */
@@ -269,37 +277,48 @@ main{min-height:70vh;padding:24px 0 80px}
 .hero-in h1 em{font-style:normal;color:var(--accent)}
 .hero-in p{font-size:16px;color:var(--ink-2);max-width:56ch;margin:0 0 22px;line-height:1.6}
 .hero-cta{display:flex;gap:10px;flex-wrap:wrap}
-.hero-stats{display:flex;gap:34px;margin-top:34px;flex-wrap:wrap}
-.hero-stats div{display:flex;flex-direction:column}
-.hero-stats b{font-size:23px;font-weight:700;letter-spacing:-.02em}
-.hero-stats span{font-size:12.5px;color:var(--ink-3)}
+/* Trust row: what matters about the SERVICE, never inventory size. */
+.trust-row{display:flex;gap:28px;margin-top:32px;flex-wrap:wrap}
+.trust-row div{display:flex;align-items:center;gap:9px;font-size:13px;
+  color:var(--ink-2);font-weight:500;max-width:220px}
+.trust-row .ic{flex:none;width:34px;height:34px;border-radius:var(--r-full);
+  background:var(--surface);border:1px solid var(--line-2);display:flex;
+  align-items:center;justify-content:center;color:var(--accent);box-shadow:var(--sh-1)}
+.trust-row svg{width:16px;height:16px}
 @media(max-width:560px){
   .hero{padding:34px 0 30px;margin-bottom:20px}
-  .hero-stats{gap:20px;margin-top:24px}
-  .hero-stats b{font-size:19px}
+  .trust-row{gap:16px;margin-top:24px}
+  .trust-row div{font-size:12px;max-width:none}
 }
 
-/* Department tiles */
-.depts{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));
-  gap:12px;margin-bottom:40px}
+/* Department tiles. An icon badge plus a defined border stop these reading as
+   blank colour blocks; the arrow gives the tile an affordance it lacked. */
+.depts{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));
+  gap:12px;margin-bottom:8px}
 @media(max-width:560px){ .depts{grid-template-columns:repeat(2,1fr);gap:10px} }
-.dept{display:flex;flex-direction:column;justify-content:flex-end;gap:2px;
-  min-height:96px;padding:14px;border-radius:var(--r);border:1px solid var(--line);
+.dept{position:relative;display:flex;align-items:center;gap:12px;
+  min-height:76px;padding:14px 16px;border-radius:var(--r);
+  border:1.5px solid var(--line-2);
   background:linear-gradient(150deg,
-    hsl(calc(var(--d) + 18) 60% 96%), hsl(calc(var(--d) + 44) 52% 92%));
-  transition:transform .16s,box-shadow .16s}
+    hsl(calc(var(--d) + 18) 58% 96%), hsl(calc(var(--d) + 44) 50% 91%));
+  transition:transform .16s,box-shadow .16s,border-color .16s}
 @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .dept{
   background:linear-gradient(150deg,
-    hsl(calc(var(--d) + 18) 22% 19%), hsl(calc(var(--d) + 44) 20% 14%));} }
+    hsl(calc(var(--d) + 18) 24% 20%), hsl(calc(var(--d) + 44) 22% 15%));} }
 :root[data-theme="dark"] .dept{background:linear-gradient(150deg,
-  hsl(calc(var(--d) + 18) 22% 19%), hsl(calc(var(--d) + 44) 20% 14%));}
-.dept:hover{transform:translateY(-2px);box-shadow:var(--sh-2)}
-.dept-n{font-size:14.5px;font-weight:650;letter-spacing:-.01em;line-height:1.25}
-.dept-c{font-size:11.5px;color:var(--ink-3)}
+  hsl(calc(var(--d) + 18) 24% 20%), hsl(calc(var(--d) + 44) 22% 15%));}
+.dept:hover{transform:translateY(-2px);box-shadow:var(--sh-2);border-color:var(--accent)}
+.dept-ic{flex:none;width:38px;height:38px;border-radius:var(--r-full);
+  background:var(--surface);display:flex;align-items:center;justify-content:center;
+  font-size:18px;box-shadow:var(--sh-1)}
+.dept-n{font-size:13.5px;font-weight:650;letter-spacing:-.01em;line-height:1.3;flex:1}
+.dept-go{flex:none;width:18px;height:18px;color:var(--ink-3);opacity:0;
+  transform:rotate(180deg) translateX(4px);transition:opacity .16s,transform .16s}
+.dept:hover .dept-go{opacity:1;transform:rotate(180deg) translateX(0);color:var(--accent)}
 
 /* Rails scroll horizontally. A wrapping grid left an orphan card alone on a
    second row whenever the item count did not divide by the column count. */
-.rail{margin-bottom:44px}
+.rail{margin-bottom:48px}
 .railscroll{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(196px,1fr);
   gap:16px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x proximity;
   scrollbar-width:thin}
@@ -313,14 +332,59 @@ main{min-height:70vh;padding:24px 0 80px}
 .rail-h{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
   margin-bottom:14px;flex-wrap:wrap}
 
+/* ------------------------------------------------------------- toolbar --- */
+/* Filter + sort, grouped as one control bar rather than a loose flex row that
+   wrapped unpredictably. */
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  flex-wrap:wrap;padding:10px 14px;margin-bottom:20px;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.toolbar-label{font-size:13.5px;font-weight:600;color:var(--ink-2);min-width:0}
+.toolbar-controls{display:flex;align-items:center;gap:14px;flex-wrap:wrap;row-gap:12px}
+.toolbar-div{width:1px;align-self:stretch;background:var(--line);min-height:22px}
+/* When the controls wrap to their own line (narrow toolbar), a 1px vertical
+   divider becomes a stray floating tick mark rather than a separator. */
+@media(max-width:600px){ .toolbar-div{display:none} }
+.field-inline{display:flex;align-items:center;gap:8px}
+.field-inline label{font-size:12.5px;font-weight:600;color:var(--ink-3);
+  white-space:nowrap;text-transform:uppercase;letter-spacing:.03em}
+.toolbar select{border:1px solid var(--line-2);background:var(--bg);
+  padding:7px 30px 7px 11px;border-radius:var(--r-sm);font-size:13.5px;
+  font-weight:600;cursor:pointer;
+  appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2357534e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 9px center;background-size:13px}
+
+/* Toggle switch, replacing a bare checkbox for the in-stock filter. */
+.switch{position:relative;display:inline-flex;align-items:center;width:36px;height:21px;
+  flex:none}
+.switch input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;z-index:1}
+.switch .track{position:absolute;inset:0;background:var(--line-2);border-radius:var(--r-full);
+  transition:background .15s}
+.switch .knob{position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;
+  background:var(--surface);box-shadow:var(--sh-1);transition:transform .15s}
+.switch input:checked ~ .track{background:var(--accent)}
+.switch input:checked ~ .knob{transform:translateX(15px)}
+.switch input:focus-visible ~ .track{outline:2px solid var(--accent);outline-offset:2px}
+
+/* --------------------------------------------------------- section rhythm - */
+.section-h{display:flex;align-items:baseline;justify-content:space-between;
+  gap:16px;margin:0 0 16px;flex-wrap:wrap}
+.eyebrow{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--accent);margin:0 0 6px}
+
 /* Cards get a little more life now that images actually load. */
 /* The image lies over its monogram, so there is never a blank tile. */
 .shot,.thumb{position:relative}
 .shot .ph,.thumb .ph{position:absolute;inset:0}
+/* Deliberately no background on the img itself: the container already supplies
+   the correct backdrop (.shot is white, .thumb is --surface-2). An img painting
+   its own white background masked the monogram underneath for the ENTIRE time
+   a photo was loading, not just after it failed — a real bug, not just a
+   sandbox artifact, since any slow connection would show the same white flash
+   instead of the placeholder. */
 img.over{position:absolute;inset:0;margin:auto;max-width:100%;max-height:100%;
-  width:auto;height:auto;object-fit:contain;background:#fff}
+  width:auto;height:auto;object-fit:contain}
 .card .shot img.over{padding:14px}
 .panel.shot img.over{padding:32px}
-.thumb img.over{background:var(--surface-2)}
 .card .shot img{transition:transform .28s ease}
 .card:hover .shot img{transform:scale(1.045)}

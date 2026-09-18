@@ -16,6 +16,33 @@ export const usd = (n) =>
 export const inr = (n) =>
   n == null ? "" : "₹" + Math.round(Number(n)).toLocaleString("en-IN");
 
+/** Keyword-matched icon for a department tile. Emoji rather than an SVG set,
+    so a new category the catalogue introduces still gets a reasonable icon
+    (via the fallback) instead of a missing glyph. */
+export function deptIcon(name) {
+  const n = (name || "").toLowerCase();
+  const table = [
+    [/home|lifestyle|decor|furnishing/, "🏠"],
+    [/stationery|game|book/, "✏️"],
+    [/chips|namkeen|snack/, "🍿"],
+    [/oil|ghee|masala|spice/, "🌶️"],
+    [/atta|rice|dal|grain|cereal/, "🌾"],
+    [/tea|coffee|milk drink/, "☕"],
+    [/feminine|hygiene/, "💗"],
+    [/instant food|noodle|ready/, "🍜"],
+    [/kitchenware|appliance/, "🍳"],
+    [/beauty|cosmetic|skin|hair/, "💄"],
+    [/bakery|biscuit|sweet|chocolate/, "🍪"],
+    [/dairy|bread|egg/, "🥛"],
+    [/fruit|vegetable/, "🥦"],
+    [/drink|juice|beverage/, "🥤"],
+    [/cleaner|repellent/, "🧴"],
+    [/health|pharma|wellness/, "🩹"],
+  ];
+  for (const [re, ic] of table) if (re.test(n)) return ic;
+  return "🛍️";
+}
+
 export function icon(name) {
   const p = {
     search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',

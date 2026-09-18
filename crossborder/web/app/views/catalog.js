@@ -18,25 +18,38 @@ const SORTS = [
 
 export function render(params) {
   const q = params.q || "";
-  const heading = q ? `“${q}”` : params.category || params.group || "Everything";
+  // A generic "Everything" as a 26px bold headline announced nothing and ate
+  // the first screen. Real context (a search or a category) still earns a
+  // heading; browsing the full catalogue does not need one — the toolbar
+  // below carries the page instead.
+  const heading = q ? `Results for “${q}”` : (params.category || params.group || "");
+
   return `
     <div class="wrap">
-      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px">
-        <div>
-          <h1 class="h1">${esc(heading)}</h1>
-          <p class="sub" id="cat-count">Loading…</p>
-        </div>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <label class="muted" style="display:flex;align-items:center;gap:6px;cursor:pointer">
-            <input type="checkbox" id="f-stock" ${params.in_stock_only !== "0" ? "checked" : ""}>
-            In stock only
+      ${heading ? `<h1 class="h1" style="margin-bottom:18px">${esc(heading)}</h1>` : ""}
+
+      <div class="toolbar">
+        <span class="toolbar-label">${heading ? "Refine" : "All products"}</span>
+        <div class="toolbar-controls">
+          <label class="field-inline">
+            <span class="switch">
+              <input type="checkbox" id="f-stock" ${params.in_stock_only !== "0" ? "checked" : ""}>
+              <span class="track"></span><span class="knob"></span>
+            </span>
+            <span style="text-transform:none;font-weight:500;color:var(--ink-2);font-size:13px">
+              In stock only</span>
           </label>
-          <select id="f-sort" class="iconbtn" style="padding-right:10px">
-            ${SORTS.map(([v, l]) =>
-              `<option value="${v}" ${params.sort === v ? "selected" : ""}>${l}</option>`).join("")}
-          </select>
+          <span class="toolbar-div"></span>
+          <label class="field-inline">
+            <span>Sort by</span>
+            <select id="f-sort">
+              ${SORTS.map(([v, l]) =>
+                `<option value="${v}" ${params.sort === v ? "selected" : ""}>${l}</option>`).join("")}
+            </select>
+          </label>
         </div>
       </div>
+
       <div class="note info" style="margin-bottom:18px;display:flex;gap:10px;align-items:flex-start">
         <span style="font-size:15px;line-height:1">📦</span>
         <span>Shipping is charged per parcel, not per item — so a basket of three or four
@@ -72,9 +85,6 @@ export async function mount(params, nav) {
       state.total = d.total;
       state.items = append ? state.items.concat(d.items) : d.items;
       state.offset += d.items.length;
-
-      $("#cat-count").textContent =
-        `${d.total.toLocaleString()} product${d.total === 1 ? "" : "s"} you can order`;
 
       grid.innerHTML = state.items.length
         ? `<div class="grid">${state.items.map(productCard).join("")}</div>`
