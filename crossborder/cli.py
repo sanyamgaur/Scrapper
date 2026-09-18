@@ -38,6 +38,8 @@ def main(argv=None):
     p = sub.add_parser("packout"); p.add_argument("batch_id")
     sub.add_parser("restock")
     p = sub.add_parser("drift"); p.add_argument("--limit", type=int, default=None)
+    p = sub.add_parser("images"); p.add_argument("--limit", type=int, default=None)
+    p.add_argument("--workers", type=int, default=8); p.add_argument("--stats", action="store_true")
     p = sub.add_parser("serve"); p.add_argument("--port", type=int, default=8000)
     p.add_argument("--host", default="127.0.0.1")
     sub.add_parser("stats")
@@ -212,6 +214,15 @@ def main(argv=None):
     elif a.cmd == "drift":
         from .pricedrift import PriceDriftEngine
         print(PriceDriftEngine().sweep(limit=a.limit))
+
+    elif a.cmd == "images":
+        from .images import warm, stats as img_stats
+        if a.stats:
+            print(img_stats()); return 0
+        print("warming the local image cache (the storefront works without it,\n"
+              "it just redirects to the source CDN until this fills)...")
+        print(warm(limit=a.limit, workers=a.workers))
+        print(img_stats())
 
     elif a.cmd == "serve":
         import uvicorn

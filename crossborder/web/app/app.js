@@ -7,6 +7,7 @@ import { api } from "./api.js";
 import { $, $$, esc, debounce } from "./ui.js";
 import { store } from "./store.js";
 
+import * as home     from "./views/home.js";
 import * as catalog  from "./views/catalog.js";
 import * as product  from "./views/product.js";
 import * as cart     from "./views/cart.js";
@@ -19,6 +20,7 @@ const ROUTES = [
   [/^#\/checkout$/,          checkout],
   [/^#\/order\/(?<id>.+)$/,  order],
   [/^#\/c(?:\?(?<query>.*))?$/, catalog],
+  [/^#\/?$/,                 home],
 ];
 
 function parse(hash) {
@@ -32,7 +34,7 @@ function parse(hash) {
     }
     return { view, params };
   }
-  return { view: catalog, params: {} };
+  return { view: home, params: {} };
 }
 
 function nav(hash) {
@@ -43,7 +45,7 @@ function nav(hash) {
 let current = null;
 
 async function render() {
-  const { view, params } = parse(location.hash || "#/c");
+  const { view, params } = parse(location.hash || "#/");
   current = view;
   const host = $("#view");
   host.innerHTML = view.render(params);
@@ -72,10 +74,10 @@ async function buildNav() {
     const f = await api.facets();
     const cats = f.categories.filter(c => c.name).slice(0, 12);
     $("#nav").innerHTML =
-      `<a href="#/c" data-cat="">All</a>` +
+      `<a href="#/c" data-cat="">All products</a>` +
       cats.map(c => `<a href="#/c?category=${encodeURIComponent(c.name)}"
         data-cat="${esc(c.name)}">${esc(c.name)}</a>`).join("");
-    syncNav(parse(location.hash || "#/c").params);
+    syncNav(parse(location.hash || "#/").params);
   } catch { /* nav is progressive enhancement; the app works without it */ }
 }
 

@@ -51,16 +51,40 @@ export function toast(msg) {
     blocked, or be missing entirely, so no image is ever rendered without a
     fallback. Defined once because four different views need identical
     behaviour. */
-export function thumb(p, { size = "100%", radius = "var(--r-sm)" } = {}) {
+/** Deterministic hue from a product id, so a given product always gets the
+    same placeholder colour instead of flickering between renders. */
+function hueOf(seed) {
+  const s = String(seed || "");
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
+  return h;
+}
+
+/** Monogram placeholder. Rendered whenever there is no usable image — which
+    is a real state, not an edge case, so it is designed rather than left grey. */
+export function placeholder(p) {
   const letter = esc((p.name || "?").trim().charAt(0).toUpperCase());
-  const fallback = `Object.assign(document.createElement('div'),`
-                 + `{className:'ph',textContent:'${letter}'})`;
-  const inner = p.image
-    ? `<img loading="lazy" src="${esc(p.image)}" alt=""
-         style="max-width:100%;max-height:100%;object-fit:contain"
-         onerror="this.replaceWith(${fallback})">`
-    : `<div class="ph">${letter}</div>`;
-  return `<div class="thumb" style="width:${size};height:${size};border-radius:${radius}">${inner}</div>`;
+  const h = hueOf(p.product_id || p.name);
+  return `<div class="ph" style="--ph-h:${h}">${letter}</div>`;
+}
+
+export function imgSrc(p) {
+  // Served from our own origin: /img/<id> hits the local cache and falls back
+  // to the source CDN, so images survive hotlink protection and get faster as
+  // the cache warms. Raw p.image is only used when there is no id to route on.
+  return p.product_id ? `/img/${encodeURIComponent(p.product_id)}` : (p.image || "");
+}
+
+export function thumb(p, { size = "100%", radius = "var(--r-sm)" } = {}) {
+  const src = imgSrc(p);
+  // The monogram is always rendered underneath. Previously it only appeared via
+  // onerror, so a tile stayed blank for as long as the request was pending —
+  // and permanently blank if the image resolved to something undisplayable.
+  return `<div class="thumb" style="width:${size};height:${size};border-radius:${radius}">
+    ${placeholder(p)}
+    ${src ? `<img loading="lazy" src="${esc(src)}" alt="" class="over"
+              onerror="this.remove()">` : ""}
+  </div>`;
 }
 
 /** Product card. Used by the catalogue grid, related rails and suggestions. */
@@ -72,12 +96,18 @@ export function productCard(p) {
   const off = p.mrp_inr && p.mrp_inr > p.price_inr
     ? Math.round((1 - p.price_inr / p.mrp_inr) * 100) : 0;
   return `
-    <article class="card" data-pid="${esc(p.product_id)}">
-      <div class="shot">${p.image
-        ? `<img loading="lazy" src="${esc(p.image)}" alt=""
-             onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ph',textContent:'${esc((p.name||'?').trim().charAt(0).toUpperCase())}'}))">`
-        : `<div class="ph">${esc((p.name || "?").trim().charAt(0).toUpperCase())}</div>`}
-        ${off >= 10 ? `<span class="off">${off}% off</span>` : ""}</div>
+    <article class="card" data-pid="${esc(p.product_id)}"
+      data-item='${esc(JSON.stringify({ product_id: p.product_id, name: p.name,
+        unit: p.unit, brand: p.brand, price_inr: p.price_inr, image: p.image,
+        in_stock: p.in_stock ? 1 : 0 }))}'>
+      <div class="shot">
+        ${placeholder(p)}
+        ${imgSrc(p) ? `<img loading="lazy" src="${esc(imgSrc(p))}" alt="" class="over"
+             onerror="this.remove()">` : ""}
+        ${off >= 10 ? `<span class="off">${off}% off</span>` : ""}
+        ${p.in_stock ? `<button class="quick" data-quick="${esc(p.product_id)}"
+            aria-label="Add ${esc(p.name)} to cart" title="Add to cart">+</button>` : ""}
+      </div>
       <div class="body">
         <div class="nm">${esc(p.name)}</div>
         <div class="meta">${esc(p.brand || "")}${p.brand && p.unit ? " · " : ""}${esc(p.unit || "")}</div>

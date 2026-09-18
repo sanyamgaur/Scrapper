@@ -166,13 +166,35 @@ button,input,select,textarea{font:inherit;color:inherit}
 :root[data-theme="dark"] .card .shot img,
 @media (prefers-color-scheme:dark){ .card .shot img{mix-blend-mode:normal} }
 /* Placeholder when a CDN image is missing or blocked — better than a void. */
-.card .ph,.shot .ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
-  background:var(--surface-2);color:var(--ink-3);font-size:30px;font-weight:700;
-  border-radius:var(--r-sm);letter-spacing:-.02em}
-.panel.shot .ph{font-size:76px}
-.thumb{background:#fff;display:flex;align-items:center;justify-content:center;
+/* Monogram placeholder. A tinted gradient keyed to the product id, so a missing
+   image reads as a designed state rather than a hole in the grid. */
+.ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+  font-size:30px;font-weight:700;letter-spacing:-.03em;border-radius:inherit;
+  background:linear-gradient(145deg,
+    hsl(var(--ph-h,30) 62% 94%), hsl(calc(var(--ph-h,30) + 24) 58% 88%));
+  color:hsl(var(--ph-h,30) 45% 38%);}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .ph{
+  background:linear-gradient(145deg,
+    hsl(var(--ph-h,30) 22% 20%), hsl(calc(var(--ph-h,30) + 24) 20% 15%));
+  color:hsl(var(--ph-h,30) 45% 72%);} }
+:root[data-theme="dark"] .ph{
+  background:linear-gradient(145deg,
+    hsl(var(--ph-h,30) 22% 20%), hsl(calc(var(--ph-h,30) + 24) 20% 15%));
+  color:hsl(var(--ph-h,30) 45% 72%);}
+.panel.shot .ph{font-size:84px}
+.thumb{background:var(--surface-2);display:flex;align-items:center;justify-content:center;
   overflow:hidden;flex:none}
-.thumb .ph{font-size:20px}
+.thumb .ph{font-size:19px}
+
+/* Quick-add, revealed on hover. Keyboard users get it via focus. */
+.quick{position:absolute;right:8px;bottom:8px;width:32px;height:32px;border-radius:var(--r-full);
+  border:1px solid var(--line-2);background:var(--surface);color:var(--ink);
+  font-size:19px;font-weight:600;line-height:1;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;box-shadow:var(--sh-2);
+  opacity:0;transform:translateY(4px);transition:opacity .16s,transform .16s,background .16s}
+.card:hover .quick,.quick:focus-visible{opacity:1;transform:translateY(0)}
+.quick:hover{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+@media(hover:none){ .quick{opacity:1;transform:none} }
 .card .off{position:absolute;top:8px;left:8px;background:var(--ok);color:#fff;
   font-size:10.5px;font-weight:700;padding:3px 7px;border-radius:var(--r-sm)}
 .card .body{padding:11px 12px 13px;display:flex;flex-direction:column;gap:5px;flex:1}
@@ -233,3 +255,72 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 main{min-height:70vh;padding:24px 0 80px}
 .foot{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--ink-3);font-size:12.5px}
+
+
+/* =============================================================================
+   Home
+   ========================================================================== */
+.hero{background:
+    radial-gradient(1200px 400px at 12% -10%, var(--accent-soft), transparent 70%),
+    linear-gradient(180deg, var(--surface), var(--bg));
+  border-bottom:1px solid var(--line);margin:-24px 0 26px;padding:52px 0 44px}
+.hero-in h1{font-size:clamp(30px,4.4vw,50px);line-height:1.07;letter-spacing:-.035em;
+  margin:0 0 14px;font-weight:700;max-width:14ch}
+.hero-in h1 em{font-style:normal;color:var(--accent)}
+.hero-in p{font-size:16px;color:var(--ink-2);max-width:56ch;margin:0 0 22px;line-height:1.6}
+.hero-cta{display:flex;gap:10px;flex-wrap:wrap}
+.hero-stats{display:flex;gap:34px;margin-top:34px;flex-wrap:wrap}
+.hero-stats div{display:flex;flex-direction:column}
+.hero-stats b{font-size:23px;font-weight:700;letter-spacing:-.02em}
+.hero-stats span{font-size:12.5px;color:var(--ink-3)}
+@media(max-width:560px){
+  .hero{padding:34px 0 30px;margin-bottom:20px}
+  .hero-stats{gap:20px;margin-top:24px}
+  .hero-stats b{font-size:19px}
+}
+
+/* Department tiles */
+.depts{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));
+  gap:12px;margin-bottom:40px}
+@media(max-width:560px){ .depts{grid-template-columns:repeat(2,1fr);gap:10px} }
+.dept{display:flex;flex-direction:column;justify-content:flex-end;gap:2px;
+  min-height:96px;padding:14px;border-radius:var(--r);border:1px solid var(--line);
+  background:linear-gradient(150deg,
+    hsl(calc(var(--d) + 18) 60% 96%), hsl(calc(var(--d) + 44) 52% 92%));
+  transition:transform .16s,box-shadow .16s}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .dept{
+  background:linear-gradient(150deg,
+    hsl(calc(var(--d) + 18) 22% 19%), hsl(calc(var(--d) + 44) 20% 14%));} }
+:root[data-theme="dark"] .dept{background:linear-gradient(150deg,
+  hsl(calc(var(--d) + 18) 22% 19%), hsl(calc(var(--d) + 44) 20% 14%));}
+.dept:hover{transform:translateY(-2px);box-shadow:var(--sh-2)}
+.dept-n{font-size:14.5px;font-weight:650;letter-spacing:-.01em;line-height:1.25}
+.dept-c{font-size:11.5px;color:var(--ink-3)}
+
+/* Rails scroll horizontally. A wrapping grid left an orphan card alone on a
+   second row whenever the item count did not divide by the column count. */
+.rail{margin-bottom:44px}
+.railscroll{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(196px,1fr);
+  gap:16px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x proximity;
+  scrollbar-width:thin}
+.railscroll > *{scroll-snap-align:start}
+.railscroll::-webkit-scrollbar{height:8px}
+.railscroll::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:var(--r-full)}
+.railscroll::-webkit-scrollbar-track{background:transparent}
+@media(max-width:560px){
+  .railscroll{grid-auto-columns:minmax(150px,1fr);gap:11px}
+}
+.rail-h{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
+  margin-bottom:14px;flex-wrap:wrap}
+
+/* Cards get a little more life now that images actually load. */
+/* The image lies over its monogram, so there is never a blank tile. */
+.shot,.thumb{position:relative}
+.shot .ph,.thumb .ph{position:absolute;inset:0}
+img.over{position:absolute;inset:0;margin:auto;max-width:100%;max-height:100%;
+  width:auto;height:auto;object-fit:contain;background:#fff}
+.card .shot img.over{padding:14px}
+.panel.shot img.over{padding:32px}
+.thumb img.over{background:var(--surface-2)}
+.card .shot img{transition:transform .28s ease}
+.card:hover .shot img{transform:scale(1.045)}

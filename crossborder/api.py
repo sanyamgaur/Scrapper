@@ -21,12 +21,13 @@ from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .basket import BasketBuilder
 from .db import connect, DB_PATH
+from .images import cache_path
 from .operator import OperatorFlow
 from .pricedrift import PriceDriftEngine
 from .pricing import PricingEngine
@@ -615,6 +616,27 @@ def drift_list(limit: int = Query(50, le=300)) -> dict:
         WHERE d.action != 'IGNORED' ORDER BY d.detected_at DESC LIMIT ?""", (limit,))]
     conn.close()
     return {"drift": rows}
+
+
+@app.get("/img/{product_id}")
+def product_image(product_id: str):
+    """Serve a product image from our own origin.
+
+    Falls back to redirecting at the source CDN when the local cache has not
+    been warmed, so the storefront works immediately and simply gets faster as
+    `crossborder.cli images` fills the cache.
+    """
+    conn = connect()
+    row = conn.execute("SELECT image FROM products WHERE product_id=?",
+                       (product_id,)).fetchone()
+    conn.close()
+    url = row["image"] if row else None
+    if not url:
+        raise HTTPException(404, "no image")
+    local = cache_path(url)
+    if local:
+        return FileResponse(local, headers={"Cache-Control": "public, max-age=604800"})
+    return RedirectResponse(url, status_code=307)
 
 
 # ------------------------------------------------------------------ pages ---

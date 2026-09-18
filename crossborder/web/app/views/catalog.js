@@ -103,4 +103,15 @@ export function wireCards(nav) {
   $$(".card[data-pid]").forEach((el) => {
     el.onclick = () => nav(`#/p/${el.dataset.pid}`);
   });
+  // Quick-add sits inside the card, so its click must not also navigate.
+  $$("[data-quick]").forEach((b) => {
+    b.onclick = (e) => {
+      e.stopPropagation();
+      const card = b.closest(".card");
+      const d = JSON.parse(card.dataset.item || "null");
+      if (!d) return;
+      store.add(d, 1);
+      toast("Added to cart");
+    };
+  });
 }

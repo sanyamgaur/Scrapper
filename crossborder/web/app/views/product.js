@@ -1,5 +1,5 @@
 import { api } from "../api.js";
-import { $, $$, esc, usd, inr, icon, toast, productCard, empty } from "../ui.js";
+import { $, $$, esc, usd, inr, icon, toast, productCard, empty, placeholder, imgSrc } from "../ui.js";
 import { store } from "../store.js";
 import { wireCards } from "./catalog.js";
 
@@ -44,11 +44,9 @@ export async function mount(params, nav) {
              top:calc(var(--header-h) + 16px)">
           <div style="aspect-ratio:1;background:#fff;display:flex;align-items:center;
                       justify-content:center;padding:32px">
-            ${p.image
-              ? `<img src="${esc(p.image)}" alt="${esc(p.name)}"
-                   style="max-height:100%;object-fit:contain"
-                   onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ph',textContent:'${esc((p.name || "?").trim().charAt(0).toUpperCase())}'}))">`
-              : `<div class="ph">${esc((p.name || "?").trim().charAt(0).toUpperCase())}</div>`}
+            ${placeholder(p)}
+            ${imgSrc(p) ? `<img src="${esc(imgSrc(p))}" alt="${esc(p.name)}" class="over"
+                 onerror="this.remove()">` : ""}
           </div>
         </div>
       </div>

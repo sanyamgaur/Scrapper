@@ -7,3 +7,4 @@ crossborder.db-shm
 blinkit.db
 blinkit.db-wal
 blinkit.db-shm
+image_cache/
