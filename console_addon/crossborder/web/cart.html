@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sourced — Cart run</title>
+<style>
+  :root{
+    --bg:#fbfaf8; --panel:#fff; --ink:#1a1a1a; --muted:#6b6b6b; --line:#e6e3dd;
+    --accent:#c2410c; --ok:#15803d; --warn:#a16207; --bad:#b91c1c; --info:#1d4ed8;
+    --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 14px rgba(0,0,0,.04);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#14130f; --panel:#1e1c18; --ink:#f2efe9; --muted:#a09a90; --line:#302d27;
+    --accent:#fb923c; --ok:#4ade80; --warn:#fbbf24; --bad:#f87171; --info:#93c5fd;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+  }}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  header{background:var(--panel);border-bottom:1px solid var(--line);padding:14px 18px}
+  .wrap{max-width:940px;margin:0 auto;padding:0 18px}
+  h1{margin:0;font-size:18px;letter-spacing:-.02em}
+  h1 em{font-style:normal;color:var(--muted);font-weight:400}
+  main{max-width:940px;margin:0 auto;padding:18px 18px 80px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    box-shadow:var(--shadow);padding:14px 16px;margin-bottom:14px}
+  .funnel{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+  .fn{flex:1;min-width:104px;background:var(--bg);border:1px solid var(--line);
+    border-radius:8px;padding:8px 10px}
+  .fn .k{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .fn .v{font-size:19px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .fn.ok .v{color:var(--ok)} .fn.bad .v{color:var(--bad)}
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
+  th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .n{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+  tr.short td{background:color-mix(in srgb,var(--warn) 10%,transparent)}
+  tr.over td{background:color-mix(in srgb,var(--bad) 10%,transparent)}
+  a.inl{color:var(--info);text-decoration:none} a.inl:hover{text-decoration:underline}
+  .pill{font-size:10px;padding:2px 6px;border-radius:5px;font-weight:600}
+  .pill.CRITICAL{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+  .pill.HIGH{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+  .pill.NORMAL{background:color-mix(in srgb,var(--muted) 15%,transparent);color:var(--muted)}
+  .muted{color:var(--muted);font-size:12.5px}
+  .linkrow{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+  .linkrow code{flex:1;min-width:200px;font-size:12px;background:var(--bg);
+    border:1px solid var(--line);border-radius:6px;padding:6px 9px;overflow:auto;white-space:nowrap}
+  button{font:inherit;cursor:pointer;border-radius:7px;padding:6px 12px;font-size:13px;
+    font-weight:600;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+  button:hover{border-color:var(--accent);color:var(--accent)}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>Sourced <em>· Cart run <span id="sid"></span></em></h1>
+  <div class="funnel" id="funnel"></div>
+</div></header>
+<main>
+  <div class="card">
+    <div class="linkrow"><span class="muted">This link:</span>
+      <code id="selfUrl"></code>
+      <button onclick="copyText(document.getElementById('selfUrl').textContent)">Copy</button></div>
+    <div class="linkrow"><span class="muted">Blinkit cart:</span>
+      <code id="cartUrl"></code>
+      <button onclick="copyText(document.getElementById('cartUrl').textContent)">Copy</button>
+      <a id="cartOpen" href="#" target="_blank"><button class="primary">Open cart ↗</button></a></div>
+  </div>
+  <div class="card">
+    <b>Everything added, item by item</b>
+    <div id="items"><p class="muted">Loading…</p></div>
+  </div>
+</main>
+<script>
+const fmt = n => (n==null?'–':Number(n).toLocaleString());
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,
+  c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function copyText(t){ navigator.clipboard?.writeText(t); }
+
+const SID = decodeURIComponent(location.pathname.split('/').filter(Boolean).pop() || '');
+
+async function load(){
+  document.getElementById('sid').textContent = SID;
+  document.getElementById('selfUrl').textContent = location.origin + location.pathname;
+  const r = await fetch(`/api/ops/cart/session/${encodeURIComponent(SID)}/summary`);
+  if(!r.ok){ document.getElementById('items').innerHTML =
+    '<p class="muted">This cart run no longer exists.</p>'; return; }
+  const j = await r.json();
+
+  document.getElementById('cartUrl').textContent = j.blinkit_cart_url;
+  document.getElementById('cartOpen').href = j.blinkit_cart_url;
+
+  const t = j.totals;
+  document.getElementById('funnel').innerHTML = [
+    ['Batch', j.batch_id || '—', ''],
+    ['Store', j.merchant_id || '—', ''],
+    ['Items added', `${t.n_added}/${t.n_items}`, 'ok'],
+    ['Units added', t.qty_added, 'ok'],
+    ['Cart value', '₹'+fmt(Math.round(t.value_inr)), ''],
+    ['Short lines', t.n_short, t.n_short ? 'bad' : 'ok'],
+    ['Status', j.status || '—', ''],
+  ].map(([k,v,c])=>`<div class="fn ${c}"><div class="k">${esc(k)}</div>
+      <div class="v">${esc(v)}</div></div>`).join('');
+
+  document.getElementById('items').innerHTML =
+    `<table><thead><tr><th>#</th><th>Item</th><th>Added</th><th>Wanted</th>
+      <th>Cart limit</th><th>Risk</th></tr></thead><tbody>` +
+    j.items.map(i=>`<tr class="${i.over_limit?'over':(i.short_by?'short':'')}">
+      <td class="n">${i.seq}</td>
+      <td><a class="inl" href="${esc(i.product_url)}" target="_blank">${esc(i.name)}</a>
+        <div class="muted">${esc(i.product_id)}${i.short_by?` · ${i.short_by} short`:''}</div></td>
+      <td class="n">×${i.qty_added||0}</td>
+      <td class="n">×${i.qty_planned||0}</td>
+      <td class="n">${i.max_qty} <span class="muted">${esc(i.limit_source||'')} ·
+        ${esc(i.limit_reason||'')}</span></td>
+      <td><span class="pill ${esc(i.risk_bucket||'NORMAL')}">${esc(i.risk_bucket||'NORMAL')}</span></td>
+      </tr>`).join('') + `</tbody></table>
+    <p class="muted">Quantities are what went into the Blinkit cart. A limit is the most units of
+      that item one cart accepts; anything wanted beyond it needs another cart pass.</p>`;
+}
+load();
+</script>
+</body>
+</html>

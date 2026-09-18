@@ -1,0 +1,65 @@
+Sourced — Control Tower add-on
+==============================
+Drop these files into your existing sourced-full-system folder (they sit
+alongside crossborder/, tests/, inventory_delhi.csv, crossborder.db). None of
+your original files are changed; these only ADD a control page and endpoints.
+
+Files:
+  crossborder/console.py        new API endpoints + the /console page
+  crossborder/cart.py           the Blinkit cart run + per-item cart limits
+  crossborder/web/console.html  the single control-tower page
+  crossborder/web/cart.html     the final link a finished cart run hands back
+  run_console.py                starts everything on one port
+  start-windows.bat             double-click launcher (Windows)
+  start-mac-linux.command       double-click launcher (mac/Linux)
+
+To run — Windows: double-click start-windows.bat
+         mac/Linux: double-click start-mac-linux.command (or `python3 run_console.py`)
+Your browser opens at http://127.0.0.1:8000/console. Do everything from there.
+Close the launcher window to stop the server.
+
+Demo path (all buttons, no terminal):
+  Step 1  Run listability rules · Score stockout risk
+  Step 2  Load pending clusters — Clear/Kill a cluster live
+  Step 3  Prime live stock — then Open storefront and place an order,
+          OR skip to step 4 and seed sample orders
+  Step 4  Seed sample orders · Build batch · Build Blinkit cart ·
+          Simulate operator buys · Reconcile · Pack-out bins
+  Step 5  Top stockout risk · Detect restocks · Sweep price drift
+
+Buying the batch (step 4, "Build Blinkit cart")
+-----------------------------------------------
+The buy sheet used to be a page of separate product links with a quantity
+printed beside each. A Blinkit link cannot carry a quantity -- the cart lives in
+the Blinkit session, not in the URL -- so those quantities were advisory, and
+nothing said how many units of a SKU a cart would even accept.
+
+"Build Blinkit cart" replaces that with one guided run per dark store:
+
+  * the batch's lines are consolidated per SKU and ordered riskiest first;
+  * every item carries its own cart limit -- the most units of that SKU one
+    cart takes. Hover it to see every cap considered and which one bound it;
+  * you add the items one at a time, in the same Blinkit tab, and each add is
+    recorded against that limit. Type a quantity above it and the row flags
+    immediately, before you ever reach checkout; the server re-checks the limit
+    on every add, so a stale page cannot slip one through;
+  * an item the batch wants more of than one cart accepts says how many cart
+    passes it needs;
+  * "Finish cart" hands back two links: one permalink listing every product
+    added with its quantity, and the Blinkit cart itself.
+
+The run is stored, so reloading the page mid-run keeps your progress, and the
+final link keeps working after the tab is closed.
+
+Where the limit comes from: if BLINKIT_SESSION points at a scraper session file
+(the one discover.py writes), the limit is read live from Blinkit's own product
+payload. Otherwise it is computed from data the system already has -- stock,
+stockout risk, the Rs.15k cart-value cap and parcel weight -- and the tightest
+of those wins. Live numbers are cached for six hours, computed ones for ten
+minutes so the next run tries Blinkit again. Outside India the live probe is
+refused and it falls back silently, which is the normal case for a US host.
+
+"Prime live stock" is demo-only: it stands in for the availability engine so
+checkout can succeed. In production the availability engine writes those
+readings instead. Reset a demo by deleting stock_checks/orders rows, or just
+keep going — every row written is real, not mocked.

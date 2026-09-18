@@ -129,6 +129,20 @@ sqlite3 blinkit.db "SELECT name, price, mrp, discount_pct FROM products
                     WHERE mrp IS NOT NULL ORDER BY discount_pct DESC LIMIT 20;"
 ```
 
+## Control-tower add-on (`console_addon/`)
+
+Files that belong to the downstream cross-border system, not to the crawler:
+drop `console_addon/crossborder/*` next to that project's `crossborder/` package
+and run its `run_console.py`. `console_addon/READ-ME-FIRST.txt` has the details.
+
+The part that touches this repo is the **cart run**: a buying batch becomes one
+Blinkit cart per dark store, added item by item with a per-item cart limit shown
+and enforced as the quantity is typed, ending in one link for everything added
+plus the Blinkit cart link. When `BLINKIT_SESSION` points at a session file
+`discover.py` wrote, that limit is read live from Blinkit's own product payload
+(the same `max_quantity` / `inventory` keys `blinkit_parse.py` knows about);
+otherwise it is computed from stock, stockout risk, cart value and parcel weight.
+
 ## Before you run this
 
 Scraping Blinkit is against their Terms of Service, and the catalog may be

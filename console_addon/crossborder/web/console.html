@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sourced — Control Tower</title>
+<style>
+  :root{
+    --bg:#fbfaf8; --panel:#fff; --ink:#1a1a1a; --muted:#6b6b6b; --line:#e6e3dd;
+    --accent:#c2410c; --ok:#15803d; --warn:#a16207; --bad:#b91c1c; --info:#1d4ed8;
+    --radius:10px; --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 14px rgba(0,0,0,.04);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#14130f; --panel:#1e1c18; --ink:#f2efe9; --muted:#a09a90; --line:#302d27;
+    --accent:#fb923c; --ok:#4ade80; --warn:#fbbf24; --bad:#f87171; --info:#93c5fd;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+  }}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  header{background:var(--panel);border-bottom:1px solid var(--line);padding:14px 18px;position:sticky;top:0;z-index:5}
+  .wrap{max-width:1180px;margin:0 auto}
+  h1{margin:0;font-size:18px;letter-spacing:-.02em}
+  h1 em{font-style:normal;color:var(--muted);font-weight:400}
+  .links{float:right;display:flex;gap:8px}
+  .links a{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--line);padding:6px 10px;border-radius:7px}
+  .links a:hover{border-color:var(--accent);color:var(--accent)}
+  /* funnel strip */
+  .funnel{display:flex;gap:6px;align-items:stretch;margin-top:12px;flex-wrap:wrap}
+  .fn{flex:1;min-width:96px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+  .fn .k{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .fn .v{font-size:19px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .fn.ok .v{color:var(--ok)} .fn.warn .v{color:var(--warn)} .fn.bad .v{color:var(--bad)} .fn.info .v{color:var(--info)}
+  main{max-width:1180px;margin:0 auto;padding:18px 18px 120px}
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+  .step > .hd{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:10px}
+  .step .no{font-size:12px;font-weight:700;color:#fff;background:var(--accent);border-radius:20px;padding:2px 9px}
+  .step h2{font-size:15px;margin:0}
+  .step .desc{font-size:12.5px;color:var(--muted)}
+  .body{padding:14px 16px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  button{font:inherit;cursor:pointer;border-radius:7px;padding:7px 13px;font-size:13px;font-weight:600;
+    border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+  button:hover{border-color:var(--accent);color:var(--accent)}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.primary:hover{filter:brightness(1.08);color:#fff}
+  button:disabled{opacity:.5;cursor:progress}
+  button.ok{border-color:var(--ok);color:var(--ok)} button.ok:hover{background:var(--ok);color:#fff}
+  button.bad{border-color:var(--bad);color:var(--bad)} button.bad:hover{background:var(--bad);color:#fff}
+  input[type=text],input[type=number]{font:inherit;padding:6px 9px;border:1px solid var(--line);
+    border-radius:7px;background:var(--bg);color:var(--ink);width:150px}
+  .out{margin-top:11px;font-size:12.5px;white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;
+    background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:none;max-height:340px;overflow:auto}
+  .out.show{display:block}
+  .muted{color:var(--muted);font-size:12.5px}
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+  th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .n{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+  .pill{font-size:10px;padding:2px 6px;border-radius:5px;font-weight:600}
+  .pill.CRITICAL{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+  .pill.HIGH{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+  .pill.NORMAL{background:color-mix(in srgb,var(--muted) 15%,transparent);color:var(--muted)}
+  .tag{display:inline-block;font-size:11px;padding:2px 7px;border-radius:5px;border:1px solid var(--line);color:var(--muted)}
+  .flash{animation:fl 1s ease}
+  @keyframes fl{0%{background:color-mix(in srgb,var(--ok) 25%,transparent)}100%{background:transparent}}
+  a.inl{color:var(--info);text-decoration:none} a.inl:hover{text-decoration:underline}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+  /* self-documenting bits */
+  details.guide{margin-top:12px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:0}
+  details.guide>summary{cursor:pointer;padding:11px 14px;font-weight:700;font-size:13.5px;list-style:none}
+  details.guide>summary::-webkit-details-marker{display:none}
+  details.guide>summary::before{content:"▸ ";color:var(--accent)}
+  details.guide[open]>summary::before{content:"▾ "}
+  .guide .gbody{padding:2px 16px 14px;font-size:13px}
+  .guide h4{margin:14px 0 4px;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--accent)}
+  .guide ol{margin:4px 0;padding-left:20px} .guide li{margin:3px 0}
+  .guide code{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:12px}
+  .cap{font-size:12.5px;color:var(--muted);margin:8px 0 0}
+  .cap b{color:var(--ink);font-weight:600}
+  details.whatdo{margin-top:10px}
+  details.whatdo>summary{cursor:pointer;font-size:12.5px;color:var(--info);list-style:none}
+  details.whatdo>summary::-webkit-details-marker{display:none}
+  details.whatdo>summary::before{content:"ⓘ what each button does";}
+  details.whatdo[open]>summary::before{content:"ⓘ hide";}
+  details.whatdo table{margin-top:8px}
+  details.whatdo td:first-child{white-space:nowrap;font-weight:600;color:var(--ink)}
+  .legend2{font-size:11.5px;color:var(--muted);margin-top:8px}
+  .demoflag{display:inline-block;font-size:10px;font-weight:700;color:var(--warn);
+    border:1px solid var(--warn);border-radius:4px;padding:0 5px;margin-left:6px;vertical-align:middle}
+  /* cart run */
+  .cart{border:1px solid var(--line);border-radius:10px;margin-top:12px;overflow:hidden}
+  .cart .chd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:10px 13px;background:var(--bg);border-bottom:1px solid var(--line)}
+  .cart .chd b{font-size:13.5px}
+  .prog{flex:1;min-width:120px;height:6px;background:var(--line);border-radius:4px;overflow:hidden}
+  .prog i{display:block;height:100%;background:var(--ok);width:0;transition:width .25s}
+  tr.item.active{background:color-mix(in srgb,var(--info) 8%,transparent)}
+  tr.item.added{opacity:.72}
+  tr.item.over td{background:color-mix(in srgb,var(--bad) 10%,transparent)}
+  .qty{display:inline-flex;align-items:center;gap:3px}
+  .qty button{padding:2px 8px;font-size:13px;line-height:1.3}
+  .qty input{width:54px;text-align:center;font-variant-numeric:tabular-nums}
+  tr.item.over .qty input{border-color:var(--bad);color:var(--bad)}
+  .caplim{font-size:11px;color:var(--muted);white-space:nowrap;cursor:help;
+    border-bottom:1px dotted var(--line)}
+  .caplim b{color:var(--ink)}
+  .caplim.live b{color:var(--ok)}
+  .warnline{font-size:11.5px;color:var(--bad);font-weight:600;margin-top:3px}
+  .banner{display:none;margin-top:10px;padding:9px 12px;border-radius:8px;font-size:13px;
+    border:1px solid var(--bad);color:var(--bad);
+    background:color-mix(in srgb,var(--bad) 9%,transparent);font-weight:600}
+  .banner.show{display:block}
+  .finalbox{display:none;margin-top:12px;padding:12px 14px;border:1px solid var(--ok);
+    border-radius:10px;background:color-mix(in srgb,var(--ok) 7%,transparent)}
+  .finalbox.show{display:block}
+  .finalbox h3{margin:0 0 8px;font-size:13.5px}
+  .linkrow{display:flex;gap:8px;align-items:center;margin-top:7px;flex-wrap:wrap}
+  .linkrow code{flex:1;min-width:200px;font-size:12px;background:var(--panel);
+    border:1px solid var(--line);border-radius:6px;padding:6px 9px;overflow:auto;white-space:nowrap}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="links">
+    <a href="/" target="_blank" title="The US customer-facing shop">Storefront ↗</a>
+    <a href="/ops" target="_blank" title="Full compliance triage UI">Ops queue ↗</a>
+    <a href="/docs" target="_blank" title="Auto-generated list of every API endpoint">API docs ↗</a>
+  </div>
+  <h1>Sourced <em>· Control Tower</em></h1>
+  <div class="funnel" id="funnel"></div>
+  <div class="legend2">Funnel strip is live — it refreshes after every action and every 8s.
+    <b>Catalogue</b> = SKUs crawled · <b>Allowed</b> = listable · <b>Live stock rows</b> turns red until you prime stock in step 3.</div>
+
+  <details class="guide">
+    <summary>How to run the demo — read me</summary>
+    <div class="gbody">
+      <h4>Do the steps top to bottom</h4>
+      <ol>
+        <li><b>Catalogue pipeline</b> — <i>Run listability rules</i>, then <i>Score stockout risk</i>. Watch the strip split into Blocked / In review / Allowed.</li>
+        <li><b>Compliance queue</b> — <i>Load pending clusters</i>, then <i>Clear</i> or <i>Kill</i> one row and watch the Allowed/Blocked counts move.</li>
+        <li><b>Storefront & stock</b> — <i>Prime live stock</i> (turns "Live stock rows" green), then <i>Open storefront</i> and place an order.</li>
+        <li><b>Fulfilment</b> — <i>Seed sample orders</i> → <i>Build batch</i> → <i>Build Blinkit cart</i> (add each item, watch the per-item limit) → <i>Simulate operator buys</i> → <i>Reconcile</i> → <i>Pack-out bins</i>.</li>
+        <li><b>Signals</b> — <i>Top stockout risk</i>, <i>Detect restocks</i>, <i>Sweep price drift</i>.</li>
+      </ol>
+      <h4>Words you'll see</h4>
+      <ol style="list-style:none;padding-left:0">
+        <li><b>Verdict</b> — Allowed (listable) / Review (needs a human) / Blocked (never listed).</li>
+        <li><b>Cluster</b> — a group of SKUs sharing one shelf + one rule; one Clear/Kill moves the whole group.</li>
+        <li><b>Prime live stock</b> — writes a fresh stock reading so checkout can pass. <span class="demoflag">demo</span> stands in for the availability engine.</li>
+        <li><b>Batch</b> — one day's orders sealed for buying, split into carts per dark store.</li>
+        <li><b>Short</b> — an order that couldn't be fully bought; reconcile fills smallest orders first.</li>
+        <li><b>Cart limit</b> — the most units of one SKU a single Blinkit cart will take. Unique per item: stock, stockout risk, the ₹15k cart value cap and parcel weight each bind it, and the tightest one wins. Live from Blinkit when a scraper session is configured, otherwise computed from those inputs — hover the limit to see which one bound it.</li>
+        <li><b>Cart run</b> — one guided pass over a cart: items in order, one Blinkit tab, each add recorded against its limit, ending in a link to everything added.</li>
+        <li><b>Risk bucket</b> — CRITICAL / HIGH / NORMAL likelihood a SKU goes out of stock.</li>
+      </ol>
+      <h4>Note for your manager</h4>
+      <ol style="list-style:none;padding-left:0">
+        <li>Buttons marked <span class="demoflag">demo</span> substitute for a live scraper/availability engine so the funnel can be shown offline. Everything else runs the real engines on the real database.</li>
+      </ol>
+    </div>
+  </details>
+</div></header>
+
+<main>
+  <!-- 1 CATALOGUE PIPELINE -->
+  <section class="step">
+    <div class="hd"><span class="no">1</span><h2>Catalogue pipeline</h2>
+      <span class="desc">Turn the raw crawl into verdicts: what may be listed, what needs review, what's banned.</span></div>
+    <div class="body">
+      <div class="row">
+        <input type="text" id="ingestCsv" value="inventory_delhi.csv">
+        <button title="Load the crawl CSV into the database (already done for you)" onclick="run(this,'/api/ops/pipeline/ingest','out1',{csv:document.getElementById('ingestCsv').value})">Ingest catalogue</button>
+        <button class="primary" title="Apply keyword/shelf/aisle/pack rules to every SKU" onclick="run(this,'/api/ops/pipeline/classify','out1')">Run listability rules</button>
+        <button title="Score how likely each SKU is to go out of stock" onclick="run(this,'/api/ops/pipeline/risk','out1')">Score stockout risk</button>
+        <span class="muted">LLM tail <span class="demoflag">optional</span> needs API key:</span>
+        <input type="number" id="llmLimit" value="200" style="width:90px">
+        <button title="Ask the LLM to classify SKUs no rule matched" onclick="run(this,'/api/ops/pipeline/llm','out1',{limit:+document.getElementById('llmLimit').value})">Classify tail</button>
+      </div>
+      <p class="cap"><b>What happens:</b> the buttons rebuild verdicts from your rules. The result box shows the Allowed / Review / Blocked counts, and the top strip updates.</p>
+      <details class="whatdo"><summary></summary><table>
+        <tr><td>Ingest catalogue</td><td>Loads <code>inventory_delhi.csv</code> into the products table and parses every pack size to a weight. Already done — only needed after a fresh crawl.</td></tr>
+        <tr><td>Run listability rules</td><td>The core engine. Runs 39 keyword + 71 shelf + 9 aisle + pack rules; worst verdict wins. Turns 31k SKUs into ~6k Allowed / ~22k Review / ~3.5k Blocked.</td></tr>
+        <tr><td>Score stockout risk</td><td>Weighs out-of-stock history, flip rate and discount depth into a CRITICAL/HIGH/NORMAL score used to order the buy sheet and filter basket add-ons.</td></tr>
+        <tr><td>Classify tail</td><td>Sends the ~9k SKUs no rule matched to the LLM in batches. Does nothing without an API key — safe to skip for the demo.</td></tr>
+      </table></details>
+      <div class="out" id="out1"></div>
+    </div>
+  </section>
+
+  <!-- 2 COMPLIANCE / REVIEW QUEUE -->
+  <section class="step">
+    <div class="hd"><span class="no">2</span><h2>Compliance review queue</h2>
+      <span class="desc">21k "needs a human" SKUs collapse into ~530 clusters. One decision moves a whole cluster.</span></div>
+    <div class="body">
+      <div class="row">
+        <button title="Show the pending clusters, biggest first" onclick="loadQueue()">Load pending clusters</button>
+        <button title="Show what's banned and the legal/carrier reason" onclick="loadBlocked()">Show what's blocked & why</button>
+        <span class="muted">Full triage UI: <a class="inl" href="/ops" target="_blank">/ops ↗</a></span>
+      </div>
+      <p class="cap"><b>What happens:</b> a table appears. On each row, <b>Clear</b> makes every SKU in that cluster listable; <b>Kill</b> bans them. The decision sticks even if you re-run the rules.</p>
+      <details class="whatdo"><summary></summary><table>
+        <tr><td>Load pending clusters</td><td>Lists undecided clusters (shelf × rule) with SKU count and sample names, largest first.</td></tr>
+        <tr><td>Clear (per row)</td><td>Marks the whole cluster ALLOWED — a human override that beats the rules.</td></tr>
+        <tr><td>Kill (per row)</td><td>Marks the whole cluster BLOCKED — never listed.</td></tr>
+        <tr><td>Show what's blocked & why</td><td>Audit view: each blocking rule, how many SKUs it caught, and its cited authority (e.g. 9 CFR, IATA).</td></tr>
+      </table></details>
+      <div id="queueBox"></div>
+      <div class="out" id="out2"></div>
+    </div>
+  </section>
+
+  <!-- 3 STOREFRONT + LIVE STOCK -->
+  <section class="step">
+    <div class="hd"><span class="no">3</span><h2>Storefront &amp; live-stock gate</h2>
+      <span class="desc">Make stock "live" so checkout can pass, then shop as a US customer.</span></div>
+    <div class="body">
+      <div class="row">
+        <button class="primary" title="Write a fresh stock reading for every listable SKU" onclick="run(this,'/api/ops/demo/prime-stock','out3',{only_allowed:true})">Prime live stock <span class="demoflag">demo</span></button>
+        <a href="/" target="_blank"><button title="Open the customer shop in a new tab">Open storefront ↗</button></a>
+        <span class="muted">Without a recent stock reading, every checkout fails closed on purpose.</span>
+      </div>
+      <p class="cap"><b>What happens:</b> "Prime live stock" turns the strip's <b>Live stock rows</b> green. Now go to the storefront, add an in-stock item, and checkout succeeds and creates an order.</p>
+      <details class="whatdo"><summary></summary><table>
+        <tr><td>Prime live stock <span class="demoflag">demo</span></td><td>Records the crawl's in-stock flag as a live reading for the ~6k Allowed SKUs. In production the availability engine does this continuously; here it's one click so the demo works offline.</td></tr>
+        <tr><td>Open storefront ↗</td><td>The real shop: filters, landed-cost breakdown, carrier options, cart, and a checkout that re-checks stock at the moment of sale.</td></tr>
+      </table></details>
+      <div class="out" id="out3"></div>
+    </div>
+  </section>
+
+  <!-- 4 FULFILMENT -->
+  <section class="step">
+    <div class="hd"><span class="no">4</span><h2>Fulfilment funnel</h2>
+      <span class="desc">Orders → one daily batch → operator buys in Delhi → reconcile → per-customer parcels.</span></div>
+    <div class="body">
+      <div class="row">
+        <input type="number" id="seedN" value="4" style="width:70px">
+        <button title="Create sample US orders that share one SKU" onclick="run(this,'/api/ops/demo/seed-orders','out4',{n_orders:+document.getElementById('seedN').value,items_per_order:3},refreshState)">Seed sample orders <span class="demoflag">demo</span></button>
+        <span class="muted">or place real ones on the storefront.</span>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <input type="text" id="batchDate" title="Batch date — defaults to today" style="width:130px">
+        <button class="primary" title="Seal today's orders into one buying batch" onclick="buildBatch()">Build batch</button>
+        <button title="Build one Blinkit cart per store and walk it item by item, with each item's cart limit" onclick="startCartRun()">Build Blinkit cart</button>
+        <button title="Show the operator's shopping list, riskiest first" onclick="showPicksheet()">View buy sheet</button>
+        <button class="ok" title="Mark the batch as bought, leaving one line short" onclick="simulateBuys()">Simulate operator buys <span class="demoflag">demo</span></button>
+        <button title="Allocate what was bought to orders, smallest first" onclick="reconcile()">Reconcile</button>
+        <button title="Show one parcel per customer with weight" onclick="packout()">Pack-out bins</button>
+        <a id="opLink" href="#" target="_blank" style="display:none"><button>Open operator sheet ↗</button></a>
+      </div>
+      <p class="cap"><b>What happens:</b> orders consolidate into carts by dark store. <b>Build Blinkit cart</b> turns each cart into one guided run: every item added in order, in a single Blinkit tab, with its own limit enforced as you type — and one final link at the end. Simulating buys leaves one line short on purpose, so <b>Reconcile</b> shows some parcels complete and one short.</p>
+      <details class="whatdo"><summary></summary><table>
+        <tr><td>Seed sample orders <span class="demoflag">demo</span></td><td>Creates N US orders (real rows) all sharing one SKU, so consolidation and shorting are visible. Or place real orders via the storefront.</td></tr>
+        <tr><td>Build batch</td><td>Seals all un-batched orders into <code>PB-&lt;date&gt;</code>: merges duplicate SKUs, orders lines by risk × dollars, splits into carts (≤40 lines, ≤₹15k, ≤6/SKU).</td></tr>
+        <tr><td>Build Blinkit cart</td><td>The buying run. Consolidates the batch into one cart per dark store, computes each item's own cart limit (live from Blinkit when a scraper session is configured, otherwise from stock, risk, cart value and parcel weight), and walks you item by item — same Blinkit tab, quantity recorded per item, over-limit quantities flagged the moment you type them. Ends with the link to everything added plus the Blinkit cart link.</td></tr>
+        <tr><td>View buy sheet</td><td>The flat list, unchanged: each cart's items with a Blinkit link + a <b>search</b> fallback, riskiest first. Useful for printing; the cart run is what you buy from.</td></tr>
+        <tr><td>Simulate operator buys <span class="demoflag">demo</span></td><td>Marks every line bought, leaving the biggest line one unit short — stands in for a person tapping through the operator sheet.</td></tr>
+        <tr><td>Reconcile</td><td>Assigns bought units to orders, smallest first (ties: oldest). Full fill = complete; otherwise short.</td></tr>
+        <tr><td>Pack-out bins</td><td>One bin per customer with ship-to and parcel weight; marks each complete or short.</td></tr>
+        <tr><td>Open operator sheet ↗</td><td>Appears after Build batch — the real mobile buy sheet you'd hand a buyer instead of simulating.</td></tr>
+      </table></details>
+      <div id="fulfilBox"></div>
+      <div class="out" id="out4"></div>
+    </div>
+  </section>
+
+  <!-- 5 SIGNALS -->
+  <section class="step">
+    <div class="hd"><span class="no">5</span><h2>Live signals</h2>
+      <span class="desc">The background engines that keep the catalogue honest between crawls.</span></div>
+    <div class="body">
+      <div class="row">
+        <button title="List the SKUs most likely to be unavailable" onclick="loadRisk()">Top stockout risk</button>
+        <button title="Find items back in stock, ready to relist" onclick="run(this,'/api/ops/pipeline/restock','out5',null,refreshState)">Detect restocks</button>
+        <button title="Find prices that moved enough to reprice or delist" onclick="run(this,'/api/ops/pipeline/drift?limit=500','out5',null,refreshState)">Sweep price drift</button>
+      </div>
+      <p class="cap"><b>What happens:</b> each button runs one engine and shows results inline. These normally run on a schedule; the buttons let you demo them on demand.</p>
+      <details class="whatdo"><summary></summary><table>
+        <tr><td>Top stockout risk</td><td>Shows the CRITICAL-bucket SKUs from the risk engine — the ones a buyer should grab first.</td></tr>
+        <tr><td>Detect restocks</td><td>Flags out-of-stock → in-stock transitions; stable ones become relist candidates, flappy ones are held.</td></tr>
+        <tr><td>Sweep price drift</td><td>Compares current vs quoted prices; a drop reprices quietly, a rise flags reprice, a viability-breaking rise flags delist.</td></tr>
+      </table></details>
+      <div id="signalBox"></div>
+      <div class="out" id="out5"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const fmt = n => (n==null?'–':Number(n).toLocaleString());
+
+async function api(path, body){
+  const opt = body===undefined ? {} :
+    {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)};
+  const r = await fetch(path, opt);
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw Object.assign(new Error(j.detail||r.statusText), {status:r.status, body:j});
+  return j;
+}
+
+// generic button runner: disables, POSTs, prints JSON, refreshes funnel
+async function run(btn, path, outId, body, after){
+  const out = $('#'+outId); const label = btn.textContent;
+  btn.disabled = true; btn.textContent = '…';
+  try{
+    const j = await api(path, body||{});
+    out.textContent = JSON.stringify(j, null, 2);
+    out.classList.add('show','flash'); setTimeout(()=>out.classList.remove('flash'),1000);
+    refreshState(); if(after) after(j);
+  }catch(e){
+    out.textContent = 'Error: '+(e.message||e)+(e.body?'\n'+JSON.stringify(e.body,null,2):'');
+    out.classList.add('show');
+  }finally{ btn.disabled=false; btn.textContent=label; }
+}
+
+// ---- funnel strip ----
+async function refreshState(){
+  let s; try{ s = await api('/api/ops/console/state'); }catch{ return; }
+  const v = s.verdicts||{};
+  const cells = [
+    ['Catalogue', s.products, ''],
+    ['Blocked', v.BLOCKED||0, 'bad'],
+    ['In review', v.REVIEW||0, 'warn'],
+    ['Allowed', v.ALLOWED||0, 'ok'],
+    ['Listable in stock', s.listable_in_stock, 'ok'],
+    ['Live stock rows', s.stock_checks, s.stock_checks? 'info':'bad'],
+    ['Orders', s.orders, 'info'],
+    ['Batches', s.batches, 'info'],
+  ];
+  $('#funnel').innerHTML = cells.map(([k,val,cls])=>
+    `<div class="fn ${cls}"><div class="k">${k}</div><div class="v">${fmt(val)}</div></div>`).join('');
+}
+
+// ---- queue ----
+async function loadQueue(){
+  const {clusters} = await api('/api/ops/queue?status=PENDING&limit=25');
+  $('#queueBox').innerHTML = `<table><thead><tr><th>SKUs</th><th>Shelf</th><th>Rule / dimension</th><th></th></tr></thead><tbody>`+
+    clusters.map(c=>`<tr>
+      <td class="n">${fmt(c.sku_count)}</td>
+      <td>${esc(c.group_name||'—')}<div class="muted">${esc((c.sample_names||'').slice(0,70))}</div></td>
+      <td>${esc(c.rule_id)} <span class="tag">${esc(c.dimension||'')}</span></td>
+      <td class="row" style="gap:6px">
+        <button class="ok" onclick="decide('${jsq(c.cluster_id)}','CLEARED')">Clear</button>
+        <button class="bad" onclick="decide('${jsq(c.cluster_id)}','KILLED')">Kill</button></td></tr>`).join('')+
+    `</tbody></table>`;
+}
+async function decide(id, decision){
+  const j = await api('/api/ops/decide', {cluster_id:id, decision, reviewer:'demo'});
+  $('#out2').textContent = `${decision}: ${fmt(j.skus_affected)} SKUs moved.`;
+  $('#out2').classList.add('show'); loadQueue(); refreshState();
+}
+async function loadBlocked(){
+  const {rules} = await api('/api/ops/blocked');
+  $('#queueBox').innerHTML = `<table><thead><tr><th>SKUs</th><th>Rule</th><th>Why</th></tr></thead><tbody>`+
+    rules.slice(0,20).map(r=>`<tr><td class="n">${fmt(r.n)}</td><td>${esc(r.primary_rule)}
+      <div class="muted">${esc(r.authority||'')}</div></td>
+      <td>${esc(r.reason||'')}<div class="muted">${esc((r.samples||'').slice(0,80))}</div></td></tr>`).join('')+
+    `</tbody></table>`;
+}
+
+// ---- fulfilment ----
+function batchId(){ return 'PB-'+$('#batchDate').value; }
+async function buildBatch(){
+  try{
+    const j = await api('/api/ops/batch/build', {batch_date:$('#batchDate').value, operator:'demo'});
+    $('#out4').textContent = JSON.stringify(j, null, 2); $('#out4').classList.add('show');
+    if(j.n_orders===0){ $('#out4').textContent='No unbatched orders. Seed sample orders (or place some) first.'; }
+    const l=$('#opLink'); l.href='/operator?batch='+batchId(); l.style.display='inline-block';
+    refreshState();
+  }catch(e){ $('#out4').textContent='Error: '+(e.message||e); $('#out4').classList.add('show'); }
+}
+async function showPicksheet(){
+  const j = await api('/api/ops/batch/'+batchId()+'/picksheet');
+  if(!j.carts||!j.carts.length){ $('#fulfilBox').innerHTML='<p class="muted">No buy sheet yet — build a batch first.</p>'; return; }
+  $('#fulfilBox').innerHTML = j.carts.map(c=>`
+    <table><thead><tr><th colspan="4">Cart ${c.cart_no} · store ${esc(c.merchant_id)} · ₹${fmt(Math.round(c.value_inr))}</th></tr>
+    <tr><th>Qty</th><th>Item</th><th>Risk</th><th>Note</th></tr></thead><tbody>`+
+    c.lines.map(l=>`<tr><td class="n">×${l.qty}</td>
+      <td><a class="inl" href="${esc(l.product_url)}" target="_blank">${esc(l.name)}</a>
+          <span class="muted"> · <a class="inl" href="${esc(l.search_url)}" target="_blank">search</a></span></td>
+      <td><span class="pill ${l.risk_bucket}">${l.risk_bucket}</span></td>
+      <td class="muted">${esc(l.priority_note||'')}</td></tr>`).join('')+`</tbody></table>`).join('');
+  $('#fulfilBox').insertAdjacentHTML('afterbegin',
+    '<p class="muted">Item links open Blinkit; if a direct link 404s (Blinkit blocks non-India traffic), use “search”.</p>');
+}
+// ---- the cart run -----------------------------------------------------------
+// One Blinkit cart per store, added item by item. The page holds each item's
+// cap so a keystroke can be flagged instantly; the server re-checks the cap on
+// every recorded add, so the flag is a courtesy and never the authority.
+let CARTS = [];
+
+async function startCartRun(){
+  const box = $('#fulfilBox');
+  box.innerHTML = '<p class="muted">Building cart runs…</p>';
+  try{
+    const j = await api('/api/ops/cart/plan', {batch_id:batchId()});
+    if(!j.ok){ box.innerHTML = `<p class="muted">${esc(j.error||'No cart to build.')}</p>`; return; }
+    CARTS = j.carts;
+    renderCarts();
+  }catch(e){ box.innerHTML = '<p class="muted">Error: '+esc(e.message||e)+'</p>'; }
+}
+
+function renderCarts(){
+  $('#fulfilBox').innerHTML =
+    `<p class="muted">Open each item in the same Blinkit tab, set the quantity, then <b>Add</b>.
+     The limit beside each quantity is that item's own cart cap — exceed it and the row flags before
+     you ever reach checkout. If a direct link 404s (Blinkit blocks non-India traffic), use “search”.</p>`
+    + CARTS.map(cartHtml).join('');
+  CARTS.forEach(c => paintCart(c.cart_session_id));
+}
+
+function cartHtml(c){
+  return `<div class="cart" id="c-${esc(c.cart_session_id)}">
+    <div class="chd">
+      <b>Cart ${c.cart_no} · store ${esc(c.merchant_id||'—')}</b>
+      <span class="muted">₹${fmt(Math.round(c.value_inr))} · ${c.n_items} items</span>
+      <span class="prog"><i id="p-${esc(c.cart_session_id)}"></i></span>
+      <span class="muted n" id="t-${esc(c.cart_session_id)}"></span>
+      <a href="https://blinkit.com/cart" target="blinkit"><button title="Open the Blinkit cart in the buying tab">Blinkit cart ↗</button></a>
+      <button class="ok" onclick="finishCart('${jsq(c.cart_session_id)}')">Finish cart</button>
+    </div>
+    <div class="banner" id="b-${esc(c.cart_session_id)}"></div>
+    <table><thead><tr><th>#</th><th>Item</th><th>Qty to add</th><th>Cart limit</th>
+      <th>Risk</th><th></th></tr></thead>
+      <tbody id="tb-${esc(c.cart_session_id)}">${c.items.map(i=>itemHtml(c,i)).join('')}</tbody></table>
+    <div class="finalbox" id="f-${esc(c.cart_session_id)}"></div>
+  </div>`;
+}
+
+function itemHtml(c, i){
+  const sid = c.cart_session_id, pid = i.product_id;
+  // Start at what this cart can actually take, not at what the batch wants:
+  // an item over its limit needs more than one pass, and pre-filling the
+  // over-limit number would just block the Add button on arrival.
+  const qty = i.qty_added || Math.min(i.qty_planned, i.max_qty);
+  return `<tr class="item" id="i-${esc(sid)}-${esc(cssId(pid))}" data-pid="${esc(pid)}">
+    <td class="n">${i.seq}</td>
+    <td><a class="inl" href="${esc(i.product_url)}" target="blinkit">${esc(i.name)}</a>
+        <span class="muted"> · <a class="inl" href="${esc(i.search_url)}" target="blinkit">search</a></span>
+        <div class="muted">wanted ×${i.qty_planned}${i.max_qty>0 && i.qty_planned>i.max_qty
+          ? ` · needs ${Math.ceil(i.qty_planned/i.max_qty)} cart passes` : ''}</div>
+        <div class="warnline" id="w-${esc(sid)}-${esc(cssId(pid))}"
+             style="display:${i.max_qty ? 'none' : 'block'}">${i.max_qty ? ''
+             : '⚠ Can\'t go in this cart — ' + esc(i.limit_reason) + '.'}</div></td>
+    <td><span class="qty">
+        <button onclick="bump('${jsq(sid)}','${jsq(pid)}',-1)">−</button>
+        <input type="number" min="0" value="${qty}" id="q-${esc(sid)}-${esc(cssId(pid))}"
+               oninput="checkQty('${jsq(sid)}','${jsq(pid)}')">
+        <button onclick="bump('${jsq(sid)}','${jsq(pid)}',1)">+</button></span></td>
+    <td><span class="caplim ${i.limit_source==='live'?'live':''}"
+          title="${esc(capTitle(i))}">max <b>${i.max_qty}</b> · ${esc(i.limit_source)}</span></td>
+    <td><span class="pill ${esc(i.risk_bucket)}">${esc(i.risk_bucket)}</span></td>
+    <td><button class="ok" id="a-${esc(sid)}-${esc(cssId(pid))}"
+          ${i.max_qty ? '' : 'disabled title="'+esc(i.limit_reason)+'"'}
+          onclick="addItem('${jsq(sid)}','${jsq(pid)}')">Add</button></td></tr>`;
+}
+
+function capTitle(i){
+  const d = i.limit_detail || {};
+  const lines = Object.keys(d).map(k => `  ${k}: ${d[k]}`).join('\n');
+  return `Bound by: ${i.limit_reason}\nSource: ${i.limit_source}`
+       + (lines ? `\n\nEvery cap considered:\n${lines}` : '');
+}
+
+// ids come from Blinkit and can carry characters a selector chokes on
+function cssId(s){ return String(s).replace(/[^A-Za-z0-9_-]/g,'_'); }
+function item(sid,pid){ return (CARTS.find(c=>c.cart_session_id===sid)||{items:[]})
+  .items.find(i=>String(i.product_id)===String(pid)); }
+
+function bump(sid,pid,d){
+  const el = document.getElementById(`q-${sid}-${cssId(pid)}`);
+  el.value = Math.max(0, (+el.value||0) + d);
+  checkQty(sid,pid);
+}
+
+// live flag: runs on every keystroke, straight off the cap the plan carried
+function checkQty(sid,pid){
+  const it = item(sid,pid); if(!it) return;
+  const qty = +document.getElementById(`q-${sid}-${cssId(pid)}`).value || 0;
+  const row = document.getElementById(`i-${sid}-${cssId(pid)}`);
+  const warn = document.getElementById(`w-${sid}-${cssId(pid)}`);
+  const addBtn = document.getElementById(`a-${sid}-${cssId(pid)}`);
+  const over = qty > it.max_qty;
+  row.classList.toggle('over', over);
+  // A zero cap is not a typo to correct — the item cannot go in this cart at
+  // all, so Add stays shut whatever quantity is showing.
+  addBtn.disabled = over || it.max_qty === 0;
+  if(over){
+    warn.textContent = it.max_qty > 0
+      ? `⚠ Over the limit — Blinkit takes at most ${it.max_qty} of this item per cart (${it.limit_reason}). You typed ${qty}, ${qty-it.max_qty} over.`
+      : `⚠ This item can't go in the cart (${it.limit_reason}).`;
+    warn.style.display = 'block';
+  } else if(it.max_qty === 0){
+    warn.textContent = `⚠ Can't go in this cart — ${it.limit_reason}.`;
+    warn.style.display = 'block';
+  } else {
+    warn.style.display = 'none';
+  }
+  paintCart(sid);
+}
+
+async function addItem(sid,pid){
+  const qty = +document.getElementById(`q-${sid}-${cssId(pid)}`).value || 0;
+  const btn = document.getElementById(`a-${sid}-${cssId(pid)}`);
+  btn.disabled = true;
+  try{
+    const j = await api(`/api/ops/cart/session/${encodeURIComponent(sid)}/add`,
+                        {product_id:pid, qty});
+    const it = item(sid,pid);
+    it.max_qty = j.max_qty; it.limit_reason = j.limit_reason; it.limit_source = j.limit_source;
+    if(!j.ok && j.over_limit){            // the server had a tighter cap than the page
+      const warn = document.getElementById(`w-${sid}-${cssId(pid)}`);
+      warn.textContent = '⚠ ' + j.message; warn.style.display='block';
+      document.getElementById(`i-${sid}-${cssId(pid)}`).classList.add('over');
+      return;
+    }
+    it.qty_added = j.qty_added; it.status = j.status;
+    const row = document.getElementById(`i-${sid}-${cssId(pid)}`);
+    row.classList.remove('over'); row.classList.add('added','flash');
+    setTimeout(()=>row.classList.remove('flash'),1000);
+    document.getElementById(`w-${sid}-${cssId(pid)}`).style.display='none';
+    if(j.next_item) focusItem(sid, j.next_item.product_id);
+  }catch(e){
+    const warn = document.getElementById(`w-${sid}-${cssId(pid)}`);
+    warn.textContent = '⚠ ' + (e.message||e); warn.style.display='block';
+  }finally{ btn.disabled=false; paintCart(sid); }
+}
+
+function focusItem(sid,pid){
+  document.querySelectorAll(`#tb-${cssId(sid)} tr.item`).forEach(r=>r.classList.remove('active'));
+  const row = document.getElementById(`i-${sid}-${cssId(pid)}`);
+  if(row){ row.classList.add('active'); row.scrollIntoView({block:'center',behavior:'smooth'}); }
+}
+
+// progress bar, counters and the per-cart over-limit banner
+function paintCart(sid){
+  const c = CARTS.find(x=>x.cart_session_id===sid); if(!c) return;
+  const added = c.items.filter(i=>(i.qty_added||0)>0).length;
+  const typedOver = c.items.filter(i=>{
+    const el = document.getElementById(`q-${sid}-${cssId(i.product_id)}`);
+    return el && (+el.value||0) > i.max_qty;
+  });
+  const bar = document.getElementById(`p-${sid}`);
+  if(bar) bar.style.width = Math.round(added/Math.max(c.items.length,1)*100)+'%';
+  const t = document.getElementById(`t-${sid}`);
+  if(t) t.textContent = `${added}/${c.items.length} added`;
+  const b = document.getElementById(`b-${sid}`);
+  if(b){
+    b.classList.toggle('show', typedOver.length>0);
+    b.textContent = typedOver.length
+      ? `⚠ ${typedOver.length} item${typedOver.length>1?'s are':' is'} over its cart limit: `
+        + typedOver.map(i=>`${i.name.slice(0,28)} (max ${i.max_qty})`).join(' · ')
+      : '';
+  }
+}
+
+async function finishCart(sid){
+  const j = await api(`/api/ops/cart/session/${encodeURIComponent(sid)}/finalize`, {});
+  const final = location.origin + j.final_url;
+  const box = document.getElementById(`f-${sid}`);
+  box.classList.add('show');
+  const t = j.totals;
+  box.innerHTML = `<h3>Cart run done — ${t.qty_added} unit${t.qty_added===1?'':'s'} across
+      ${t.n_added} of ${t.n_items} item${t.n_items===1?'':'s'} (₹${fmt(Math.round(t.value_inr))})${
+      t.n_short ? ` · ${t.n_short} line${t.n_short===1?'':'s'} not fully added` : ''}</h3>
+    <div class="linkrow"><span class="muted">Everything added:</span>
+      <code>${esc(final)}</code>
+      <button onclick="copyText('${jsq(final)}')">Copy</button>
+      <a href="${esc(j.final_url)}" target="_blank"><button>Open ↗</button></a></div>
+    <div class="linkrow"><span class="muted">Blinkit cart:</span>
+      <code>${esc(j.blinkit_cart_url)}</code>
+      <button onclick="copyText('${jsq(j.blinkit_cart_url)}')">Copy</button>
+      <a href="${esc(j.blinkit_cart_url)}" target="blinkit"><button>Open ↗</button></a></div>`;
+  refreshState();
+}
+
+function copyText(t){ navigator.clipboard?.writeText(t); }
+
+async function simulateBuys(){ await run(event.target,'/api/ops/demo/simulate-buys','out4',{batch_id:batchId(),short_one:true}); }
+async function reconcile(){
+  try{ const j=await api('/api/ops/batch/'+batchId()+'/reconcile');
+    $('#out4').textContent=`Complete: ${j.orders_complete}  ·  Short: ${j.orders_short}\n`+JSON.stringify(j,null,2);
+    $('#out4').classList.add('show','flash'); setTimeout(()=>$('#out4').classList.remove('flash'),1000); refreshState();
+  }catch(e){ $('#out4').textContent='Error: '+(e.message||e); $('#out4').classList.add('show'); }
+}
+async function packout(){
+  const j = await api('/api/ops/batch/'+batchId()+'/packout');
+  $('#fulfilBox').innerHTML = `<table><thead><tr><th>Parcel</th><th>Ship to</th><th>Items (filled/ordered)</th><th>Weight</th></tr></thead><tbody>`+
+    j.bins.map(b=>`<tr><td>${esc(b.order_id)} ${b.complete?'<span class="pill NORMAL">complete</span>':'<span class="pill HIGH">short</span>'}</td>
+      <td class="muted">${esc((b.ship_to&&b.ship_to.city)||'—')} ${esc((b.ship_to&&b.ship_to.zip5)||'')}</td>
+      <td>${b.items.map(i=>`${i.qty_filled}/${i.qty} ${esc(i.name).slice(0,26)}`).join('<br>')}</td>
+      <td class="n">${fmt(Math.round(b.weight_g))} g</td></tr>`).join('')+`</tbody></table>`;
+}
+
+// ---- signals ----
+async function loadRisk(){
+  const {items} = await api('/api/ops/risk?bucket=CRITICAL&limit=15');
+  $('#signalBox').innerHTML = items.length? `<table><thead><tr><th>Score</th><th>Item</th><th>Shelf</th><th>Stock</th></tr></thead><tbody>`+
+    items.map(r=>`<tr><td class="n">${(+r.score).toFixed(2)}</td><td>${esc(r.name)}</td>
+      <td class="muted">${esc(r.group_name||'')}</td><td>${r.in_stock?'in':'out'}</td></tr>`).join('')+`</tbody></table>`
+    : '<p class="muted">Nothing scored yet — run "Score stockout risk" in step 1.</p>';
+}
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function jsq(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+// init
+$('#batchDate').value = new Date().toISOString().slice(0,10);
+refreshState();
+setInterval(refreshState, 8000);
+</script>
+</body>
+</html>
