@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sourced — Indian groceries, delivered in the US</title>
+<meta name="description" content="Order from India's shelves and have it shipped to your door in the US.">
+<link rel="stylesheet" href="/app/styles.css">
+<style>
+  /* Layout breakpoints that depend on the shell rather than a component. */
+  @media(max-width:900px){
+    .pdp-cols,.cart-cols{grid-template-columns:1fr !important}
+  }
+</style>
+</head>
+<body>
+<div class="ticker">
+  <div class="wrap"><b>Every order is bought fresh in Delhi</b> after you place it —
+    nothing sits in a warehouse. Delivery runs 3–21 days depending on the carrier you pick.</div>
+</div>
+
+<header class="hdr">
+  <div class="wrap">
+    <div class="hdr-top">
+      <a class="brand" href="#/c">Sourced <em>from India</em>
+        <small>groceries shipped to the US</small></a>
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Search spices, snacks, brands…"
+               autocomplete="off" aria-label="Search products">
+      </div>
+      <div class="hdr-acts">
+        <button class="iconbtn" id="theme" title="Switch theme" aria-label="Switch theme">◐</button>
+        <a class="iconbtn cartbtn" href="#/cart" id="cartbtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/>
+            <circle cx="18" cy="20" r="1.4"/>
+            <path d="M2 3h2.5l2.6 12.4a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.2L21 7H6"/></svg>
+          Cart <span class="pip" id="cartn">0</span>
+        </a>
+      </div>
+    </div>
+    <div class="nav-wrap"><nav class="nav" id="nav" aria-label="Departments"></nav></div>
+  </div>
+</header>
+
+<main id="view"></main>
+
+<footer class="foot">
+  <div class="wrap">
+    Sourced buys from Indian retail shelves on your behalf and ships internationally.
+    Prices include duty and customs handling. Items that can't legally or physically
+    be shipped are filtered out before you ever see them.
+    <span style="display:block;margin-top:8px">
+      <a href="/ops" style="text-decoration:underline">Ops console</a> ·
+      <a href="/docs" style="text-decoration:underline">API</a>
+    </span>
+  </div>
+</footer>
+
+<script type="module" src="/app/app.js"></script>
+</body>
+</html>

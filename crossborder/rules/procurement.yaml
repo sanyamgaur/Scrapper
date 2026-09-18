@@ -47,6 +47,22 @@ risk:
   # A CRITICAL SKU is bought first, and is not sold at all when this is on.
   block_sale_above: 0.90
 
+# ------------------------------------------------------------- stock freshness
+stock:
+  # How old a reading may be before it stops being trusted, per tier. The CART
+  # tier gates checkout and is deliberately tight: taking money on a stale
+  # reading is the same mistake as selling something known to be gone.
+  #
+  # These assume the availability engine is running and keeping cart items warm.
+  # With no live checker, every reading ages past cart_seconds and checkout
+  # fails closed — correct in production, and the reason a demo needs either the
+  # engine running or a wider window here.
+  freshness_seconds:
+    cart: 60
+    hot: 900
+    listed: 21600
+    tail: 172800
+
 # ------------------------------------------------------------------- restock
 restock:
   # In stock for ten minutes is not restocked. Hold before recommending.

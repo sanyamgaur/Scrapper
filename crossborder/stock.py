@@ -32,13 +32,27 @@ from typing import Any, Callable, Optional
 
 from .db import connect, DB_PATH
 
-# How old a reading may be before it stops being trusted, by tier.
-FRESHNESS = {
-    "CART":    60,       # something is in a live cart right now
-    "HOT":     900,      # top sellers / watchlist
-    "LISTED":  21600,    # anything currently listed: 6 hours
-    "TAIL":    172800,   # everything else: 48 hours
-}
+def _load_freshness() -> dict[str, float]:
+    """Freshness windows come from rules/procurement.yaml.
+
+    They decide whether an order can be accepted at all, which makes them
+    policy rather than constants — and policy in this project lives in YAML so
+    it can be tuned without a code change. Falls back to the production values
+    if the file is unreadable, because failing to parse config must not
+    accidentally widen a money gate.
+    """
+    defaults = {"CART": 60, "HOT": 900, "LISTED": 21600, "TAIL": 172800}
+    try:
+        import yaml
+        from pathlib import Path as _P
+        cfg = yaml.safe_load((_P(__file__).parent / "rules" / "procurement.yaml").read_text())
+        got = (cfg.get("stock") or {}).get("freshness_seconds") or {}
+        return {k: float(got.get(k.lower(), v)) for k, v in defaults.items()}
+    except Exception:
+        return defaults
+
+
+FRESHNESS = _load_freshness()
 
 
 class StockState(str, Enum):

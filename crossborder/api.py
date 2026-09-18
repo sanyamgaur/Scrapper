@@ -22,6 +22,7 @@ from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .basket import BasketBuilder
@@ -148,10 +149,45 @@ def _handling_for(products: list[dict]) -> list[str]:
 
 # ------------------------------------------------------------ storefront ----
 
+# Sort keys are whitelisted rather than interpolated: `sort` arrives from the
+# query string and would otherwise be an injection point in the ORDER BY.
+SORT_SQL = {
+    # Food first, and food means the CATEGORY, not the super-category: Blinkit
+    # files "Kitchenware & Appliances" under Grocery & Kitchen, so ranking by
+    # super-category led an Indian grocery homepage with cling wrap and gloves.
+    # Ranking alphabetically instead led with a brand called "10on".
+    # Within the food tier, deal depth decides — 85% of in-stock listable SKUs
+    # carry a real MRP discount, which is the one honest merchandising signal
+    # this dataset actually supports.
+    "relevance":  ("p.in_stock DESC, CASE p.category_name"
+                   " WHEN 'Chips & Namkeen' THEN 0"
+                   " WHEN 'Sweets & Chocolates' THEN 0"
+                   " WHEN 'Oil, Ghee & Masala' THEN 0"
+                   " WHEN 'Atta, Rice & Dal' THEN 0"
+                   " WHEN 'Dry Fruits & Cereals' THEN 0"
+                   " WHEN 'Bakery & Biscuits' THEN 1"
+                   " WHEN 'Instant Food' THEN 1"
+                   " WHEN 'Sauces & Spreads' THEN 1"
+                   " WHEN 'Tea, Coffee & Milk Drinks' THEN 1"
+                   " WHEN 'Drinks & Juices' THEN 1"
+                   " WHEN 'Skin & Face' THEN 2"
+                   " WHEN 'Hair' THEN 2"
+                   " WHEN 'Bath & Body' THEN 2"
+                   " ELSE 3 END,"
+                   " COALESCE(p.discount_pct,0) DESC, p.name"),
+    "price_asc":  "p.in_stock DESC, p.price_inr ASC",
+    "price_desc": "p.in_stock DESC, p.price_inr DESC",
+    "name":       "p.name",
+    "light":      "p.in_stock DESC, p.est_weight_g ASC",   # cheapest to ship
+    "value":      "p.in_stock DESC, (p.price_inr / NULLIF(p.est_weight_g,0)) DESC",
+}
+
+
 @app.get("/api/catalog")
-def catalog(q: str = "", category: str = "", group: str = "",
-            in_stock_only: bool = False, limit: int = Query(60, le=200),
-            offset: int = 0) -> dict:
+def catalog(q: str = "", category: str = "", group: str = "", brand: str = "",
+            in_stock_only: bool = False, sort: str = "relevance",
+            min_usd: float = 0, max_usd: float = 0,
+            limit: int = Query(60, le=200), offset: int = 0) -> dict:
     """Listable catalogue only. The compliance filter is in the SQL on purpose."""
     conn = connect()
     where = ["c.verdict = 'ALLOWED'"]
@@ -163,9 +199,12 @@ def catalog(q: str = "", category: str = "", group: str = "",
         where.append("p.category_name = ?"); args.append(category)
     if group:
         where.append("p.group_name = ?"); args.append(group)
+    if brand:
+        where.append("p.brand = ?"); args.append(brand)
     if in_stock_only:
         where.append("p.in_stock = 1")
     clause = " AND ".join(where)
+    order = SORT_SQL.get(sort, SORT_SQL["relevance"])
 
     total = conn.execute(f"""SELECT COUNT(*) FROM products p
         JOIN classifications c USING(product_id) WHERE {clause}""", args).fetchone()[0]
@@ -173,7 +212,7 @@ def catalog(q: str = "", category: str = "", group: str = "",
         SELECT p.product_id,p.name,p.brand,p.unit,p.price_inr,p.mrp_inr,
                p.in_stock,p.image,p.category_name,p.group_name,p.est_weight_g
         FROM products p JOIN classifications c USING(product_id)
-        WHERE {clause} ORDER BY p.in_stock DESC, p.name LIMIT ? OFFSET ?""",
+        WHERE {clause} ORDER BY {order} LIMIT ? OFFSET ?""",
         args + [limit, offset]).fetchall()
     conn.close()
 
@@ -186,6 +225,10 @@ def catalog(q: str = "", category: str = "", group: str = "",
         d["list_price_usd"] = lc.list_price_usd
         d["viable"] = lc.viable
         d["freight_ratio"] = lc.freight_ratio
+        if min_usd and d["list_price_usd"] < min_usd:
+            continue
+        if max_usd and d["list_price_usd"] > max_usd:
+            continue
         items.append(d)
     return {"total": total, "items": items}
 
@@ -201,8 +244,13 @@ def facets() -> dict:
         SELECT p.group_name AS name, COUNT(*) n FROM products p
         JOIN classifications c USING(product_id) WHERE c.verdict='ALLOWED'
         GROUP BY 1 ORDER BY n DESC LIMIT 60""")]
+    brands = [dict(r) for r in conn.execute("""
+        SELECT p.brand AS name, COUNT(*) n FROM products p
+        JOIN classifications c USING(product_id)
+        WHERE c.verdict='ALLOWED' AND p.brand IS NOT NULL AND p.brand != ''
+        GROUP BY 1 ORDER BY n DESC LIMIT 80""")]
     conn.close()
-    return {"categories": cats, "groups": groups}
+    return {"categories": cats, "groups": groups, "brands": brands}
 
 
 @app.get("/api/product/{product_id}")
@@ -372,6 +420,72 @@ def ops_blocked(limit: int = Query(100, le=500)) -> dict:
     return {"rules": rows}
 
 
+@app.get("/api/product/{product_id}/related")
+def related(product_id: str, limit: int = Query(8, le=24)) -> dict:
+    """Same shelf, in stock, listable — and cheap to add to an existing parcel.
+
+    Ordered by value density, because on this lane the useful "you might also
+    like" is the one that improves the customer's freight ratio rather than the
+    one an engagement metric would pick.
+    """
+    conn = connect()
+    me = conn.execute("SELECT group_name, category_name, merchant_id "
+                      "FROM products WHERE product_id=?", (product_id,)).fetchone()
+    if not me:
+        conn.close(); raise HTTPException(404, "unknown product")
+    rows = [dict(r) for r in conn.execute("""
+        SELECT p.product_id,p.name,p.brand,p.unit,p.price_inr,p.in_stock,p.image,
+               p.est_weight_g,p.group_name
+        FROM products p JOIN classifications c USING(product_id)
+        WHERE c.verdict='ALLOWED' AND p.product_id != ?
+          AND (p.group_name = ? OR p.category_name = ?)
+          AND p.price_inr > 0 AND p.est_weight_g > 0
+        ORDER BY p.in_stock DESC,
+                 (p.group_name = ?) DESC,
+                 (p.price_inr / p.est_weight_g) DESC
+        LIMIT ?""", (product_id, me["group_name"], me["category_name"],
+                     me["group_name"], limit))]
+    conn.close()
+    for r in rows:
+        pr = dict(r); pr["price"] = r["price_inr"]
+        try:
+            lc, _ = pricing.price_single(pr, 1)
+            r["list_price_usd"] = lc.list_price_usd
+        except Exception:
+            r["list_price_usd"] = None
+    return {"items": rows}
+
+
+@app.get("/api/order/{order_id}")
+def order_status(order_id: str) -> dict:
+    """Where an order actually is. The states are the real procurement ladder,
+    not a decorative progress bar."""
+    conn = connect()
+    o = conn.execute("SELECT * FROM orders WHERE order_id=?", (order_id,)).fetchone()
+    if not o:
+        conn.close(); raise HTTPException(404, "unknown order")
+    o = dict(o)
+    lines = [dict(r) for r in conn.execute("""
+        SELECT ol.product_id, ol.qty, p.name, p.unit, p.image,
+               COALESCE(a.qty_filled, 0) AS qty_filled
+        FROM order_lines ol JOIN products p USING(product_id)
+        LEFT JOIN batch_allocations a
+          ON a.order_id = ol.order_id AND a.product_id = ol.product_id
+        WHERE ol.order_id=?""", (order_id,))]
+    conn.close()
+    o["lines"] = lines
+    o["quote"] = json.loads(o.get("quote_json") or "{}")
+    # A customer-readable stage, derived from the internal status.
+    stage = {
+        "PLACED": 1, "STOCK_CONFIRMED": 1, "PROCURED": 2,
+        "PROCUREMENT_SHORT": 2, "PACKED": 3, "SHIPPED": 4, "DELIVERED": 5,
+    }.get(o["status"], 1)
+    o["stage"] = stage
+    o["stage_labels"] = ["Order placed", "Buying in Delhi", "Packed",
+                         "In transit to the US", "Delivered"]
+    return o
+
+
 # ------------------------------------------------------------- basket ------
 
 @app.post("/api/basket/advise")
@@ -505,8 +619,20 @@ def drift_list(limit: int = Query(50, le=300)) -> dict:
 
 # ------------------------------------------------------------------ pages ---
 
+# The storefront is a small ES-module app rather than one large HTML file, so
+# views can be edited independently. Mounted before the routes below so its
+# assets resolve without a catch-all rewrite.
+app.mount("/app", StaticFiles(directory=str(WEB / "app")), name="app")
+
+
 @app.get("/")
 def storefront():
+    return FileResponse(WEB / "app" / "index.html")
+
+
+@app.get("/legacy")
+def storefront_legacy():
+    """The original single-file prototype, kept for reference."""
     return FileResponse(WEB / "storefront.html")
 
 
