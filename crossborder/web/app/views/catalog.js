@@ -6,7 +6,9 @@ const PAGE = 48;
 let state = { items: [], total: 0, offset: 0, loading: false };
 
 const SORTS = [
-  ["relevance", "Most relevant"],
+  // Labelled for what the query actually does. The default ranks by absolute
+  // rupee saving, so calling it "most relevant" would be hiding the rule.
+  ["relevance", "Biggest savings"],
   ["price_asc", "Price: low to high"],
   ["price_desc", "Price: high to low"],
   ["value", "Best value for weight"],

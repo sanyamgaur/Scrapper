@@ -153,29 +153,18 @@ def _handling_for(products: list[dict]) -> list[str]:
 # Sort keys are whitelisted rather than interpolated: `sort` arrives from the
 # query string and would otherwise be an injection point in the ORDER BY.
 SORT_SQL = {
-    # Food first, and food means the CATEGORY, not the super-category: Blinkit
-    # files "Kitchenware & Appliances" under Grocery & Kitchen, so ranking by
-    # super-category led an Indian grocery homepage with cling wrap and gloves.
-    # Ranking alphabetically instead led with a brand called "10on".
-    # Within the food tier, deal depth decides — 85% of in-stock listable SKUs
-    # carry a real MRP discount, which is the one honest merchandising signal
-    # this dataset actually supports.
-    "relevance":  ("p.in_stock DESC, CASE p.category_name"
-                   " WHEN 'Chips & Namkeen' THEN 0"
-                   " WHEN 'Sweets & Chocolates' THEN 0"
-                   " WHEN 'Oil, Ghee & Masala' THEN 0"
-                   " WHEN 'Atta, Rice & Dal' THEN 0"
-                   " WHEN 'Dry Fruits & Cereals' THEN 0"
-                   " WHEN 'Bakery & Biscuits' THEN 1"
-                   " WHEN 'Instant Food' THEN 1"
-                   " WHEN 'Sauces & Spreads' THEN 1"
-                   " WHEN 'Tea, Coffee & Milk Drinks' THEN 1"
-                   " WHEN 'Drinks & Juices' THEN 1"
-                   " WHEN 'Skin & Face' THEN 2"
-                   " WHEN 'Hair' THEN 2"
-                   " WHEN 'Bath & Body' THEN 2"
-                   " ELSE 3 END,"
-                   " COALESCE(p.discount_pct,0) DESC, p.name"),
+    # Category-NEUTRAL by design. An earlier version ranked food categories
+    # first, which misrepresented the catalogue: only 33% of listable SKUs are
+    # food, while Household Essentials alone is 64% (Home & Lifestyle 2,923,
+    # Stationery & Games 1,024). This is a general store, not a grocer.
+    #
+    # Ranking by discount PERCENT surfaced cheap items with big markdowns, and
+    # by value-per-gram it surfaced ball pens. Absolute rupee saving favours
+    # substantial products with real markdowns, in whatever department they
+    # happen to sit, and "biggest savings" is a claim the data can back.
+    "relevance":  ("p.in_stock DESC, "
+                   "(COALESCE(p.mrp_inr,0) - p.price_inr) DESC, "
+                   "COALESCE(p.discount_pct,0) DESC, p.name"),
     "price_asc":  "p.in_stock DESC, p.price_inr ASC",
     "price_desc": "p.in_stock DESC, p.price_inr DESC",
     "name":       "p.name",
@@ -207,13 +196,24 @@ def catalog(q: str = "", category: str = "", group: str = "", brand: str = "",
     clause = " AND ".join(where)
     order = SORT_SQL.get(sort, SORT_SQL["relevance"])
 
-    total = conn.execute(f"""SELECT COUNT(*) FROM products p
-        JOIN classifications c USING(product_id) WHERE {clause}""", args).fetchone()[0]
-    rows = conn.execute(f"""
+    # Collapse same-name variants to one card, keeping the cheapest. The
+    # catalogue carries the same product under several ids (five "Limestone
+    # Analog Watch" rows at four prices), and they clustered at the top of the
+    # savings sort — the homepage opened with the same watch twice. The subquery
+    # is aliased `p` so the ORDER BY clauses above keep working unchanged.
+    dedup = f"""
         SELECT p.product_id,p.name,p.brand,p.unit,p.price_inr,p.mrp_inr,
-               p.in_stock,p.image,p.category_name,p.group_name,p.est_weight_g
+               p.in_stock,p.image,p.category_name,p.group_name,p.est_weight_g,
+               p.discount_pct,
+               ROW_NUMBER() OVER (PARTITION BY p.name
+                                  ORDER BY p.in_stock DESC, p.price_inr ASC) AS rn
         FROM products p JOIN classifications c USING(product_id)
-        WHERE {clause} ORDER BY {order} LIMIT ? OFFSET ?""",
+        WHERE {clause}"""
+
+    total = conn.execute(
+        f"SELECT COUNT(*) FROM ({dedup}) p WHERE p.rn = 1", args).fetchone()[0]
+    rows = conn.execute(
+        f"SELECT * FROM ({dedup}) p WHERE p.rn = 1 ORDER BY {order} LIMIT ? OFFSET ?",
         args + [limit, offset]).fetchall()
     conn.close()
 

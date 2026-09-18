@@ -4,30 +4,34 @@ import { wireCards } from "./catalog.js";
 
 /* Curated rails. Each is a real query against the catalogue rather than a
    hand-picked list, so they stay correct as stock and prices move. */
-/* Every rail is scoped to a food category. An unscoped "high value per gram"
-   query is mathematically correct and commercially absurd — it returned ball
-   pens and a Titan watch on the front page of a grocery store. */
+/* Rails span the WHOLE catalogue, not just the food end of it. Only 33% of
+   listable SKUs are food; Home & Lifestyle (2,923) and Stationery & Games
+   (1,024) are the two largest departments by a distance. An earlier version
+   showed six food rails and described a shop this catalogue is not. */
 const RAILS = [
   { key: "deals",  title: "Biggest savings today",
-    sub: "Real discounts off Indian MRP, not a markup dressed up as a sale.",
-    params: { sort: "relevance", in_stock_only: true, limit: 12 } },
-  { key: "spice",  title: "Big flavour, barely any weight",
-    sub: "Spices are the best thing to ship from India: tiny, light, and they "
-       + "cost almost nothing to add to a parcel.",
+    sub: "Ranked by what you actually save against Indian MRP, across every department.",
+    params: { sort: "relevance", in_stock_only: true, limit: 20 } },
+  { key: "home",   title: "Home & living",
+    sub: "Bedding, kitchen, decor and the everyday things that are hard to find abroad.",
+    params: { category: "Home & Lifestyle", sort: "price_asc",
+              in_stock_only: true, limit: 20 } },
+  { key: "snack",  title: "Snacks & namkeen",
+    sub: "Chips, mixtures and everything in between.",
+    params: { category: "Chips & Namkeen", in_stock_only: true, limit: 20 } },
+  { key: "spice",  title: "Spices & masala",
+    sub: "The best thing to ship from India: tiny, light, and almost free to add to a parcel.",
     params: { category: "Oil, Ghee & Masala", sort: "value",
-              in_stock_only: true, limit: 12 } },
+              in_stock_only: true, limit: 20 } },
+  { key: "stat",   title: "Stationery & games",
+    sub: "Pens, notebooks, craft supplies and board games.",
+    params: { category: "Stationery & Games", in_stock_only: true, limit: 20 } },
   { key: "pantry", title: "Pantry staples",
     sub: "Dals, flours and rice that keep for months.",
-    params: { category: "Atta, Rice & Dal", in_stock_only: true, limit: 12 } },
-  { key: "snack",  title: "Snacks worth the airmail",
-    sub: "Namkeen, chips and everything in between.",
-    params: { category: "Chips & Namkeen", in_stock_only: true, limit: 12 } },
-  { key: "sweet",  title: "Something sweet",
-    sub: "Shelf-stable sweets and chocolate that survive the journey.",
-    params: { category: "Sweets & Chocolates", in_stock_only: true, limit: 12 } },
-  { key: "chai",   title: "Chai and coffee",
+    params: { category: "Atta, Rice & Dal", in_stock_only: true, limit: 20 } },
+  { key: "chai",   title: "Chai & coffee",
     sub: "Loose leaf, masala chai and South Indian filter coffee.",
-    params: { category: "Tea, Coffee & Milk Drinks", in_stock_only: true, limit: 12 } },
+    params: { category: "Tea, Coffee & Milk Drinks", in_stock_only: true, limit: 20 } },
 ];
 
 export function render() {
@@ -35,13 +39,14 @@ export function render() {
     <section class="hero">
       <div class="wrap hero-in">
         <div>
-          <h1>The Indian grocery aisle,<br><em>delivered to your door.</em></h1>
-          <p>We buy from real Delhi shelves the day you order, consolidate it,
+          <h1>India's shelves,<br><em>delivered to your door.</em></h1>
+          <p>Snacks and spices, bedding and kitchenware, stationery and skincare —
+             we buy it from real Delhi shops the day you order, consolidate it,
              and ship it to you in the US. No warehouse, no substitutions you
              didn't ask for.</p>
           <div class="hero-cta">
             <a class="btn btn-pri" href="#/c">Browse everything</a>
-            <a class="btn" href="#/c?category=Oil%2C%20Ghee%20%26%20Masala">Start with spices</a>
+            <a class="btn" href="#/c?sort=value&in_stock_only=1">Cheapest things to ship</a>
           </div>
           <div class="hero-stats" id="hero-stats"></div>
         </div>
@@ -58,25 +63,15 @@ export async function mount(_params, nav) {
   // Department tiles
   try {
     const f = await api.facets();
-    // Food departments first. The facet list is ordered by size, which put
-    // "Home & Lifestyle" (2,923 items) at the front of a grocery store.
-    const FOOD = ["Oil, Ghee & Masala", "Atta, Rice & Dal", "Chips & Namkeen",
-                  "Sweets & Chocolates", "Tea, Coffee & Milk Drinks",
-                  "Dry Fruits & Cereals", "Instant Food", "Bakery & Biscuits",
-                  "Sauces & Spreads", "Drinks & Juices"];
-    const rank = (n) => { const i = FOOD.indexOf(n); return i === -1 ? 99 : i; };
-    const top = f.categories.filter(c => c.name)
-      .sort((a, b) => rank(a.name) - rank(b.name) || b.n - a.n)
-      .slice(0, 8);
+    // No thumb on the scale: departments in the order the catalogue actually
+    // has them. Forcing food to the front described a shop that does not exist.
+    const top = f.categories.filter(c => c.name).slice(0, 8);
     $("#depts").innerHTML = top.map((c, i) => `
       <a class="dept" href="#/c?category=${encodeURIComponent(c.name)}" style="--d:${i * 37}">
         <span class="dept-n">${esc(c.name)}</span>
         <span class="dept-c">${c.n.toLocaleString()} items</span>
       </a>`).join("");
-    // "products you can order" must mean what is actually buyable today. The
-    // facet count is the whole listable catalogue (6,173) but only ~2,179 are
-    // in stock in Delhi right now, and this shop's whole pitch is not
-    // overstating what it can get.
+
     const live = await api.catalog({ in_stock_only: true, limit: 1 });
     const total = f.categories.reduce((n, c) => n + c.n, 0);
     $("#hero-stats").innerHTML = `
@@ -109,7 +104,7 @@ export async function mount(_params, nav) {
               .filter(([k]) => ["category", "sort"].includes(k)))).toString()}">
           See all</a>
       </div>
-      <div class="railscroll">${r.items.map(productCard).join("")}</div>
+      <div class="railscroll">${r.items.slice(0, 12).map(productCard).join("")}</div>
     </section>`).join("");
 
   wireCards(nav);
