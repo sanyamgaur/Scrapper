@@ -21,13 +21,20 @@ crawl ──► ingest ──► classify ──► [review queue] ──► sto
 ## Quick start
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-web.txt
 python -m crossborder.cli ingest inventory_delhi.csv   # 31,366 SKUs
 python -m crossborder.cli classify                     # verdicts + review queue
 python -m crossborder.cli serve                        # storefront + /ops
 ```
 
 `http://127.0.0.1:8000/` is the storefront, `/ops` is the review console.
+
+Use `requirements-web.txt`, not the repo-root `requirements.txt` — the root
+file also lists `httpx`/`playwright` for the *scraper* (`crawl.py`,
+`discover.py`), which pull in `greenlet`. `greenlet` needs a C++ build
+toolchain to compile from source on Windows when no prebuilt wheel matches
+your Python version, and the website never needs a browser or an HTTP/2
+client, so it never needs that toolchain either.
 
 ## The four engines
 
