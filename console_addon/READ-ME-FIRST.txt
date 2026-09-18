@@ -7,6 +7,7 @@ your original files are changed; these only ADD a control page and endpoints.
 Files:
   crossborder/console.py        new API endpoints + the /console page
   crossborder/cart.py           the Blinkit cart run + per-item cart limits
+  crossborder/buysheet.py       the live buy sheet (cart adds, orders, events)
   crossborder/web/console.html  the single control-tower page
   crossborder/web/cart.html     the final link a finished cart run hands back
   run_console.py                starts everything on one port
@@ -58,6 +59,42 @@ stockout risk, the Rs.15k cart-value cap and parcel weight -- and the tightest
 of those wins. Live numbers are cached for six hours, computed ones for ten
 minutes so the next run tries Blinkit again. Outside India the live probe is
 refused and it falls back silently, which is the normal case for a US host.
+
+The buy sheet is live
+---------------------
+"View buy sheet" is no longer a snapshot taken when a batch is built. It is one
+row per SKU with four quantities, and it updates itself while you watch:
+
+  in cart          a customer is holding it, not ordered yet
+  ordered          they pressed Place order; not sealed into a batch yet
+  batched          sealed into the buying batch
+  in Blinkit cart  the operator has actually added it during a cart run
+
+plus what is still outstanding, that SKU's cart limit, and a feed of the events
+underneath, newest first. Rows flash when their numbers move. Leave the sheet
+open while you work a cart run and the last column fills in as you add items.
+
+Nothing needs changing in the storefront for this to work:
+
+  * Place order is read straight from the orders table -- every order the sheet
+    has not seen yet becomes an ORDER_PLACED event on the next refresh, whoever
+    wrote the row;
+  * cart adds are picked up by a request watcher that notices cart/checkout
+    POSTs already flowing through the app and reads the product/quantity pairs
+    out of them. It is an observer: the request is replayed to the real handler
+    untouched, failures are swallowed, and SOURCED_CART_WATCH=0 leaves it out.
+
+If you would rather be explicit than have the watcher guess, the storefront can
+post its cart directly -- one call in the cart handler:
+
+    fetch('/api/ops/buysheet/track', {method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({kind: 'CART_SNAPSHOT', ref: cartId, items: cart})});
+
+  kind: CART_SNAPSHOT (the whole cart -- replaces what we knew about that cart),
+        CART_ADD (one line; mode "absolute" sets it, "delta" moves it),
+        CART_CLEAR, or ORDER_PLACED.
+  ref:  the cart or session id, so one cart's changes stay one cart.
 
 "Prime live stock" is demo-only: it stands in for the availability engine so
 checkout can succeed. In production the availability engine writes those

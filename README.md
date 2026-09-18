@@ -135,7 +135,10 @@ Files that belong to the downstream cross-border system, not to the crawler:
 drop `console_addon/crossborder/*` next to that project's `crossborder/` package
 and run its `run_console.py`. `console_addon/READ-ME-FIRST.txt` has the details.
 
-The part that touches this repo is the **cart run**: a buying batch becomes one
+Two pieces sit in there. The **buy sheet** is live: one row per SKU showing what
+is held in customers' carts, what was ordered when they pressed Place order,
+what is sealed into the batch and what the operator has actually put in a Blinkit
+cart, updating as each of those happens. The **cart run**: a buying batch becomes one
 Blinkit cart per dark store, added item by item with a per-item cart limit shown
 and enforced as the quantity is typed, ending in one link for everything added
 plus the Blinkit cart link. When `BLINKIT_SESSION` points at a session file

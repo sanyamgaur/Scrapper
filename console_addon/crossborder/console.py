@@ -11,6 +11,8 @@ What it adds:
     simulate an operator's buying run
   - the cart run (see cart.py): the batch's lines become one Blinkit cart per
     store, added item by item with a live per-item cap, ending in one link
+  - the live buy sheet (see buysheet.py): every cart add and every placed order
+    lands on the sheet as it happens, rather than only when a batch is built
   - GET /console -> a single page with a button for every step
 
 Everything here drives the SAME engines and the SAME crossborder.db the rest of
@@ -34,6 +36,7 @@ from pydantic import BaseModel
 from .api import app, pricing, procurement, risk, restock, drift
 from .db import connect
 from . import cart                      # noqa: F401  (attaches /api/ops/cart/*)
+from . import buysheet                  # noqa: F401  (attaches /api/ops/buysheet/*)
 
 WEB = Path(__file__).parent / "web"
 
@@ -266,6 +269,10 @@ def console_state() -> dict:
                WHERE qty_added > max_qty""")
     except Exception:
         state["cart_runs_open"] = state["cart_items_over_limit"] = 0
+    try:
+        state["buysheet_events"] = q("SELECT COUNT(*) FROM buysheet_events")
+    except Exception:
+        state["buysheet_events"] = 0
     state["batch_list"] = [dict(r) for r in conn.execute(
         "SELECT batch_id, state, n_orders, n_lines FROM procurement_batches "
         "ORDER BY batch_date DESC LIMIT 8")]

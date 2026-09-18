@@ -648,6 +648,17 @@ def cart_add(sid: str, req: AddReq) -> dict:
             (qty, max_qty, cap["source"], cap["reason"], status, int(time.time()),
              sid, str(req.product_id)))
     conn.commit()
+    if not req.dry_run:
+        # The buy sheet is live, so every unit that goes into a Blinkit cart has
+        # to land on it as it happens. Imported here rather than at module load:
+        # buysheet imports this module for the cap and the links.
+        try:
+            from .buysheet import record_event, BLINKIT_ADD
+            record_event(conn, BLINKIT_ADD, product_id=req.product_id, qty=qty,
+                         ref=sid, name=item["name"], source="cart-run",
+                         actor="operator")
+        except Exception:
+            pass          # the sheet is a view; never fail an add over it
     items = _session_items(conn, sid)
     nxt = next((i for i in items if i["status"] == "PENDING"), None)
     conn.close()

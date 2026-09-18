@@ -120,6 +120,26 @@
   .linkrow{display:flex;gap:8px;align-items:center;margin-top:7px;flex-wrap:wrap}
   .linkrow code{flex:1;min-width:200px;font-size:12px;background:var(--panel);
     border:1px solid var(--line);border-radius:6px;padding:6px 9px;overflow:auto;white-space:nowrap}
+  /* live buy sheet */
+  .sheet{border:1px solid var(--line);border-radius:10px;margin-top:12px;overflow:hidden}
+  .sheet .shd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:10px 13px;background:var(--bg);border-bottom:1px solid var(--line)}
+  .sheet .shd b{font-size:13.5px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block}
+  .dot.on{background:var(--ok);animation:pulse 2s infinite}
+  @keyframes pulse{50%{opacity:.35}}
+  td.z{color:var(--muted);font-weight:400}
+  tr.bump td{animation:fl 1.2s ease}
+  .feed{max-height:190px;overflow:auto;border-top:1px solid var(--line);
+    padding:8px 13px;font-size:12px;background:var(--bg)}
+  .feed div{padding:2px 0;display:flex;gap:8px;align-items:baseline}
+  .feed .k{font-weight:700;font-size:10px;letter-spacing:.03em;padding:1px 5px;
+    border-radius:4px;white-space:nowrap}
+  .feed .k.CART_ADD,.feed .k.CART_SNAPSHOT{background:color-mix(in srgb,var(--info) 15%,transparent);color:var(--info)}
+  .feed .k.ORDER_PLACED{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}
+  .feed .k.BLINKIT_ADD{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+  .feed .k.CART_CLEAR{background:color-mix(in srgb,var(--muted) 15%,transparent);color:var(--muted)}
+  .feed .t{color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -151,6 +171,7 @@
         <li><b>Cluster</b> — a group of SKUs sharing one shelf + one rule; one Clear/Kill moves the whole group.</li>
         <li><b>Prime live stock</b> — writes a fresh stock reading so checkout can pass. <span class="demoflag">demo</span> stands in for the availability engine.</li>
         <li><b>Batch</b> — one day's orders sealed for buying, split into carts per dark store.</li>
+        <li><b>Buy sheet</b> — live demand per SKU: <i>in cart</i> (held by a customer) → <i>ordered</i> (Place order pressed) → <i>batched</i> (sealed for buying) → <i>in Blinkit cart</i> (the operator added it). Every one of those moves shows on the sheet as it happens.</li>
         <li><b>Short</b> — an order that couldn't be fully bought; reconcile fills smallest orders first.</li>
         <li><b>Cart limit</b> — the most units of one SKU a single Blinkit cart will take. Unique per item: stock, stockout risk, the ₹15k cart value cap and parcel weight each bind it, and the tightest one wins. Live from Blinkit when a scraper session is configured, otherwise computed from those inputs — hover the limit to see which one bound it.</li>
         <li><b>Cart run</b> — one guided pass over a cart: items in order, one Blinkit tab, each add recorded against its limit, ending in a link to everything added.</li>
@@ -238,14 +259,14 @@
     <div class="body">
       <div class="row">
         <input type="number" id="seedN" value="4" style="width:70px">
-        <button title="Create sample US orders that share one SKU" onclick="run(this,'/api/ops/demo/seed-orders','out4',{n_orders:+document.getElementById('seedN').value,items_per_order:3},refreshState)">Seed sample orders <span class="demoflag">demo</span></button>
+        <button title="Create sample US orders that share one SKU" onclick="run(this,'/api/ops/demo/seed-orders','out4',{n_orders:+document.getElementById('seedN').value,items_per_order:3},()=>{refreshState();refreshBuySheet();})">Seed sample orders <span class="demoflag">demo</span></button>
         <span class="muted">or place real ones on the storefront.</span>
       </div>
       <div class="row" style="margin-top:10px">
         <input type="text" id="batchDate" title="Batch date — defaults to today" style="width:130px">
         <button class="primary" title="Seal today's orders into one buying batch" onclick="buildBatch()">Build batch</button>
         <button title="Build one Blinkit cart per store and walk it item by item, with each item's cart limit" onclick="startCartRun()">Build Blinkit cart</button>
-        <button title="Show the operator's shopping list, riskiest first" onclick="showPicksheet()">View buy sheet</button>
+        <button title="The live buy sheet: every cart add and every placed order, as it happens" onclick="showBuySheet()">View buy sheet</button>
         <button class="ok" title="Mark the batch as bought, leaving one line short" onclick="simulateBuys()">Simulate operator buys <span class="demoflag">demo</span></button>
         <button title="Allocate what was bought to orders, smallest first" onclick="reconcile()">Reconcile</button>
         <button title="Show one parcel per customer with weight" onclick="packout()">Pack-out bins</button>
@@ -256,12 +277,13 @@
         <tr><td>Seed sample orders <span class="demoflag">demo</span></td><td>Creates N US orders (real rows) all sharing one SKU, so consolidation and shorting are visible. Or place real orders via the storefront.</td></tr>
         <tr><td>Build batch</td><td>Seals all un-batched orders into <code>PB-&lt;date&gt;</code>: merges duplicate SKUs, orders lines by risk × dollars, splits into carts (≤40 lines, ≤₹15k, ≤6/SKU).</td></tr>
         <tr><td>Build Blinkit cart</td><td>The buying run. Consolidates the batch into one cart per dark store, computes each item's own cart limit (live from Blinkit when a scraper session is configured, otherwise from stock, risk, cart value and parcel weight), and walks you item by item — same Blinkit tab, quantity recorded per item, over-limit quantities flagged the moment you type them. Ends with the link to everything added plus the Blinkit cart link.</td></tr>
-        <tr><td>View buy sheet</td><td>The flat list, unchanged: each cart's items with a Blinkit link + a <b>search</b> fallback, riskiest first. Useful for printing; the cart run is what you buy from.</td></tr>
+        <tr><td>View buy sheet</td><td>The live demand sheet, one row per SKU: how many units are sitting in customers' carts, how many were ordered when they pressed <b>Place order</b>, how many are sealed into the batch, and how many the operator has actually put in a Blinkit cart. It updates itself — every cart add and every order lands on it as it happens, with a feed of those events underneath. Leave it open while you work the cart run and watch the last column fill.</td></tr>
         <tr><td>Simulate operator buys <span class="demoflag">demo</span></td><td>Marks every line bought, leaving the biggest line one unit short — stands in for a person tapping through the operator sheet.</td></tr>
         <tr><td>Reconcile</td><td>Assigns bought units to orders, smallest first (ties: oldest). Full fill = complete; otherwise short.</td></tr>
         <tr><td>Pack-out bins</td><td>One bin per customer with ship-to and parcel weight; marks each complete or short.</td></tr>
         <tr><td>Open operator sheet ↗</td><td>Appears after Build batch — the real mobile buy sheet you'd hand a buyer instead of simulating.</td></tr>
       </table></details>
+      <div id="buysheetBox"></div>
       <div id="fulfilBox"></div>
       <div class="out" id="out4"></div>
     </div>
@@ -370,23 +392,101 @@ async function buildBatch(){
     $('#out4').textContent = JSON.stringify(j, null, 2); $('#out4').classList.add('show');
     if(j.n_orders===0){ $('#out4').textContent='No unbatched orders. Seed sample orders (or place some) first.'; }
     const l=$('#opLink'); l.href='/operator?batch='+batchId(); l.style.display='inline-block';
-    refreshState();
+    refreshState(); refreshBuySheet();
   }catch(e){ $('#out4').textContent='Error: '+(e.message||e); $('#out4').classList.add('show'); }
 }
-async function showPicksheet(){
-  const j = await api('/api/ops/batch/'+batchId()+'/picksheet');
-  if(!j.carts||!j.carts.length){ $('#fulfilBox').innerHTML='<p class="muted">No buy sheet yet — build a batch first.</p>'; return; }
-  $('#fulfilBox').innerHTML = j.carts.map(c=>`
-    <table><thead><tr><th colspan="4">Cart ${c.cart_no} · store ${esc(c.merchant_id)} · ₹${fmt(Math.round(c.value_inr))}</th></tr>
-    <tr><th>Qty</th><th>Item</th><th>Risk</th><th>Note</th></tr></thead><tbody>`+
-    c.lines.map(l=>`<tr><td class="n">×${l.qty}</td>
-      <td><a class="inl" href="${esc(l.product_url)}" target="_blank">${esc(l.name)}</a>
-          <span class="muted"> · <a class="inl" href="${esc(l.search_url)}" target="_blank">search</a></span></td>
-      <td><span class="pill ${l.risk_bucket}">${l.risk_bucket}</span></td>
-      <td class="muted">${esc(l.priority_note||'')}</td></tr>`).join('')+`</tbody></table>`).join('');
-  $('#fulfilBox').insertAdjacentHTML('afterbegin',
-    '<p class="muted">Item links open Blinkit; if a direct link 404s (Blinkit blocks non-India traffic), use “search”.</p>');
+// ---- the live buy sheet -----------------------------------------------------
+// One row per SKU, four quantities: held in a customer's cart, ordered when
+// Place order was pressed, sealed into the batch, and actually put in a Blinkit
+// cart. It polls, so every one of those moves lands on the sheet as it happens;
+// the cart run also pokes it the moment an item goes in.
+const SHEET = {open:false, live:true, timer:null, prev:{}};
+
+async function showBuySheet(){
+  SHEET.open = true;
+  await refreshBuySheet();
+  startSheetPolling();
 }
+
+function startSheetPolling(){
+  clearInterval(SHEET.timer);
+  if(SHEET.open && SHEET.live) SHEET.timer = setInterval(refreshBuySheet, 4000);
+}
+
+function toggleSheetLive(){
+  SHEET.live = !SHEET.live;
+  startSheetPolling();
+  refreshBuySheet();
+}
+
+function closeBuySheet(){
+  SHEET.open = false; clearInterval(SHEET.timer);
+  $('#buysheetBox').innerHTML = '';
+}
+
+async function refreshBuySheet(){
+  if(!SHEET.open) return;
+  let j;
+  try{ j = await api('/api/ops/buysheet/live?n_events=25&batch_id='+encodeURIComponent(batchId())); }
+  catch(e){ $('#buysheetBox').innerHTML = '<p class="muted">Buy sheet error: '+esc(e.message||e)+'</p>'; return; }
+  const t = j.totals;
+  const rows = j.lines.map(l=>{
+    // flash a row whose numbers moved since the last poll
+    const key = JSON.stringify([l.qty_in_cart,l.qty_ordered,l.qty_batched,l.qty_in_blinkit_cart]);
+    const moved = SHEET.prev[l.product_id] !== undefined && SHEET.prev[l.product_id] !== key;
+    SHEET.prev[l.product_id] = key;
+    return `<tr class="${moved?'bump':''}${l.over_limit?' over':''}">
+      <td><a class="inl" href="${esc(l.product_url)}" target="blinkit">${esc(l.name)}</a>
+          <span class="muted"> · <a class="inl" href="${esc(l.search_url)}" target="blinkit">search</a></span>
+          ${l.needs_passes>1?`<div class="muted">needs ${l.needs_passes} cart passes</div>`:''}</td>
+      <td class="n ${l.qty_in_cart?'':'z'}">${l.qty_in_cart||'–'}</td>
+      <td class="n ${l.qty_ordered?'':'z'}">${l.qty_ordered||'–'}</td>
+      <td class="n ${l.qty_batched?'':'z'}">${l.qty_batched||'–'}</td>
+      <td class="n ${l.qty_in_blinkit_cart?'':'z'}">${l.qty_in_blinkit_cart||'–'}</td>
+      <td class="n ${l.qty_outstanding?'':'z'}">${l.qty_outstanding||'–'}</td>
+      <td><span class="caplim ${l.limit_source==='live'?'live':''}"
+            title="${esc(capTitle(l))}">max <b>${l.max_qty}</b></span></td>
+      <td><span class="pill ${esc(l.risk_bucket)}">${esc(l.risk_bucket)}</span></td></tr>`;
+  }).join('');
+
+  $('#buysheetBox').innerHTML = `<div class="sheet">
+    <div class="shd">
+      <b>Buy sheet</b>
+      <span class="muted"><span class="dot ${SHEET.live?'on':''}"></span>
+        ${SHEET.live?'live — updating as carts and orders come in':'paused'}</span>
+      <span class="muted">${t.skus} SKUs · in cart ${t.qty_in_cart} · ordered ${t.qty_ordered}
+        · batched ${t.qty_batched} · in Blinkit cart ${t.qty_in_blinkit_cart}
+        · outstanding <b>${t.qty_outstanding}</b>${t.n_over_limit?` · ⚠ ${t.n_over_limit} over limit`:''}</span>
+      <span style="flex:1"></span>
+      <button onclick="toggleSheetLive()">${SHEET.live?'Pause':'Resume'}</button>
+      <button onclick="closeBuySheet()">Close</button>
+    </div>
+    ${j.lines.length ? `<table><thead><tr><th>Item</th><th>In cart</th><th>Ordered</th>
+      <th>Batched</th><th>In Blinkit cart</th><th>Outstanding</th><th>Limit</th><th>Risk</th>
+      </tr></thead><tbody>${rows}</tbody></table>`
+      : `<p class="muted" style="padding:12px 13px">Nothing on the sheet yet. Add something to a
+         cart on the storefront, place an order, or seed sample orders — it appears here
+         the moment it happens.</p>`}
+    ${feedHtml(j.events)}
+  </div>`;
+}
+
+function feedHtml(events){
+  if(!events || !events.length) return '';
+  const now = Date.now()/1000;
+  return `<div class="feed">` + events.map(e=>{
+    const ago = Math.max(0, Math.round(now - (e.at||now)));
+    const when = ago<60?`${ago}s ago`:ago<3600?`${Math.round(ago/60)}m ago`:`${Math.round(ago/3600)}h ago`;
+    const what = {CART_ADD:'added to cart', CART_SNAPSHOT:'cart updated',
+                  CART_CLEAR:'cart cleared', ORDER_PLACED:'PLACE ORDER',
+                  BLINKIT_ADD:'into Blinkit cart'}[e.kind] || e.kind;
+    return `<div><span class="k ${esc(e.kind)}">${esc(what)}</span>
+      <span>${e.qty?`×${e.qty} `:''}${esc(e.name || e.product_id || '—')}</span>
+      <span class="muted">${esc(e.ref||'')}</span>
+      <span style="flex:1"></span><span class="t">${when}</span></div>`;
+  }).join('') + `</div>`;
+}
+
 // ---- the cart run -----------------------------------------------------------
 // One Blinkit cart per store, added item by item. The page holds each item's
 // cap so a keystroke can be flagged instantly; the server re-checks the cap on
@@ -524,6 +624,7 @@ async function addItem(sid,pid){
     setTimeout(()=>row.classList.remove('flash'),1000);
     document.getElementById(`w-${sid}-${cssId(pid)}`).style.display='none';
     if(j.next_item) focusItem(sid, j.next_item.product_id);
+    refreshBuySheet();            // on the sheet before the next poll
   }catch(e){
     const warn = document.getElementById(`w-${sid}-${cssId(pid)}`);
     warn.textContent = '⚠ ' + (e.message||e); warn.style.display='block';
