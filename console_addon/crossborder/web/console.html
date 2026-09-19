@@ -324,6 +324,17 @@ async function api(path, body){
   return j;
 }
 
+// Whether an ops endpoint is a GET or a POST differs between builds of the
+// API, and the operator should not be the one to find out: send the shape the
+// call implies, and on a 405 send the other one.
+async function apiAuto(path, body){
+  try{ return await api(path, body); }
+  catch(e){
+    if(e.status !== 405) throw e;
+    return body === undefined ? await api(path, {}) : await api(path);
+  }
+}
+
 // generic button runner: disables, POSTs, prints JSON, refreshes funnel
 async function run(btn, path, outId, body, after){
   const out = $('#'+outId); const label = btn.textContent;
@@ -393,7 +404,21 @@ async function buildBatch(){
     if(j.n_orders===0){ $('#out4').textContent='No unbatched orders. Seed sample orders (or place some) first.'; }
     const l=$('#opLink'); l.href='/operator?batch='+batchId(); l.style.display='inline-block';
     refreshState(); refreshBuySheet();
-  }catch(e){ $('#out4').textContent='Error: '+(e.message||e); $('#out4').classList.add('show'); }
+  }catch(e){
+    const msg = String(e.message || e);
+    if(/already exists/i.test(msg)){
+      // Today's batch is already sealed. That is where the operator wants to
+      // be anyway, so carry on with it instead of stopping on a red error.
+      $('#out4').textContent = `Batch ${batchId()} is already sealed — carrying on with it. `
+        + `Use View buy sheet and Build Blinkit cart to work it; to seal a different `
+        + `day's orders, change the date box first.`;
+      $('#out4').classList.add('show');
+      const l=$('#opLink'); l.href='/operator?batch='+batchId(); l.style.display='inline-block';
+      refreshState(); refreshBuySheet();
+      return;
+    }
+    $('#out4').textContent='Error: '+msg; $('#out4').classList.add('show');
+  }
 }
 // ---- the live buy sheet -----------------------------------------------------
 // One row per SKU, four quantities: held in a customer's cart, ordered when
@@ -683,13 +708,13 @@ function copyText(t){ navigator.clipboard?.writeText(t); }
 
 async function simulateBuys(){ await run(event.target,'/api/ops/demo/simulate-buys','out4',{batch_id:batchId(),short_one:true}); }
 async function reconcile(){
-  try{ const j=await api('/api/ops/batch/'+batchId()+'/reconcile');
+  try{ const j=await apiAuto('/api/ops/batch/'+batchId()+'/reconcile');
     $('#out4').textContent=`Complete: ${j.orders_complete}  ·  Short: ${j.orders_short}\n`+JSON.stringify(j,null,2);
     $('#out4').classList.add('show','flash'); setTimeout(()=>$('#out4').classList.remove('flash'),1000); refreshState();
   }catch(e){ $('#out4').textContent='Error: '+(e.message||e); $('#out4').classList.add('show'); }
 }
 async function packout(){
-  const j = await api('/api/ops/batch/'+batchId()+'/packout');
+  const j = await apiAuto('/api/ops/batch/'+batchId()+'/packout');
   $('#fulfilBox').innerHTML = `<table><thead><tr><th>Parcel</th><th>Ship to</th><th>Items (filled/ordered)</th><th>Weight</th></tr></thead><tbody>`+
     j.bins.map(b=>`<tr><td>${esc(b.order_id)} ${b.complete?'<span class="pill NORMAL">complete</span>':'<span class="pill HIGH">short</span>'}</td>
       <td class="muted">${esc((b.ship_to&&b.ship_to.city)||'—')} ${esc((b.ship_to&&b.ship_to.zip5)||'')}</td>

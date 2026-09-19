@@ -34,6 +34,7 @@ Additive like the rest of the add-on: one new table, api.py untouched.
 
 from __future__ import annotations
 
+import collections
 import hashlib
 import json
 import os
@@ -57,7 +58,20 @@ BLINKIT_ADD = "BLINKIT_ADD"      # the operator added it in a cart run
 
 EVENT_WINDOW_S = 7 * 24 * 3600   # how far back the sheet aggregates carts
 MAX_WATCH_BODY = 256 * 1024      # don't buffer a large upload to peek at it
-WATCH_PATH_HINTS = ("cart", "basket", "checkout", "order", "buy")
+
+# Paths the watcher reads a body from. A storefront that posts its cart
+# somewhere less obvious ("/api/session/items") can be taught without editing
+# this file: SOURCED_CART_PATHS=session/items,quote
+WATCH_PATH_HINTS = tuple(
+    h.strip().lower() for h in
+    ("cart,basket,checkout,order,buy," + os.environ.get("SOURCED_CART_PATHS", "")).split(",")
+    if h.strip())
+
+# Every write the watcher sees goes in here, matched or not, so that "my cart
+# adds are not showing up" is answerable: GET /api/ops/buysheet/watch-log says
+# which paths the storefront actually posts to. Paths only -- an unmatched
+# request's body is never read.
+WATCH_LOG: "collections.deque[dict]" = collections.deque(maxlen=60)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS buysheet_events (
@@ -410,6 +424,33 @@ def buysheet_events(limit: int = 50, since: Optional[int] = None) -> dict:
             "last_event_id": rows[0]["event_id"] if rows else (since or 0)}
 
 
+@app.get("/api/ops/buysheet/watch-log")
+def buysheet_watch_log() -> dict:
+    """What the watcher has seen — the answer to "my cart adds aren't showing".
+
+    Add something to a cart on the storefront, then read this. An empty log
+    means the storefront never posted anything (a browser-only cart), so the
+    /track call is the way in. A logged path with matched_hint false means it
+    posts somewhere this watcher does not look: add that word to
+    SOURCED_CART_PATHS and restart.
+    """
+    conn = connect()
+    _ensure_schema(conn)
+    by_kind = {r[0]: r[1] for r in conn.execute(
+        "SELECT kind, COUNT(*) FROM buysheet_events GROUP BY kind")}
+    conn.close()
+    return {"ok": True,
+            "watcher_enabled": os.environ.get("SOURCED_CART_WATCH", "1") != "0",
+            "path_hints": list(WATCH_PATH_HINTS),
+            "seen": list(WATCH_LOG)[::-1],
+            "events_by_kind": by_kind,
+            "note": ("Empty 'seen' with a cart you have just changed means the "
+                     "storefront keeps its cart in the browser and posts nothing "
+                     "until checkout — wire POST /api/ops/buysheet/track into the "
+                     "cart handler. A row with matched_hint=false is a path this "
+                     "watcher ignores; add a word from it to SOURCED_CART_PATHS.")}
+
+
 # ----------------------------------------------------- the request watcher ---
 
 def _walk_lines(obj: Any, out: list, depth: int = 0) -> list:
@@ -461,6 +502,13 @@ def install_cart_watch(fastapi_app) -> bool:
             and not path.startswith("/api/ops/")          # never watch ourselves
             and any(h in path.lower() for h in WATCH_PATH_HINTS)
         )
+        seen = (request.method in ("POST", "PUT", "PATCH")
+                and not path.startswith("/api/ops/"))
+        if seen:
+            WATCH_LOG.append({"at": int(time.time()), "method": request.method,
+                              "path": path, "matched_hint": bool(watchable),
+                              "items_found": None, "recorded": False})
+
         if watchable:
             try:
                 body = await request.body()
@@ -478,22 +526,27 @@ def install_cart_watch(fastapi_app) -> bool:
 
         if watchable and body and response.status_code < 400:
             try:
-                _record_watched(path, body)
+                n = _record_watched(path, body)
+                if WATCH_LOG:
+                    WATCH_LOG[-1].update(items_found=n, recorded=n > 0)
             except Exception:
                 pass          # an observer must never break a checkout
+        if seen and WATCH_LOG:
+            WATCH_LOG[-1]["status"] = response.status_code
         return response
 
     return True
 
 
-def _record_watched(path: str, body: bytes) -> None:
+def _record_watched(path: str, body: bytes) -> int:
+    """Record one watched request; returns how many product lines were in it."""
     try:
         payload = json.loads(body.decode("utf-8", "replace"))
     except ValueError:
-        return
+        return 0
     items = _walk_lines(payload, [])
     if not items:
-        return
+        return 0
     low = path.lower()
     placed = any(h in low for h in ("checkout", "order", "place"))
     ref = None
@@ -531,6 +584,7 @@ def _record_watched(path: str, body: bytes) -> None:
                          name=f"{len(items)} item{'' if len(items) == 1 else 's'}")
     finally:
         conn.close()
+    return len(items)
 
 
 install_cart_watch(app)

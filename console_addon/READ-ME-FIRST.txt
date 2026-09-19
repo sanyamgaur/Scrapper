@@ -8,6 +8,7 @@ Files:
   crossborder/console.py        new API endpoints + the /console page
   crossborder/cart.py           the Blinkit cart run + per-item cart limits
   crossborder/buysheet.py       the live buy sheet (cart adds, orders, events)
+  diagnose.py                   read-only check of the database and the API
   crossborder/web/console.html  the single control-tower page
   crossborder/web/cart.html     the final link a finished cart run hands back
   run_console.py                starts everything on one port
@@ -95,6 +96,29 @@ post its cart directly -- one call in the cart handler:
         CART_ADD (one line; mode "absolute" sets it, "delta" moves it),
         CART_CLEAR, or ORDER_PLACED.
   ref:  the cart or session id, so one cart's changes stay one cart.
+
+When something looks wrong
+--------------------------
+    python diagnose.py --url http://127.0.0.1:8000
+
+Read-only, run from the folder with crossborder.db while the server is up. It
+answers the questions that otherwise need a SQL prompt: whether products carry
+a parsed weight (a parcel shows 0 g when they do not -- a watch or a belt has
+no weight to sum), whether placed orders reached orders/order_lines, what the
+buy sheet has recorded and from where, and which HTTP method this build's API
+wants for reconcile and pack-out.
+
+Two things it commonly turns up:
+
+  * "Build batch: PB-<date> already exists" -- today's batch is already sealed.
+    Not a failure: the console now carries on with the existing batch, and the
+    date box is there to seal a different day's orders.
+  * cart adds not reaching the sheet -- open /api/ops/buysheet/watch-log after
+    changing a cart. An empty list means the storefront keeps its cart in the
+    browser and posts nothing until checkout, so the /track call above is the
+    way in. A row with matched_hint false is a path the watcher ignores: add a
+    word from it to SOURCED_CART_PATHS (e.g. SOURCED_CART_PATHS=session/items)
+    and restart.
 
 "Prime live stock" is demo-only: it stands in for the availability engine so
 checkout can succeed. In production the availability engine writes those
