@@ -98,9 +98,14 @@ post its cart directly -- one call in the cart handler:
         CART_CLEAR, or ORDER_PLACED.
   ref:  the cart or session id, so one cart's changes stay one cart.
 
-The operator sheet (/operator-run)
-----------------------------------
-"Open operator sheet" now opens the buying sheet built on the cart run, laid
+The operator sheet (/operator, /operator-run)
+---------------------------------------------
+/operator redirects to it, so the link already in a browser history, on a
+printed slip, or in an old bookmark lands on the fixed sheet without anyone
+learning a new address. To keep the original page instead, start the server
+with SOURCED_OPERATOR=legacy.
+
+"Open operator sheet" opens the buying sheet built on the cart run, laid
 out for one thumb in a dark store. It is the same engine as the console's run,
 so a buy made on the phone shows on the buy sheet immediately.
 

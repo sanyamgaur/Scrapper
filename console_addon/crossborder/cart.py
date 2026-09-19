@@ -47,7 +47,7 @@ from pathlib import Path
 from typing import Any, Iterable, Optional
 
 from fastapi import HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from pydantic import BaseModel
 
 from .api import app
@@ -854,6 +854,29 @@ def cart_summary(sid: str) -> dict:
     conn.close()
     return {"ok": True, **row, "items": items, "totals": _totals(items),
             "blinkit_cart_url": BLINKIT_CART_URL}
+
+
+@app.middleware("http")
+async def _operator_to_cart_run(request, call_next):
+    """Send /operator to the cart-run sheet, because that is the link people have.
+
+    The original operator page is the one in everybody's browser history, on
+    the printed slip, in the link the console used to hand out. Adding a better
+    page at a new address does not help someone who opens the old one, and a
+    route defined here cannot shadow api.py's -- that one was registered first
+    and wins. A redirect, decided before routing, is the one place this can be
+    done without editing api.py. SOURCED_OPERATOR=legacy keeps the old page.
+    """
+    try:
+        if (request.method == "GET"
+                and request.url.path.rstrip("/") == "/operator"
+                and os.environ.get("SOURCED_OPERATOR", "").lower() != "legacy"):
+            q = request.url.query
+            return RedirectResponse(url="/operator-run" + (f"?{q}" if q else ""),
+                                    status_code=302)
+    except Exception:
+        pass            # never let this stand between a request and its handler
+    return await call_next(request)
 
 
 @app.get("/operator-run")
