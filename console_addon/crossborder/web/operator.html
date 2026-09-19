@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sourced — Buy sheet</title>
+<style>
+  :root{
+    --bg:#fbfaf8; --panel:#fff; --ink:#1a1a1a; --muted:#6b6b6b; --line:#e6e3dd;
+    --accent:#c2410c; --ok:#15803d; --warn:#a16207; --bad:#b91c1c; --info:#1d4ed8;
+    --tap:52px;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#14130f; --panel:#1e1c18; --ink:#f2efe9; --muted:#a09a90; --line:#302d27;
+    --accent:#fb923c; --ok:#4ade80; --warn:#fbbf24; --bad:#f87171; --info:#93c5fd;
+  }}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    padding-bottom:96px}
+  header{position:sticky;top:0;z-index:5;background:var(--panel);
+    border-bottom:1px solid var(--line);padding:10px 14px}
+  .hrow{display:flex;align-items:center;gap:10px}
+  h1{margin:0;font-size:15px;letter-spacing:-.01em}
+  h1 span{color:var(--muted);font-weight:400}
+  .prog{height:7px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:8px}
+  .prog i{display:block;height:100%;width:0;background:var(--ok);transition:width .25s}
+  .sub{font-size:12.5px;color:var(--muted);margin-top:6px;
+    display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  main{padding:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:14px;margin-bottom:12px}
+  .card.done{opacity:.55}
+  .card.current{border-color:var(--accent);box-shadow:0 2px 14px rgba(0,0,0,.07)}
+  .seq{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.05em}
+  .nm{font-size:17px;font-weight:650;line-height:1.3;margin:3px 0 6px}
+  .meta{font-size:12.5px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .pill{font-size:10.5px;padding:2px 7px;border-radius:5px;font-weight:700}
+  .pill.CRITICAL{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+  .pill.HIGH{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+  .pill.NORMAL{background:color-mix(in srgb,var(--muted) 15%,transparent);color:var(--muted)}
+  .want{font-size:15px;font-weight:700}
+  .cap{font-size:12.5px;color:var(--muted)}
+  .cap b{color:var(--ink)}
+  a.open{display:flex;align-items:center;justify-content:center;gap:8px;
+    min-height:var(--tap);margin:12px 0 10px;border-radius:12px;font-weight:700;
+    text-decoration:none;background:var(--accent);color:#fff;font-size:16px}
+  a.srch{display:block;text-align:center;font-size:13px;color:var(--info);
+    text-decoration:none;margin:-4px 0 10px}
+  .steps{display:flex;align-items:center;gap:10px;justify-content:center;margin:10px 0}
+  .steps button{width:var(--tap);height:var(--tap);border-radius:12px;font-size:24px;
+    font-weight:700;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+  .steps button:disabled{opacity:.35}
+  .qv{min-width:68px;text-align:center;font-size:30px;font-weight:750;
+    font-variant-numeric:tabular-nums}
+  .qv small{display:block;font-size:11px;font-weight:600;color:var(--muted)}
+  .acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  button{font:inherit;cursor:pointer}
+  .acts button{min-height:var(--tap);border-radius:12px;font-weight:700;font-size:15px;
+    border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+  .acts button.go{grid-column:1/-1;background:var(--ok);border-color:var(--ok);color:#fff}
+  .acts button.no{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 45%,var(--line))}
+  .warn{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:13.5px;font-weight:600;
+    border:1px solid var(--bad);color:var(--bad);
+    background:color-mix(in srgb,var(--bad) 9%,transparent)}
+  .outcome{margin-top:10px;font-size:13.5px;font-weight:650}
+  .outcome.ok{color:var(--ok)} .outcome.short{color:var(--warn)} .outcome.none{color:var(--bad)}
+  .outcome button{font-size:12.5px;font-weight:600;background:none;border:none;
+    color:var(--info);text-decoration:underline;padding:0 0 0 8px}
+  footer{position:fixed;left:0;right:0;bottom:0;background:var(--panel);
+    border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    display:flex;gap:10px;align-items:center}
+  footer .t{flex:1;font-size:13px;color:var(--muted)}
+  footer button{min-height:46px;padding:0 18px;border-radius:12px;font-weight:700;
+    border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+  footer button.fin{background:var(--accent);border-color:var(--accent);color:#fff}
+  .done-box{padding:16px;border:1px solid var(--ok);border-radius:14px;
+    background:color-mix(in srgb,var(--ok) 8%,transparent)}
+  .done-box h2{margin:0 0 6px;font-size:17px}
+  .lnk{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+  .lnk code{flex:1;min-width:160px;font-size:12px;background:var(--panel);
+    border:1px solid var(--line);border-radius:8px;padding:8px 10px;overflow:auto;white-space:nowrap}
+  .lnk button,.lnk a{min-height:42px;display:inline-flex;align-items:center;padding:0 14px;
+    border-radius:10px;border:1px solid var(--line);background:var(--panel);
+    color:var(--ink);text-decoration:none;font-weight:700;font-size:14px}
+  .muted{color:var(--muted);font-size:13px}
+  .pick{display:block;width:100%;text-align:left;margin-bottom:10px;padding:14px;
+    border-radius:14px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+  .pick b{font-size:16px}
+</style>
+</head>
+<body>
+<header>
+  <div class="hrow">
+    <h1 id="title">Buy sheet</h1>
+  </div>
+  <div class="prog"><i id="bar"></i></div>
+  <div class="sub" id="sub"></div>
+</header>
+<main id="main"><p class="muted">Loading…</p></main>
+<footer id="foot" style="display:none">
+  <span class="t" id="foott"></span>
+  <button onclick="jumpNext()">Next item</button>
+  <button class="fin" onclick="finish()">Finish</button>
+</footer>
+
+<script>
+// The operator's half of the cart run. Every outcome a line can have is a
+// button here -- got all, got fewer, none on the shelf -- because a sheet that
+// only offers "done" loses the quantity, and the quantity is the whole point:
+// reconcile allocates from what was actually bought.
+const P = new URLSearchParams(location.search);
+const BATCH = P.get('batch') || P.get('batch_id') || '';
+let RUN = null, QTY = {};
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,
+  c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+async function api(path, body){
+  const opt = body===undefined ? {} :
+    {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)};
+  const r = await fetch(path, opt);
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw Object.assign(new Error(j.detail||r.statusText), {status:r.status});
+  return j;
+}
+
+async function boot(){
+  const run = P.get('run');
+  if(run) return load(run);
+  if(!BATCH){ $('#main').innerHTML =
+    '<p class="muted">Open this from the control tower, or add ?batch=PB-YYYY-MM-DD to the address.</p>';
+    return; }
+  let j;
+  try{ j = await api('/api/ops/cart/plan', {batch_id:BATCH}); }
+  catch(e){ return fail(e); }
+  if(!j.ok || !j.carts.length){
+    $('#main').innerHTML = `<p class="muted">${esc(j.error||'Nothing to buy for '+BATCH+'.')}</p>`;
+    return;
+  }
+  if(j.carts.length === 1) return load(j.carts[0].cart_session_id, j.carts[0]);
+  // More than one store in this batch: the operator picks the one they are in.
+  $('#main').innerHTML = '<p class="muted">Which store are you in?</p>' + j.carts.map(c=>`
+    <button class="pick" onclick="load('${c.cart_session_id}')">
+      <b>Cart ${c.cart_no} · store ${esc(c.merchant_id||'—')}</b>
+      <div class="muted">${c.items.length} items · ₹${Math.round(c.value_inr).toLocaleString()}
+        · ${c.totals.n_added} already done</div></button>`).join('');
+}
+
+async function load(sid){
+  try{ RUN = await api('/api/ops/cart/session/'+encodeURIComponent(sid)); }
+  catch(e){ return fail(e); }
+  RUN.items.forEach(i => {
+    // Start each line at what this cart can actually take, never above the cap.
+    if(QTY[i.product_id] === undefined)
+      QTY[i.product_id] = i.qty_added || stepMax(i);
+  });
+  render();
+}
+
+function fail(e){
+  $('#main').innerHTML = `<p class="muted">Could not load: ${esc(e.message||e)}</p>`;
+}
+
+function render(){
+  const t = RUN.totals;
+  // Only lines the operator has actually decided count as short. An item not
+  // reached yet is pending, and calling it short mid-run reads as a failure
+  // that has not happened.
+  const shortSoFar = RUN.items.filter(i => i.status !== 'PENDING' && i.short_by > 0).length;
+  $('#title').innerHTML = `Cart ${RUN.cart_no} <span>· store ${esc(RUN.merchant_id||'—')}</span>`;
+  $('#bar').style.width = Math.round(t.n_added / Math.max(t.n_items,1) * 100) + '%';
+  $('#sub').innerHTML =
+    `<span><b>${t.n_added}</b>/${t.n_items} items</span>
+     <span>${t.qty_added}/${t.qty_planned} units</span>
+     ${shortSoFar?`<span style="color:var(--warn)">${shortSoFar} short</span>`:''}
+     <a class="srch" style="margin:0" href="https://blinkit.com/cart" target="blinkit">Blinkit cart ↗</a>`;
+  $('#foot').style.display = 'flex';
+  $('#foott').textContent = `${t.n_pending} left`;
+  $('#main').innerHTML = RUN.items.map(card).join('');
+  const next = RUN.items.find(i => i.status === 'PENDING');
+  if(next) markCurrent(next.product_id);
+}
+
+// The ceiling on this card is whichever bites first: the cart's limit for this
+// item, or what the batch still needs. Buying past the need is money spent on
+// stock nobody ordered, so the button stops there and says which bound it.
+function stepMax(i){ return Math.max(0, Math.min(i.max_qty, i.qty_planned)); }
+
+function card(i){
+  const top = stepMax(i);
+  const q = Math.min(QTY[i.product_id], top);
+  const over = q > i.max_qty;
+  const done = i.status !== 'PENDING';
+  const passes = i.max_qty > 0 && i.qty_planned > i.max_qty
+    ? Math.ceil(i.qty_planned / i.max_qty) : 0;
+  return `<div class="card ${done?'done':''}" id="c-${cssId(i.product_id)}">
+    <div class="seq">ITEM ${i.seq} OF ${RUN.items.length}</div>
+    <div class="nm">${esc(i.name)}</div>
+    <div class="meta">
+      <span class="pill ${esc(i.risk_bucket)}">${esc(i.risk_bucket)}</span>
+      <span class="want">need ×${i.qty_planned}</span>
+      ${i.qty_earlier ? `<span>${i.qty_earlier} of ${i.qty_demand} already bought
+        in an earlier pass</span>` : ''}
+      <span class="cap">cart limit <b>${i.max_qty}</b>${i.limit_source==='live'?' (live)':''}</span>
+    </div>
+    ${passes>1?`<div class="meta" style="margin-top:4px">this cart takes ${i.max_qty};
+       ${passes} cart passes needed for all ${i.qty_planned}</div>`:''}
+    ${done ? outcome(i) : `
+      <a class="open" href="${esc(i.product_url)}" target="blinkit">Open in Blinkit ↗</a>
+      <a class="srch" href="${esc(i.search_url)}" target="blinkit">can't find it? search</a>
+      <div class="steps">
+        <button onclick="bump('${jsq(i.product_id)}',-1)" ${q<=0?'disabled':''}>−</button>
+        <div class="qv">${q}<small>ADDING</small></div>
+        <button onclick="bump('${jsq(i.product_id)}',1)" ${q>=top?'disabled':''}>+</button>
+      </div>
+      ${over?`<div class="warn">Over the cart limit — Blinkit takes at most
+         ${i.max_qty} (${esc(i.limit_reason)}).</div>`:''}
+      ${q >= top && top > 0 ? `<div class="meta" style="justify-content:center">${
+         top === i.max_qty && i.qty_planned > i.max_qty
+           ? "at this cart's limit — the rest needs another pass"
+           : "that's all this batch needs"}</div>`:''}
+      <div class="acts">
+        <button class="go" ${over||i.max_qty===0?'disabled':''}
+          onclick="record('${jsq(i.product_id)}', ${q})">
+          ${q >= i.qty_planned ? 'Added all '+q : 'Added '+q+' of '+i.qty_planned}</button>
+        <button class="no" onclick="unavailable('${jsq(i.product_id)}')">None on shelf</button>
+        <button onclick="skip('${jsq(i.product_id)}')">Skip for now</button>
+      </div>`}
+  </div>`;
+}
+
+function outcome(i){
+  const cls = i.status === 'UNAVAILABLE' ? 'none' : (i.short_by ? 'short' : 'ok');
+  const txt = i.status === 'UNAVAILABLE' ? 'None on the shelf — recorded as zero'
+            : i.short_by ? `Added ${i.qty_added} of ${i.qty_planned} — ${i.short_by} short`
+            : `Added all ${i.qty_added}`;
+  return `<div class="outcome ${cls}">${txt}
+    <button onclick="reopen('${jsq(i.product_id)}')">change</button></div>`;
+}
+
+const cssId = s => String(s).replace(/[^A-Za-z0-9_-]/g,'_');
+const jsq = s => String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+const item = pid => RUN.items.find(i => String(i.product_id) === String(pid));
+
+function bump(pid, d){
+  const i = item(pid);
+  QTY[pid] = Math.max(0, Math.min(stepMax(i), (QTY[pid]||0) + d));
+  repaint(pid);
+}
+
+// Redraw one card, not the list. Rebuilding everything on a tap makes the page
+// flicker and throws away the scroll position, which on a phone means the
+// operator loses the item they are standing in front of.
+function repaint(pid){
+  const el = document.getElementById('c-' + cssId(pid));
+  if(!el) return render();
+  const holder = document.createElement('div');
+  holder.innerHTML = card(item(pid));
+  const fresh = holder.firstElementChild;
+  if(el.classList.contains('current')) fresh.classList.add('current');
+  el.replaceWith(fresh);
+}
+
+async function record(pid, qty, opts){
+  const body = Object.assign({product_id: pid, qty}, opts||{});
+  let j;
+  try{ j = await api(`/api/ops/cart/session/${encodeURIComponent(RUN.cart_session_id)}/add`, body); }
+  catch(e){ return alert('Could not record: ' + (e.message||e)); }
+  if(!j.ok && j.over_limit){ alert(j.message); await load(RUN.cart_session_id); return; }
+  // "not_recorded" means the batch line never learned about this buy, which
+  // reconcile would silently turn into a short. Say so now, not at pack-out.
+  if(j.procurement === 'unavailable' || j.procurement === 'no-batch')
+    warnOnce('This run is not attached to a batch line, so Reconcile will not '
+           + 'see these buys. Build the batch first.');
+  await load(RUN.cart_session_id);
+  jumpNext();
+}
+
+function unavailable(pid){
+  if(!confirm('Nothing on the shelf for this item? It will be recorded as zero.')) return;
+  record(pid, 0, {unavailable: true, note: 'not on shelf'});
+}
+
+function skip(pid){
+  const i = RUN.items.find(x => x.status === 'PENDING' && x.product_id !== pid);
+  if(i) markCurrent(i.product_id); else alert('Nothing else pending.');
+}
+
+async function reopen(pid){
+  const i = item(pid);
+  i.status = 'PENDING';                      // local only; the next add rewrites it
+  QTY[pid] = i.qty_added || Math.min(i.qty_planned, i.max_qty);
+  render(); markCurrent(pid);
+}
+
+function markCurrent(pid){
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('current'));
+  const el = document.getElementById('c-' + cssId(pid));
+  if(el){ el.classList.add('current'); el.scrollIntoView({block:'center', behavior:'smooth'}); }
+}
+
+function jumpNext(){
+  const n = RUN.items.find(i => i.status === 'PENDING');
+  if(n) markCurrent(n.product_id);
+  else $('#foott').textContent = 'all items done — Finish';
+}
+
+let warned = false;
+function warnOnce(msg){ if(!warned){ warned = true; alert(msg); } }
+
+async function finish(){
+  const left = RUN.totals.n_pending;
+  if(left && !confirm(`${left} item${left>1?'s are':' is'} still untouched. `
+      + `Finishing records ${left>1?'them':'it'} as not bought. Carry on?`)) return;
+  let j;
+  try{ j = await api(`/api/ops/cart/session/${encodeURIComponent(RUN.cart_session_id)}/finalize`, {}); }
+  catch(e){ return alert('Could not finish: ' + (e.message||e)); }
+  const final = location.origin + j.final_url;
+  const p = j.procurement || {};
+  $('#foot').style.display = 'none';
+  $('#main').innerHTML = `<div class="done-box">
+    <h2>Done — ${j.totals.qty_added} units across ${j.totals.n_added} of ${j.totals.n_items} items</h2>
+    <div class="muted">₹${Math.round(j.totals.value_inr).toLocaleString()} in this cart${
+      j.totals.n_short?` · ${j.totals.n_short} line${j.totals.n_short>1?'s':''} short`:''}.
+      ${p.not_recorded ? `<b style="color:var(--bad)">${p.not_recorded} line(s) could not be
+      written back to the batch.</b>` : 'Every line is written back to the batch, so Reconcile can allocate it.'}</div>
+    <div class="lnk"><code>${esc(j.blinkit_cart_url)}</code>
+      <a href="${esc(j.blinkit_cart_url)}" target="blinkit">Pay ↗</a></div>
+    <div class="lnk"><code>${esc(final)}</code>
+      <button onclick="navigator.clipboard?.writeText('${jsq(final)}')">Copy</button>
+      <a href="${esc(j.final_url)}">Open</a></div>
+  </div>`;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+boot();
+</script>
+</body>
+</html>

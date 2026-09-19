@@ -11,6 +11,7 @@ Files:
   diagnose.py                   read-only check of the database and the API
   crossborder/web/console.html  the single control-tower page
   crossborder/web/cart.html     the final link a finished cart run hands back
+  crossborder/web/operator.html the buyer's sheet for a phone (/operator-run)
   run_console.py                starts everything on one port
   start-windows.bat             double-click launcher (Windows)
   start-mac-linux.command       double-click launcher (mac/Linux)
@@ -96,6 +97,34 @@ post its cart directly -- one call in the cart handler:
         CART_ADD (one line; mode "absolute" sets it, "delta" moves it),
         CART_CLEAR, or ORDER_PLACED.
   ref:  the cart or session id, so one cart's changes stay one cart.
+
+The operator sheet (/operator-run)
+----------------------------------
+"Open operator sheet" now opens the buying sheet built on the cart run, laid
+out for one thumb in a dark store. It is the same engine as the console's run,
+so a buy made on the phone shows on the buy sheet immediately.
+
+What it does that a tick-list cannot:
+
+  * every line gets an outcome, not a tick -- "added N of M", "none on shelf",
+    or skip. A tick loses the quantity, and the quantity is what reconcile
+    allocates from;
+  * the + button stops at whichever bites first, this cart's limit for that
+    item or what the batch still needs, and says which. Nobody over-buys and
+    nobody exceeds a cart cap;
+  * every outcome is written back to the batch line through the procurement
+    engine. This was the missing half: before it, an operator could work a
+    whole run and reconcile would still see nothing bought and short every
+    order -- only "Simulate operator buys" ever marked a line. If a line cannot
+    be written back, the sheet says so rather than letting pack-out discover it;
+  * a second pass plans the remainder, not the original demand again. An item
+    needing 5 with a cart limit of 2 asks for 2, then 3, then 1, and drops off
+    the run once it is complete;
+  * the run is server-side, so a locked phone or a closed tab loses nothing --
+    reopen the same link and carry on.
+
+Finish writes the outcome of every line, including untouched ones (recorded as
+not bought), so reconcile is never left waiting on a run that is over.
 
 When something looks wrong
 --------------------------

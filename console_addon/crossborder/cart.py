@@ -53,6 +53,11 @@ from pydantic import BaseModel
 from .api import app
 from .db import connect
 
+try:                       # the engine that owns what a batch line has bought
+    from .api import procurement
+except ImportError:        # an older api.py that does not re-export it
+    procurement = None
+
 WEB = Path(__file__).parent / "web"
 
 BLINKIT = "https://blinkit.com"
@@ -94,7 +99,9 @@ CREATE TABLE IF NOT EXISTS cart_session_items (
     product_id  TEXT,
     seq         INTEGER,
     name        TEXT,
-    qty_planned INTEGER,
+    qty_planned INTEGER,     -- what THIS pass should buy (demand minus earlier passes)
+    qty_demand  INTEGER,     -- what the batch wants in total
+    qty_earlier INTEGER DEFAULT 0,
     qty_added   INTEGER DEFAULT 0,
     max_qty     INTEGER,
     limit_source TEXT,
@@ -112,8 +119,24 @@ CREATE INDEX IF NOT EXISTS idx_cart_items_seq
 
 # ------------------------------------------------------------- schema glue ---
 
+# Columns added after the first release. CREATE TABLE IF NOT EXISTS leaves an
+# existing table alone, so a database built by an earlier version needs them
+# added rather than assumed.
+_LATER_COLUMNS = {
+    "cart_session_items": [("qty_demand", "INTEGER"), ("qty_earlier", "INTEGER DEFAULT 0")],
+}
+
+
 def _ensure_schema(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
+    for table, columns in _LATER_COLUMNS.items():
+        have = _cols(conn, table)
+        for name, decl in columns:
+            if name not in have:
+                try:
+                    conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {decl}")
+                except sqlite3.Error:
+                    pass
     conn.commit()
 
 
@@ -400,12 +423,18 @@ def plan_batch(conn: sqlite3.Connection, batch_id: str,
         pid = str(l["product_id"])
         row = rows.get(pid, {})
         cap = cap_for(conn, pid, row, refresh=refresh_limits, deadline=deadline)
-        qty = int(l["qty_planned"] or 0)
+        demand = int(l["qty_planned"] or 0)
+        earlier = _bought_in_earlier_passes(conn, batch_id, pid)
+        qty = max(0, demand - earlier)
+        if qty == 0 and earlier:
+            continue                  # finished in an earlier pass; not this run's work
         max_qty = int(cap["max_qty"])
         item = {
             "product_id": pid,
             "name": row.get("name") or pid,
             "qty_planned": qty,
+            "qty_demand": demand,              # what the batch wants in total
+            "qty_bought_earlier": earlier,     # already in the bag from a past pass
             "max_qty": max_qty,
             "limit_source": cap["source"],
             "limit_reason": cap["reason"],
@@ -425,6 +454,8 @@ def plan_batch(conn: sqlite3.Connection, batch_id: str,
     out = []
     for key in sorted(carts, key=lambda k: (k[0] or 0, str(k[1] or ""))):
         cart = carts[key]
+        if not cart["items"]:
+            continue                  # every line finished in an earlier pass
         cart["items"].sort(key=lambda i: (rank.get(i["risk_bucket"], 3),
                                           -(i["unit_price_inr"] or 0) * i["qty_planned"],
                                           i["name"]))
@@ -436,6 +467,89 @@ def plan_batch(conn: sqlite3.Connection, batch_id: str,
         cart["n_multi_pass"] = sum(1 for i in cart["items"] if i["plan_over_limit"])
         out.append(cart)
     return out
+
+
+def _bought_across_runs(conn: sqlite3.Connection, batch_id: str,
+                        product_id: str) -> Optional[int]:
+    """Total units of this SKU bought for this batch, across every cart pass.
+
+    An item whose demand exceeds one cart's limit is bought over several
+    passes, each its own run. `mark_line` sets qty_bought rather than adding to
+    it, so a second pass must send the running total or it would erase the
+    first one.
+    """
+    if not _cols(conn, "cart_session_items"):
+        return None
+    row = conn.execute(
+        """SELECT COALESCE(SUM(i.qty_added),0) FROM cart_session_items i
+           JOIN cart_sessions s USING(cart_session_id)
+           WHERE s.batch_id=? AND i.product_id=?""",
+        (batch_id, str(product_id))).fetchone()
+    return int(row[0]) if row else None
+
+
+def _bought_in_earlier_passes(conn: sqlite3.Connection, batch_id: str,
+                              product_id: str) -> int:
+    """Units already bought for this SKU in runs that are closed.
+
+    A new pass exists to finish what the last one could not fit, so it plans
+    the remainder, not the original demand again. Only finalized runs count:
+    an open run's own adds are this pass's work, and subtracting them would
+    make the target shrink as the operator worked.
+    """
+    if not _cols(conn, "cart_session_items"):
+        return 0
+    row = conn.execute(
+        """SELECT COALESCE(SUM(i.qty_added),0) FROM cart_session_items i
+           JOIN cart_sessions s USING(cart_session_id)
+           WHERE s.batch_id=? AND i.product_id=? AND s.status='FINALIZED'""",
+        (batch_id, str(product_id))).fetchone()
+    return int(row[0]) if row else 0
+
+
+def mark_bought(conn: sqlite3.Connection, batch_id: Optional[str],
+                product_id: str, qty: int, actor: str = "operator") -> str:
+    """Record a cart-run add against the batch line it fills.
+
+    Without this the run is a private tally: the operator adds everything to
+    Blinkit, and reconcile -- which allocates from what batch_lines says was
+    bought -- still sees zero and shorts every order. The procurement engine
+    owns that column, so ask it first; only if this build does not expose it
+    do we write the line ourselves, and say which happened so a silent
+    mismatch cannot hide.
+    """
+    if not batch_id:
+        return "no-batch"
+    total = _bought_across_runs(conn, batch_id, product_id)
+    qty = qty if total is None else total      # cumulative, not this pass alone
+    if procurement is not None and hasattr(procurement, "mark_line"):
+        try:
+            procurement.mark_line(batch_id, str(product_id), "BOUGHT",
+                                  qty_bought=int(qty), actor=actor)
+            return "marked"
+        except Exception:
+            pass               # fall through to writing the line directly
+    bc = _cols(conn, "batch_lines")
+    qb = _pick(bc, "qty_bought")
+    if not qb:
+        return "unavailable"
+    sets, args = [f"{qb}=?"], [int(qty)]
+    if "status" in bc:
+        sets.append("status='BOUGHT'")
+    if "bought_at" in bc:
+        sets.append("bought_at=?")
+        args.append(int(time.time()))
+    if "bought_by" in bc:
+        sets.append("bought_by=?")
+        args.append(actor)
+    try:
+        conn.execute(f"UPDATE batch_lines SET {', '.join(sets)} "
+                     "WHERE batch_id=? AND product_id=?",
+                     (*args, batch_id, str(product_id)))
+        conn.commit()
+        return "fallback"
+    except sqlite3.Error:
+        return "unavailable"
 
 
 def _session_row(conn: sqlite3.Connection, sid: str) -> dict:
@@ -499,6 +613,8 @@ class AddReq(BaseModel):
     qty: int
     dry_run: bool = False      # the console validates on every keystroke; a
                                # dry run checks the cap without recording it
+    note: Optional[str] = None # why it went short: "only 2 on the shelf"
+    unavailable: bool = False  # nothing on the shelf; records a hard zero
 
 
 @app.get("/api/ops/cart/limits")
@@ -526,9 +642,13 @@ def cart_plan(req: PlanReq) -> dict:
     _ensure_schema(conn)
     carts = plan_batch(conn, req.batch_id, refresh_limits=req.refresh_limits)
     if not carts:
+        has_lines = bool(_batch_lines(conn, req.batch_id))
         conn.close()
-        return {"ok": False, "error": f"no lines for batch {req.batch_id} — "
-                                      "build a batch first", "carts": []}
+        return {"ok": False, "carts": [],
+                "error": ("everything in this batch has been bought — nothing left "
+                          "to add" if has_lines else
+                          f"no lines for batch {req.batch_id} — build a batch first"),
+                "all_bought": has_lines}
     now = int(time.time())
     out = []
     for cart in carts:
@@ -544,19 +664,23 @@ def cart_plan(req: PlanReq) -> dict:
         for item in cart["items"]:
             conn.execute(
                 """INSERT INTO cart_session_items
-                   (cart_session_id,product_id,seq,name,qty_planned,qty_added,max_qty,
-                    limit_source,limit_reason,risk_bucket,unit_price_inr,status,updated_at)
-                   VALUES (?,?,?,?,?,0,?,?,?,?,?, 'PENDING', ?)
+                   (cart_session_id,product_id,seq,name,qty_planned,qty_demand,
+                    qty_earlier,qty_added,max_qty,limit_source,limit_reason,
+                    risk_bucket,unit_price_inr,status,updated_at)
+                   VALUES (?,?,?,?,?,?,?,0,?,?,?,?,?, 'PENDING', ?)
                    ON CONFLICT(cart_session_id,product_id) DO UPDATE SET
                      seq=excluded.seq, name=excluded.name,
-                     qty_planned=excluded.qty_planned, max_qty=excluded.max_qty,
+                     qty_planned=excluded.qty_planned,
+                     qty_demand=excluded.qty_demand, qty_earlier=excluded.qty_earlier,
+                     max_qty=excluded.max_qty,
                      limit_source=excluded.limit_source,
                      limit_reason=excluded.limit_reason,
                      risk_bucket=excluded.risk_bucket,
                      unit_price_inr=excluded.unit_price_inr,
                      updated_at=excluded.updated_at""",
                 (sid, item["product_id"], item["seq"], item["name"],
-                 item["qty_planned"], item["max_qty"], item["limit_source"],
+                 item["qty_planned"], item["qty_demand"], item["qty_bought_earlier"],
+                 item["max_qty"], item["limit_source"],
                  item["limit_reason"], item["risk_bucket"],
                  item["unit_price_inr"], now))
         conn.commit()
@@ -595,7 +719,7 @@ def cart_add(sid: str, req: AddReq) -> dict:
     """
     conn = connect()
     _ensure_schema(conn)
-    _session_row(conn, sid)
+    row = _session_row(conn, sid)
     item = conn.execute(
         "SELECT * FROM cart_session_items WHERE cart_session_id=? AND product_id=?",
         (sid, str(req.product_id))).fetchone()
@@ -605,13 +729,16 @@ def cart_add(sid: str, req: AddReq) -> dict:
                             detail=f"{req.product_id} is not in cart run {sid}")
     item = dict(item)
     cap = cap_for(conn, str(req.product_id))          # fresh, not the page's copy
-    max_qty, qty = int(cap["max_qty"]), int(req.qty)
+    max_qty = int(cap["max_qty"])
+    # "Not available" is a real outcome, not a zero someone typed: it records a
+    # hard zero against the line so reconcile stops waiting for it.
+    qty = 0 if req.unavailable else int(req.qty)
 
     if qty < 0:
         conn.close()
         raise HTTPException(status_code=400, detail="qty cannot be negative")
 
-    if qty > max_qty:
+    if qty > max_qty and not req.unavailable:
         conn.execute(
             "UPDATE cart_session_items SET max_qty=?, limit_source=?, limit_reason=?, "
             "updated_at=? WHERE cart_session_id=? AND product_id=?",
@@ -631,7 +758,8 @@ def cart_add(sid: str, req: AddReq) -> dict:
                             f"This item cannot go in the cart ({cap['reason']})."),
                 "totals": _totals(items)}
 
-    status = "ADDED" if qty >= (item["qty_planned"] or 0) else "SHORT"
+    status = ("UNAVAILABLE" if req.unavailable else
+              "ADDED" if qty >= (item["qty_planned"] or 0) else "SHORT")
     if req.dry_run:
         # Only the cap is worth persisting from a keystroke check; the quantity
         # itself is not an add until the operator says it is.
@@ -648,7 +776,11 @@ def cart_add(sid: str, req: AddReq) -> dict:
             (qty, max_qty, cap["source"], cap["reason"], status, int(time.time()),
              sid, str(req.product_id)))
     conn.commit()
+    marked = "skipped"
     if not req.dry_run:
+        # An add is only half recorded until the batch line knows about it --
+        # reconcile allocates from what was bought, not from what we tallied.
+        marked = mark_bought(conn, row.get("batch_id"), req.product_id, qty)
         # The buy sheet is live, so every unit that goes into a Blinkit cart has
         # to land on it as it happens. Imported here rather than at module load:
         # buysheet imports this module for the cap and the links.
@@ -656,7 +788,8 @@ def cart_add(sid: str, req: AddReq) -> dict:
             from .buysheet import record_event, BLINKIT_ADD
             record_event(conn, BLINKIT_ADD, product_id=req.product_id, qty=qty,
                          ref=sid, name=item["name"], source="cart-run",
-                         actor="operator")
+                         actor="operator", detail={"note": req.note,
+                                                   "unavailable": req.unavailable})
         except Exception:
             pass          # the sheet is a view; never fail an add over it
     items = _session_items(conn, sid)
@@ -665,6 +798,7 @@ def cart_add(sid: str, req: AddReq) -> dict:
     return {"ok": True, "over_limit": False, "product_id": req.product_id,
             "qty_added": item["qty_added"] if req.dry_run else qty,
             "max_qty": max_qty, "status": status, "dry_run": req.dry_run,
+            "procurement": marked,      # marked | fallback | unavailable | no-batch
             "limit_source": cap["source"], "limit_reason": cap["reason"],
             "short_by": max(0, (item["qty_planned"] or 0) - qty),
             "next_item": nxt, "totals": _totals(items)}
@@ -680,7 +814,15 @@ def cart_finalize(sid: str) -> dict:
     """
     conn = connect()
     _ensure_schema(conn)
-    _session_row(conn, sid)
+    row = _session_row(conn, sid)
+    items = _session_items(conn, sid)
+    # Every line in the run gets its outcome written to the batch, including the
+    # ones nobody touched. A line left unmarked is indistinguishable from one
+    # not yet worked, and reconcile would keep waiting on a run that is over.
+    marks = {}
+    for i in items:
+        marks[i["product_id"]] = mark_bought(
+            conn, row.get("batch_id"), i["product_id"], i["qty_added"] or 0)
     conn.execute("UPDATE cart_sessions SET status='FINALIZED', finalized_at=? "
                  "WHERE cart_session_id=?", (int(time.time()), sid))
     conn.commit()
@@ -693,7 +835,13 @@ def cart_finalize(sid: str) -> dict:
                        "qty_added": i["qty_added"], "qty_planned": i["qty_planned"],
                        "max_qty": i["max_qty"], "short_by": i["short_by"],
                        "product_url": i["product_url"]} for i in items],
-            "short": [i["product_id"] for i in items if i["short_by"] > 0]}
+            "short": [i["product_id"] for i in items if i["short_by"] > 0],
+            "procurement": {"marked": sum(1 for v in marks.values() if v == "marked"),
+                            "written_directly": sum(1 for v in marks.values()
+                                                    if v == "fallback"),
+                            "not_recorded": sum(1 for v in marks.values()
+                                                if v in ("unavailable", "no-batch"))},
+            "next_step": "Reconcile now allocates what this run actually bought."}
 
 
 @app.get("/api/ops/cart/session/{sid}/summary")
@@ -706,6 +854,18 @@ def cart_summary(sid: str) -> dict:
     conn.close()
     return {"ok": True, **row, "items": items, "totals": _totals(items),
             "blinkit_cart_url": BLINKIT_CART_URL}
+
+
+@app.get("/operator-run")
+def operator_page():
+    """The buying sheet for the phone in the operator's hand.
+
+    Same engine as the console's cart run -- same caps, same recording, same
+    links -- laid out for one thumb in a dark store: one item at a time, big
+    targets, and an outcome for every line rather than a tick that loses the
+    quantity.
+    """
+    return FileResponse(WEB / "operator.html")
 
 
 @app.get("/cart-run/{sid}")

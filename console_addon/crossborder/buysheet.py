@@ -255,18 +255,25 @@ def _batched(conn: sqlite3.Connection, batch_id: Optional[str]) -> dict[str, int
 
 
 def _in_blinkit_cart(conn: sqlite3.Connection,
-                     batch_id: Optional[str]) -> dict[str, int]:
-    """What the operator has actually put in a Blinkit cart for this batch."""
+                     batch_id: Optional[str]) -> dict[str, tuple]:
+    """What the operator has put in a Blinkit cart: (total, most in one cart).
+
+    The total spans every cart pass, because an item over its limit is bought
+    across several. The cap, though, is per cart -- so the over-limit test has
+    to look at the biggest single run, or a legitimate three-pass buy would be
+    flagged as a violation of a limit it never broke.
+    """
     if not _cols(conn, "cart_session_items"):
         return {}
-    q = ("SELECT i.product_id AS pid, SUM(i.qty_added) AS qty "
-         "FROM cart_session_items i JOIN cart_sessions s USING(cart_session_id) ")
+    q = ("SELECT i.product_id AS pid, SUM(i.qty_added) AS total, "
+         "MAX(i.qty_added) AS most FROM cart_session_items i "
+         "JOIN cart_sessions s USING(cart_session_id) ")
     args: tuple = ()
     if batch_id:
         q += "WHERE s.batch_id=? "
         args = (batch_id,)
     rows = conn.execute(q + "GROUP BY i.product_id", args).fetchall()
-    return {str(r["pid"]): int(r["qty"] or 0) for r in rows}
+    return {str(r["pid"]): (int(r["total"] or 0), int(r["most"] or 0)) for r in rows}
 
 
 def live_sheet(conn: sqlite3.Connection, batch_id: Optional[str] = None,
@@ -294,7 +301,8 @@ def live_sheet(conn: sqlite3.Connection, batch_id: Optional[str] = None,
         cap = cap_for(conn, pid, row)
         name = row.get("name") or pid
         qty_cart, qty_ord = in_cart.get(pid, 0), ordered.get(pid, 0)
-        qty_bat, qty_add = batched.get(pid, 0), added.get(pid, 0)
+        qty_bat = batched.get(pid, 0)
+        qty_add, most_in_one_cart = added.get(pid, (0, 0))
         # The furthest a unit of this SKU has got is what the row is "at".
         state = ("ADDED" if qty_add else "BATCHED" if qty_bat
                  else "ORDERED" if qty_ord else "IN_CART")
@@ -310,7 +318,7 @@ def live_sheet(conn: sqlite3.Connection, batch_id: Optional[str] = None,
             "state": state,
             "max_qty": cap["max_qty"], "limit_source": cap["source"],
             "limit_reason": cap["reason"], "limit_detail": cap.get("detail") or {},
-            "over_limit": qty_add > cap["max_qty"],
+            "over_limit": most_in_one_cart > cap["max_qty"],
             "needs_passes": (demand + cap["max_qty"] - 1) // cap["max_qty"]
                             if cap["max_qty"] else None,
             "last_event_at": last_seen.get(pid),

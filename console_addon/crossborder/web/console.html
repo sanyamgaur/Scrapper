@@ -281,7 +281,7 @@
         <tr><td>Simulate operator buys <span class="demoflag">demo</span></td><td>Marks every line bought, leaving the biggest line one unit short — stands in for a person tapping through the operator sheet.</td></tr>
         <tr><td>Reconcile</td><td>Assigns bought units to orders, smallest first (ties: oldest). Full fill = complete; otherwise short.</td></tr>
         <tr><td>Pack-out bins</td><td>One bin per customer with ship-to and parcel weight; marks each complete or short.</td></tr>
-        <tr><td>Open operator sheet ↗</td><td>Appears after Build batch — the real mobile buy sheet you'd hand a buyer instead of simulating.</td></tr>
+        <tr><td>Open operator sheet ↗</td><td>Appears after Build batch — the buying sheet for the phone in the buyer's hand. Same engine as the cart run, laid out for one thumb: one item at a time, its cart limit enforced, and an outcome for every line (<b>added N</b>, <b>none on shelf</b>, skip). Each outcome is written back to the batch line, so <b>Reconcile</b> allocates what was really bought instead of needing the demo simulator.</td></tr>
       </table></details>
       <div id="buysheetBox"></div>
       <div id="fulfilBox"></div>
@@ -402,7 +402,7 @@ async function buildBatch(){
     const j = await api('/api/ops/batch/build', {batch_date:$('#batchDate').value, operator:'demo'});
     $('#out4').textContent = JSON.stringify(j, null, 2); $('#out4').classList.add('show');
     if(j.n_orders===0){ $('#out4').textContent='No unbatched orders. Seed sample orders (or place some) first.'; }
-    const l=$('#opLink'); l.href='/operator?batch='+batchId(); l.style.display='inline-block';
+    const l=$('#opLink'); l.href='/operator-run?batch='+batchId(); l.style.display='inline-block';
     refreshState(); refreshBuySheet();
   }catch(e){
     const msg = String(e.message || e);
@@ -413,7 +413,7 @@ async function buildBatch(){
         + `Use View buy sheet and Build Blinkit cart to work it; to seal a different `
         + `day's orders, change the date box first.`;
       $('#out4').classList.add('show');
-      const l=$('#opLink'); l.href='/operator?batch='+batchId(); l.style.display='inline-block';
+      const l=$('#opLink'); l.href='/operator-run?batch='+batchId(); l.style.display='inline-block';
       refreshState(); refreshBuySheet();
       return;
     }
@@ -566,7 +566,9 @@ function itemHtml(c, i){
     <td class="n">${i.seq}</td>
     <td><a class="inl" href="${esc(i.product_url)}" target="blinkit">${esc(i.name)}</a>
         <span class="muted"> · <a class="inl" href="${esc(i.search_url)}" target="blinkit">search</a></span>
-        <div class="muted">wanted ×${i.qty_planned}${i.max_qty>0 && i.qty_planned>i.max_qty
+        <div class="muted">wanted ×${i.qty_planned}${i.qty_earlier
+          ? ` (${i.qty_earlier} of ${i.qty_demand} bought in an earlier pass)` : ''}${
+          i.max_qty>0 && i.qty_planned>i.max_qty
           ? ` · needs ${Math.ceil(i.qty_planned/i.max_qty)} cart passes` : ''}</div>
         <div class="warnline" id="w-${esc(sid)}-${esc(cssId(pid))}"
              style="display:${i.max_qty ? 'none' : 'block'}">${i.max_qty ? ''
