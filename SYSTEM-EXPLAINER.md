@@ -738,14 +738,14 @@ The relevance guard matters most: unconstrained freight math recommends a $197 w
 
 Everything runs as **one application on one address**. The engines are not separate services — they are Python modules that execute server-side when a page or an endpoint asks them to.
 
-| Path | Surface | Who uses it | What it shows |
+| Surface | Live URL | Who uses it | What it shows |
 | --- | --- | --- | --- |
-| `/` | **Storefront** | Customers | Catalogue, product pages, cart, checkout. Prices come from the pricing engine, freight from the shipping engine, suggestions from the basket builder. |
-| `/console` | **Control tower** | You | Runs the pipeline stages by hand, seeds demo data, simulates orders, and shows the state of every engine. |
-| `/ops` | **Compliance queue** | Reviewer | The 531 clustered decisions from section 8. Clear a cluster, move hundreds of SKUs. |
-| `/operator` | **Pick sheet** | Buyer in Delhi | Risk-ordered lines with deep links and the three confirmations from section 13. |
-| `/docs` | API reference | Developers | All 47 endpoints, interactive. |
-| `/legacy` | Old storefront | — | The earlier single-page version, kept for reference. |
+| **Storefront** | [baba-it.onrender.com/](https://baba-it.onrender.com/) | Customers | Catalogue, product pages, cart, checkout. Prices from the pricing engine, freight from shipping, suggestions from the basket builder. |
+| **Control tower** | [/console](https://baba-it.onrender.com/console) | You | Runs pipeline stages by hand, seeds demo data, simulates orders, shows every engine's state. |
+| **Compliance queue** | [/ops](https://baba-it.onrender.com/ops) | Reviewer | The 531 clustered decisions from section 8. |
+| **Pick sheet** | [/operator](https://baba-it.onrender.com/operator) | Buyer in Delhi | Risk-ordered lines, deep links, three confirmations. |
+| API reference | [/docs](https://baba-it.onrender.com/docs) | Developers | All 47 endpoints, interactive. |
+| Old storefront | [/legacy](https://baba-it.onrender.com/legacy) | — | The earlier single-page version. |
 
 ### The control tower is where the system explains itself
 
@@ -837,3 +837,60 @@ The database lives on the host's ephemeral disk. **Anything written at runtime �
 | **Quote drift** | Movement against a price promised to a named customer. Held tighter: $2 or 4% |
 | **LLM tail** | The \~28% of SKUs no rule covers, optionally classified by a model |
 | **Rule pack** | The versioned set of compliance rules. Currently `2026.09.1` |
+
+## 19. Links
+
+### Live system
+
+| What | Link |
+| --- | --- |
+| Storefront | https://baba-it.onrender.com/ |
+| Control tower | https://baba-it.onrender.com/console |
+| Compliance queue | https://baba-it.onrender.com/ops |
+| Operator pick sheet | https://baba-it.onrender.com/operator |
+| API reference (47 endpoints) | https://baba-it.onrender.com/docs |
+| Old storefront | https://baba-it.onrender.com/legacy |
+
+First request after idle takes 30–50 seconds — the host spins the service down between visits, and the catalogue is a 28 MB database.
+
+### Source
+
+| What | Link |
+| --- | --- |
+| Repository | https://github.com/sanyamgaur/Scrapper |
+| This document (Markdown) | [`SYSTEM-EXPLAINER.md`](https://github.com/sanyamgaur/Scrapper/blob/main/SYSTEM-EXPLAINER.md) |
+| Getting started | [`START-HERE.txt`](https://github.com/sanyamgaur/Scrapper/blob/main/START-HERE.txt) |
+| Engine notes | [`crossborder/README.md`](https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/README.md) |
+
+### The rule packs
+
+Every threshold in this document lives in one of these four files. Change policy here, never in code.
+
+| Engine | File |
+| --- | --- |
+| Compliance (sections 6–8) | [`rules/compliance.yaml`](https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/rules/compliance.yaml) |
+| Pricing (section 9) | [`rules/pricing.yaml`](https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/rules/pricing.yaml) |
+| Shipping + customs (sections 9–10) | [`rules/shipping.yaml`](https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/rules/shipping.yaml) |
+| Stock, risk, procurement, drift, restock, basket (sections 11–15) | [`rules/procurement.yaml`](https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/rules/procurement.yaml) |
+
+### Engine source
+
+| Section | Module |
+| --- | --- |
+| 5. Pack parsing | [`packparse.py`](https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/packparse.py) |
+| 6–7. Compliance | [`compliance.py`](https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/compliance.py) |
+| 8. Ops queue | [`operator.py`](https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/operator.py) |
+| 9. Pricing | [`pricing.py`](https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/pricing.py) |
+| 10. Shipping | [`shipping.py`](https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/shipping.py) |
+| 11. Stock | [`stock.py`](https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/stock.py) · [`availability_engine.py`](https://github.com/sanyamgaur/Scrapper/blob/main/availability_engine.py) |
+| 12. Stockout risk | [`stockout_risk.py`](https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/stockout_risk.py) |
+| 13. Procurement | [`procurement.py`](https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/procurement.py) |
+| 14. Price drift | [`pricedrift.py`](https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/pricedrift.py) |
+| 15. Restock · Basket | [`restock.py`](https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/restock.py) · [`basket.py`](https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/basket.py) |
+| 16. API · console | [`api.py`](https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/api.py) · [`console.py`](https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/console.py) |
+| 16. LLM tail | [`llm.py`](https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/llm.py) |
+| 17. Scraper | [`crawl.py`](https://github.com/sanyamgaur/Scrapper/blob/main/crawl.py) · [`discover.py`](https://github.com/sanyamgaur/Scrapper/blob/main/discover.py) |
+
+### On the legal citations
+
+The authorities in section 7 (`9 CFR 94`, `FDA Import Alert 53-19`, `IATA DGR UN1950` and the rest) are quoted from the rule pack and are **not linked here** — they were not fetched or verified against the issuing bodies while writing this document. Look each one up at [ecfr.gov](https://www.ecfr.gov) or [fda.gov](https://www.fda.gov) before relying on it, and have a licensed customs broker sign off, as the rule pack itself says.
