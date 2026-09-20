@@ -1,0 +1,60 @@
+# =============================================================================
+# Landed cost and US retail pricing policy
+# =============================================================================
+# One place where every number that turns an INR shelf price into a USD list
+# price lives. Change policy here, never in code.
+# =============================================================================
+
+meta:
+  version: "2026.09.1"
+  currency_base: "INR"
+  currency_sell: "USD"
+
+fx:
+  # Hold a buffer over spot. FX moves between the moment you quote a customer
+  # and the moment you actually buy the goods on Blinkit; the buffer stops that
+  # gap from eating the order's margin.
+  usd_inr_spot: 88.0
+  buffer_pct: 2.5
+  source: "manual - wire to an FX API and refresh daily"
+
+sourcing:
+  # What it actually costs to get the goods into your India hub.
+  blinkit_delivery_fee_inr: 35.0      # per order, amortized across the basket
+  blinkit_handling_pct: 2.0           # surge/handling variance on the shelf price
+  india_pick_pack_inr: 45.0           # per order labour at the India hub
+  procurement_failure_pct: 4.0        # orders where the SKU is gone on arrival
+                                      # and must be refunded or re-sourced
+
+payments:
+  gateway_pct: 2.9                    # Stripe-class card processing
+  gateway_flat_usd: 0.30
+  fx_conversion_pct: 1.0              # settlement INR<->USD spread
+  chargeback_reserve_pct: 0.8
+
+margin:
+  # Applied on total landed cost. Cross-border grocery lives or dies on whether
+  # the customer accepts a multiple of the Indian shelf price -- they are paying
+  # for access, not for groceries.
+  target_gross_margin_pct: 28.0
+  min_gross_margin_pct: 15.0
+  # Category overrides: light, high-value, non-perishable goods carry more.
+  by_category:
+    "Beauty & Cosmetics": 38.0
+    "Skin & Face": 38.0
+    "Home & Lifestyle": 34.0
+    "Stationery & Games": 32.0
+    "Chips & Namkeen": 22.0
+    "Atta, Rice & Dal": 18.0     # heavy and cheap: freight already dominates
+
+  # Psychological rounding on the final USD price.
+  round_to: 0.99
+  min_price_usd: 2.99
+
+viability:
+  # A SKU where freight dwarfs the goods value is technically listable and
+  # commercially absurd. These thresholds surface that before a customer
+  # discovers it at checkout.
+  max_freight_to_goods_ratio: 4.0
+  warn_freight_to_goods_ratio: 2.0
+  min_goods_value_inr: 40.0

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="/app/config.js"></script>
+<title>Sourced — Control Tower</title>
+<style>
+  :root{
+    --bg:#fbfaf8; --panel:#fff; --ink:#1a1a1a; --muted:#6b6b6b; --line:#e6e3dd;
+    --accent:#c2410c; --ok:#15803d; --warn:#a16207; --bad:#b91c1c; --info:#1d4ed8;
+    --radius:10px; --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 14px rgba(0,0,0,.04);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#14130f; --panel:#1e1c18; --ink:#f2efe9; --muted:#a09a90; --line:#302d27;
+    --accent:#fb923c; --ok:#4ade80; --warn:#fbbf24; --bad:#f87171; --info:#93c5fd;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+  }}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  header{background:var(--panel);border-bottom:1px solid var(--line);padding:14px 18px;position:sticky;top:0;z-index:5}
+  .wrap{max-width:1180px;margin:0 auto}
+  h1{margin:0;font-size:18px;letter-spacing:-.02em}
+  h1 em{font-style:normal;color:var(--muted);font-weight:400}
+  .links{float:right;display:flex;gap:8px}
+  .links a{font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--line);padding:6px 10px;border-radius:7px}
+  .links a:hover{border-color:var(--accent);color:var(--accent)}
+  /* funnel strip */
+  .funnel{display:flex;gap:6px;align-items:stretch;margin-top:12px;flex-wrap:wrap}
+  .fn{flex:1;min-width:96px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+  .fn .k{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .fn .v{font-size:19px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .fn.ok .v{color:var(--ok)} .fn.warn .v{color:var(--warn)} .fn.bad .v{color:var(--bad)} .fn.info .v{color:var(--info)}
+  main{max-width:1180px;margin:0 auto;padding:18px 18px 120px}
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+  .step > .hd{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:10px}
+  .step .no{font-size:12px;font-weight:700;color:#fff;background:var(--accent);border-radius:20px;padding:2px 9px}
+  .step h2{font-size:15px;margin:0}
+  .step .desc{font-size:12.5px;color:var(--muted)}
+  .body{padding:14px 16px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  button{font:inherit;cursor:pointer;border-radius:7px;padding:7px 13px;font-size:13px;font-weight:600;
+    border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+  button:hover{border-color:var(--accent);color:var(--accent)}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.primary:hover{filter:brightness(1.08);color:#fff}
+  button:disabled{opacity:.5;cursor:progress}
+  button.ok{border-color:var(--ok);color:var(--ok)} button.ok:hover{background:var(--ok);color:#fff}
+  button.bad{border-color:var(--bad);color:var(--bad)} button.bad:hover{background:var(--bad);color:#fff}
+  input[type=text],input[type=number]{font:inherit;padding:6px 9px;border:1px solid var(--line);
+    border-radius:7px;background:var(--bg);color:var(--ink);width:150px}
+  .out{margin-top:11px;font-size:12.5px;white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;
+    background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:none;max-height:340px;overflow:auto}
+  .out.show{display:block}
+  .muted{color:var(--muted);font-size:12.5px}
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+  th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .n{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+  .pill{font-size:10px;padding:2px 6px;border-radius:5px;font-weight:600}
+  .pill.CRITICAL{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+  .pill.HIGH{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+  .pill.NORMAL{background:color-mix(in srgb,var(--muted) 15%,transparent);color:var(--muted)}
+  .tag{display:inline-block;font-size:11px;padding:2px 7px;border-radius:5px;border:1px solid var(--line);color:var(--muted)}
+  .flash{animation:fl 1s ease}
+  @keyframes fl{0%{background:color-mix(in srgb,var(--ok) 25%,transparent)}100%{background:transparent}}
+  a.inl{color:var(--info);text-decoration:none} a.inl:hover{text-decoration:underline}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+  /* self-documenting bits */
+  details.guide{margin-top:12px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:0}
+  details.guide>summary{cursor:pointer;padding:11px 14px;font-weight:700;font-size:13.5px;list-style:none}
+  details.guide>summary::-webkit-details-marker{display:none}
+  details.guide>summary::before{content:"▸ ";color:var(--accent)}
+  details.guide[open]>summary::before{content:"▾ "}
+  .guide .gbody{padding:2px 16px 14px;font-size:13px}
+  .guide h4{margin:14px 0 4px;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--accent)}
+  .guide ol{margin:4px 0;padding-left:20px} .guide li{margin:3px 0}
+  .guide code{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:12px}
+  .cap{font-size:12.5px;color:var(--muted);margin:8px 0 0}
+  .cap b{color:var(--ink);font-weight:600}
+  details.whatdo{margin-top:10px}
+  details.whatdo>summary{cursor:pointer;font-size:12.5px;color:var(--info);list-style:none}
+  details.whatdo>summary::-webkit-details-marker{display:none}
+  details.whatdo>summary::before{content:"ⓘ what each button does";}
+  details.whatdo[open]>summary::before{content:"ⓘ hide";}
+  details.whatdo table{margin-top:8px}
+  details.whatdo td:first-child{white-space:nowrap;font-weight:600;color:var(--ink)}
+  .legend2{font-size:11.5px;color:var(--muted);margin-top:8px}
+  .demoflag{display:inline-block;font-size:10px;font-weight:700;color:var(--warn);
+    border:1px solid var(--warn);border-radius:4px;padding:0 5px;margin-left:6px;vertical-align:middle}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="links">
+    <a href="/" target="_blank" title="The US customer-facing shop">Storefront ↗</a>
+    <a href="/ops" target="_blank" title="Full compliance triage UI">Ops queue ↗</a>
+    <a href="/docs" target="_blank" title="Auto-generated list of every API endpoint">API docs ↗</a>
+  </div>
+  <h1>Sourced <em>· Control Tower</em></h1>
+  <div class="funnel" id="funnel"></div>
+  <div class="legend2">Funnel strip is live — it refreshes after every action and every 8s.
+    <b>Catalogue</b> = SKUs crawled · <b>Allowed</b> = listable · <b>Waiting to buy</b> = orders placed but not yet built into a buy sheet.</div>
+
+  <details class="guide">
+    <summary>How to run the demo — read me</summary>
+    <div class="gbody">
+      <h4>Do the steps top to bottom</h4>
+      <ol>
+        <li><b>Catalogue pipeline</b> — <i>Run listability rules</i>, then <i>Score stockout risk</i>. Watch the strip split into Blocked / In review / Allowed.</li>
+        <li><b>Compliance queue</b> — <i>Load pending clusters</i>, then <i>Clear</i> or <i>Kill</i> one row and watch the Allowed/Blocked counts move.</li>
+        <li><b>Storefront</b> — <i>Open storefront</i>, add an item, complete checkout. It just works; the order then appears in step 4.</li>
+        <li><b>Fulfilment</b> — <i>Build buy sheet from waiting orders</i> → <i>View buy sheet</i> → <i>Reconcile</i> → <i>Pack-out</i>. Or just <i>Fulfil everything in one click</i>.</li>
+        <li><b>Signals</b> — <i>Top stockout risk</i>, <i>Detect restocks</i>, <i>Sweep price drift</i>.</li>
+      </ol>
+      <h4>Words you'll see</h4>
+      <ol style="list-style:none;padding-left:0">
+        <li><b>Verdict</b> — Allowed (listable) / Review (needs a human) / Blocked (never listed).</li>
+        <li><b>Cluster</b> — a group of SKUs sharing one shelf + one rule; one Clear/Kill moves the whole group.</li>
+        <li><b>Waiting to buy</b> — orders that have been placed but not yet built into a buy sheet. Build clears them into a batch.</li>
+        <li><b>Batch</b> — one day's orders sealed for buying, split into carts per dark store.</li>
+        <li><b>Short</b> — an order that couldn't be fully bought; reconcile fills smallest orders first.</li>
+        <li><b>Risk bucket</b> — CRITICAL / HIGH / NORMAL likelihood a SKU goes out of stock.</li>
+      </ol>
+      <h4>Note for your manager</h4>
+      <ol style="list-style:none;padding-left:0">
+        <li>Buttons marked <span class="demoflag">demo</span> substitute for a live scraper/availability engine so the funnel can be shown offline. Everything else runs the real engines on the real database.</li>
+      </ol>
+    </div>
+  </details>
+</div></header>
+
+<main>
+  <!-- 1 CATALOGUE PIPELINE -->
+  <section class="step">
+    <div class="hd"><span class="no">1</span><h2>Catalogue pipeline</h2>
+      <span class="desc">Turn the raw crawl into verdicts: what may be listed, what needs review, what's banned.</span></div>
+    <div class="body">
+      <div class="row">
+        <input type="text" id="ingestCsv" value="inventory_delhi.csv">
+        <button title="Load the crawl CSV into the database (already done for you)" onclick="run(this,'/api/ops/pipeline/ingest','out1',{csv:document.getElementById('ingestCsv').value})">Ingest catalogue</button>
+        <button class="primary" title="Apply keyword/shelf/aisle/pack rules to every SKU" onclick="run(this,'/api/ops/pipeline/classify','out1')">Run listability rules</button>
+        <button title="Score how likely each SKU is to go out of stock" onclick="run(this,'/api/ops/pipeline/risk','out1')">Score stockout risk</button>
+        <span class="muted">LLM tail <span class="demoflag">optional</span> needs API key:</span>
+        <input type="number" id="llmLimit" value="200" style="width:90px">
+        <button title="Ask the LLM to classify SKUs no rule matched" onclick="run(this,'/api/ops/pipeline/llm','out1',{limit:+document.getElementById('llmLimit').value})">Classify tail</button>
+      </div>
+      <p class="cap"><b>What happens:</b> the buttons rebuild verdicts from your rules. The result box shows the Allowed / Review / Blocked counts, and the top strip updates.</p>
+      <details class="whatdo"><summary></summary><table>
+        <tr><td>Ingest catalogue</td><td>Loads <code>inventory_delhi.csv</code> into the products table and parses every pack size to a weight. Already done — only needed after a fresh crawl.</td></tr>
+        <tr><td>Run listability rules</td><td>The core engine. Runs 39 keyword + 71 shelf + 9 aisle + pack rules; worst verdict wins. Turns 31k SKUs into ~6k Allowed / ~22k Review / ~3.5k Blocked.</td></tr>
+        <tr><td>Score stockout risk</td><td>Weighs out-of-stock history, flip rate and discount depth into a CRITICAL/HIGH/NORMAL score used to order the buy sheet and filter basket add-ons.</td></tr>
+        <tr><td>Classify tail</td><td>Sends the ~9k SKUs no rule matched to the LLM in batches. Does nothing without an API key — safe to skip for the demo.</td></tr>
+      </table></details>
+      <div class="out" id="out1"></div>
+    </div>
+  </section>
+
+  <!-- 2 COMPLIANCE / REVIEW QUEUE -->
+  <section class="step">
+    <div class="hd"><span class="no">2</span><h2>Compliance review queue</h2>
+      <span class="desc">21k "needs a human" SKUs collapse into ~530 clusters. One decision moves a whole cluster.</span></div>
+    <div class="body">
+      <div class="row">
+        <button title="Show the pending clusters, biggest first" onclick="loadQueue()">Load pending clusters</button>
+        <button title="Show what's banned and the legal/carrier reason" onclick="loadBlocked()">Show what's blocked & why</button>
+        <span class="muted">Full triage UI: <a class="inl" href="/ops" target="_blank">/ops ↗</a></span>
+      </div>
+      <p class="cap"><b>What happens:</b> a table appears. On each row, <b>Clear</b> makes every SKU in that cluster listable; <b>Kill</b> bans them. The decision sticks even if you re-run the rules.</p>
+      <details class="whatdo"><summary></summary><table>
+        <tr><td>Load pending clusters</td><td>Lists undecided clusters (shelf × rule) with SKU count and sample names, largest first.</td></tr>
+        <tr><td>Clear (per row)</td><td>Marks the whole cluster ALLOWED — a human override that beats the rules.</td></tr>
+        <tr><td>Kill (per row)</td><td>Marks the whole cluster BLOCKED — never listed.</td></tr>
+        <tr><td>Show what's blocked & why</td><td>Audit view: each blocking rule, how many SKUs it caught, and its cited authority (e.g. 9 CFR, IATA).</td></tr>
+      </table></details>
+      <div id="queueBox"></div>
+      <div class="out" id="out2"></div>
+    </div>
+  </section>
+
+  <!-- 3 STOREFRONT + LIVE STOCK -->
+  <section class="step">
+    <div class="hd"><span class="no">3</span><h2>Storefront &amp; checkout</h2>
+      <span class="desc">Shop as a US customer. Checkout works out of the box — it sells what's in stock and refuses only genuine sell-outs.</span></div>
+    <div class="body">
+      <div class="row">
+        <a href="/" target="_blank"><button class="primary" title="Open the customer shop in a new tab">Open storefront ↗</button></a>
+        <button title="Optional: refresh live stock readings — not required, checkout already works" onclick="run(this,'/api/ops/demo/prime-stock','out3',{only_allowed:true})">Refresh stock <span class="demoflag">optional</span></button>
+      </div>
+      <p class="cap"><b>What happens:</b> open the storefront, add an in-stock item, complete checkout — it creates a real order that appears in step 4 under "Waiting to buy". Only items known to be out of stock in Delhi are refused, with a clear per-item message.</p>
+      <details class="whatdo"><summary></summary><table>
+        <tr><td>Open storefront ↗</td><td>The real shop: filters, landed-cost breakdown, carrier options, cart, and a checkout that re-checks Delhi stock at the moment of sale.</td></tr>
+        <tr><td>Refresh stock <span class="demoflag">optional</span></td><td>Re-records the latest in-stock flags. Not needed for checkout to work — the store already trusts the most recent reading. In production the availability engine does this continuously.</td></tr>
+      </table></details>
+      <div class="out" id="out3"></div>
+    </div>
+  </section>
+
+  <!-- 4 FULFILMENT -->
+  <section class="step">
+    <div class="hd"><span class="no">4</span><h2>Fulfilment funnel</h2>
+      <span class="desc">Orders → one daily batch → operator buys in Delhi → reconcile → per-customer parcels.</span></div>
+    <div class="body">
+      <p class="cap" style="margin-top:0"><b>Orders live here first.</b> The number of orders waiting to be bought:
+        <b id="pendingCount" class="n">—</b>. Adding to the cart on the storefront is not an order —
+        you must complete checkout. Then click <b>Build buy sheet</b>.</p>
+
+      <div class="row">
+        <button class="primary" title="Turn every waiting order into a buy sheet — no date to pick" onclick="buildPending()">① Build buy sheet from waiting orders</button>
+        <button title="Show the consolidated shopping list per dark store" onclick="showPicksheet()">② View buy sheet</button>
+        <button onclick="reconcile()">③ Reconcile</button>
+        <button onclick="packout()">④ Pack-out parcels</button>
+        <a id="opLink" href="#" target="_blank" style="display:none"><button>Open operator sheet ↗</button></a>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <span class="muted">Shortcuts for a fast demo:</span>
+        <input type="number" id="seedN" value="4" style="width:64px">
+        <button title="Create N sample US orders that share one SKU" onclick="run(this,'/api/ops/demo/seed-orders','out4',{n_orders:+document.getElementById('seedN').value,items_per_order:3},refreshState)">Seed sample orders <span class="demoflag">demo</span></button>
+        <button class="ok" title="Build + buy + reconcile in one go" onclick="oneClick()">Fulfil everything in one click <span class="demoflag">demo</span></button>
+        <button title="Mark the current buy sheet as bought (one line short)" onclick="simulateBuys()">Simulate operator buys <span class="demoflag">demo</span></button>
+      </div>
+
+      <p class="cap"><b>What happens:</b> waiting orders consolidate into one shopping list per Delhi dark store (three customers buying the same pens become one line of ×3). You buy them, then <b>Reconcile</b> hands the units back to customers — completing whole orders first — and <b>Pack-out</b> makes one parcel each.</p>
+      <details class="whatdo"><summary></summary><table>
+        <tr><td>Build buy sheet</td><td>Seals every waiting order into a fresh batch (auto-named, so it always works — no date, no "already exists"). Merges duplicate SKUs, ranks by risk × revenue, splits by dark store.</td></tr>
+        <tr><td>View buy sheet</td><td>One consolidated card per dark store: every item with quantity, a running ₹ total, a <b>Copy shopping list</b> button, and one-tap links. This is what the Delhi buyer works from.</td></tr>
+        <tr><td>Reconcile</td><td>Assigns what was actually bought to orders, completing the closest-to-whole first (ties: oldest). Full fill = ships; otherwise short → refund. This is the "who gets the last one" decision.</td></tr>
+        <tr><td>Pack-out parcels</td><td>One bin per customer with address and parcel weight, marked complete or short.</td></tr>
+        <tr><td>Seed / Fulfil / Simulate <span class="demoflag">demo</span></td><td>Shortcuts so you can show the funnel without placing real orders. Fulfil-in-one-click runs build → buy → reconcile at once.</td></tr>
+      </table></details>
+      <div id="fulfilBox"></div>
+      <div class="out" id="out4"></div>
+    </div>
+  </section>
+
+  <!-- 5 SIGNALS -->
+  <section class="step">
+    <div class="hd"><span class="no">5</span><h2>Live signals</h2>
+      <span class="desc">The background engines that keep the catalogue honest between crawls.</span></div>
+    <div class="body">
+      <div class="row">
+        <button title="List the SKUs most likely to be unavailable" onclick="loadRisk()">Top stockout risk</button>
+        <button title="Find items back in stock, ready to relist" onclick="run(this,'/api/ops/pipeline/restock','out5',null,refreshState)">Detect restocks</button>
+        <button title="Find prices that moved enough to reprice or delist" onclick="run(this,'/api/ops/pipeline/drift?limit=500','out5',null,refreshState)">Sweep price drift</button>
+      </div>
+      <p class="cap"><b>What happens:</b> each button runs one engine and shows results inline. These normally run on a schedule; the buttons let you demo them on demand.</p>
+      <details class="whatdo"><summary></summary><table>
+        <tr><td>Top stockout risk</td><td>Shows the CRITICAL-bucket SKUs from the risk engine — the ones a buyer should grab first.</td></tr>
+        <tr><td>Detect restocks</td><td>Flags out-of-stock → in-stock transitions; stable ones become relist candidates, flappy ones are held.</td></tr>
+        <tr><td>Sweep price drift</td><td>Compares current vs quoted prices; a drop reprices quietly, a rise flags reprice, a viability-breaking rise flags delist.</td></tr>
+      </table></details>
+      <div id="signalBox"></div>
+      <div class="out" id="out5"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const fmt = n => (n==null?'–':Number(n).toLocaleString());
+
+async function api(path, body){
+  const opt = body===undefined ? {} :
+    {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)};
+  const r = await fetch((window.API_BASE||'')+path, opt);
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw Object.assign(new Error(j.detail||r.statusText), {status:r.status, body:j});
+  return j;
+}
+
+// generic button runner: disables, POSTs, prints JSON, refreshes funnel
+async function run(btn, path, outId, body, after){
+  const out = $('#'+outId); const label = btn.textContent;
+  btn.disabled = true; btn.textContent = '…';
+  try{
+    const j = await api(path, body||{});
+    out.textContent = JSON.stringify(j, null, 2);
+    out.classList.add('show','flash'); setTimeout(()=>out.classList.remove('flash'),1000);
+    refreshState(); if(after) after(j);
+  }catch(e){
+    out.textContent = 'Error: '+(e.message||e)+(e.body?'\n'+JSON.stringify(e.body,null,2):'');
+    out.classList.add('show');
+  }finally{ btn.disabled=false; btn.textContent=label; }
+}
+
+// ---- funnel strip ----
+async function refreshState(){
+  let s; try{ s = await api('/api/ops/console/state'); }catch{ return; }
+  const v = s.verdicts||{};
+  const cells = [
+    ['Catalogue', s.products, ''],
+    ['Blocked', v.BLOCKED||0, 'bad'],
+    ['In review', v.REVIEW||0, 'warn'],
+    ['Allowed', v.ALLOWED||0, 'ok'],
+    ['Listable in stock', s.listable_in_stock, 'ok'],
+    ['Orders', s.orders, 'info'],
+    ['Waiting to buy', s.orders_unbatched, s.orders_unbatched? 'warn':''],
+    ['Batches', s.batches, 'info'],
+  ];
+  $('#funnel').innerHTML = cells.map(([k,val,cls])=>
+    `<div class="fn ${cls}"><div class="k">${k}</div><div class="v">${fmt(val)}</div></div>`).join('');
+  const pc = $('#pendingCount'); if(pc) pc.textContent = fmt(s.orders_unbatched);
+}
+
+// ---- queue ----
+async function loadQueue(){
+  const {clusters} = await api('/api/ops/queue?status=PENDING&limit=25');
+  $('#queueBox').innerHTML = `<table><thead><tr><th>SKUs</th><th>Shelf</th><th>Rule / dimension</th><th></th></tr></thead><tbody>`+
+    clusters.map(c=>`<tr>
+      <td class="n">${fmt(c.sku_count)}</td>
+      <td>${esc(c.group_name||'—')}<div class="muted">${esc((c.sample_names||'').slice(0,70))}</div></td>
+      <td>${esc(c.rule_id)} <span class="tag">${esc(c.dimension||'')}</span></td>
+      <td class="row" style="gap:6px">
+        <button class="ok" onclick="decide('${jsq(c.cluster_id)}','CLEARED')">Clear</button>
+        <button class="bad" onclick="decide('${jsq(c.cluster_id)}','KILLED')">Kill</button></td></tr>`).join('')+
+    `</tbody></table>`;
+}
+async function decide(id, decision){
+  const j = await api('/api/ops/decide', {cluster_id:id, decision, reviewer:'demo'});
+  $('#out2').textContent = `${decision}: ${fmt(j.skus_affected)} SKUs moved.`;
+  $('#out2').classList.add('show'); loadQueue(); refreshState();
+}
+async function loadBlocked(){
+  const {rules} = await api('/api/ops/blocked');
+  $('#queueBox').innerHTML = `<table><thead><tr><th>SKUs</th><th>Rule</th><th>Why</th></tr></thead><tbody>`+
+    rules.slice(0,20).map(r=>`<tr><td class="n">${fmt(r.n)}</td><td>${esc(r.primary_rule)}
+      <div class="muted">${esc(r.authority||'')}</div></td>
+      <td>${esc(r.reason||'')}<div class="muted">${esc((r.samples||'').slice(0,80))}</div></td></tr>`).join('')+
+    `</tbody></table>`;
+}
+
+// ---- fulfilment ----
+let curBatch = null;                 // the batch we're currently working on
+window._cartLists = {};              // cart_no -> copy-ready shopping list text
+
+function setBatch(bid){
+  curBatch = bid;
+  const l = $('#opLink');
+  if(bid){ l.href = '/operator?batch='+encodeURIComponent(bid); l.style.display='inline-block'; }
+}
+function needBatch(){
+  if(!curBatch){ $('#fulfilBox').innerHTML='<p class="muted">Build a buy sheet first (button ①).</p>'; return false; }
+  return true;
+}
+
+async function buildPending(){
+  try{
+    const j = await api('/api/ops/fulfil/build-pending', {});
+    if(!j.ok){ $('#out4').textContent = j.error || 'Nothing to build.'; $('#out4').classList.add('show'); return; }
+    setBatch(j.batch_id);
+    $('#out4').textContent = `Buy sheet ${j.batch_id} built: ${j.n_orders} order(s) → `
+      + `${j.n_lines} line(s) → ${j.n_carts||0} cart(s). Click "View buy sheet".`;
+    $('#out4').classList.add('show','flash'); setTimeout(()=>$('#out4').classList.remove('flash'),1000);
+    refreshState(); showPicksheet();
+  }catch(e){ $('#out4').textContent='Error: '+(e.message||e); $('#out4').classList.add('show'); }
+}
+
+async function oneClick(){
+  try{
+    const j = await api('/api/ops/fulfil/oneclick', {});
+    if(!j.ok){ $('#out4').textContent = j.error || 'Nothing to fulfil.'; $('#out4').classList.add('show'); return; }
+    setBatch(j.batch_id);
+    $('#out4').textContent =
+      `Batch ${j.batch_id}: ${j.orders} order(s), ${j.lines} line(s), ${j.carts} cart(s).\n`+
+      `Bought ${j.bought_lines} line(s), ${j.short_lines} left short.\n`+
+      `Reconciled → ${j.orders_complete} order(s) complete, ${j.orders_short} short.`;
+    $('#out4').classList.add('show','flash'); setTimeout(()=>$('#out4').classList.remove('flash'),1000);
+    refreshState(); packout();
+  }catch(e){ $('#out4').textContent='Error: '+(e.message||e); $('#out4').classList.add('show'); }
+}
+
+async function showPicksheet(){
+  if(!needBatch()) return;
+  const j = await api('/api/ops/batch/'+encodeURIComponent(curBatch)+'/cart-summary');
+  if(!j.carts||!j.carts.length){ $('#fulfilBox').innerHTML='<p class="muted">This batch has no lines.</p>'; return; }
+  window._cartLists = {};
+  const doneStr = (j.total? ` · ${j.done}/${j.total} lines bought` : '');
+  const cards = j.carts.map(c=>{
+    window._cartLists[c.cart_no] = c.shopping_list;
+    const rows = c.lines.map(l=>`
+      <tr>
+        <td class="n">×${l.qty}</td>
+        <td><a class="inl" href="${esc(l.product_url)}" target="_blank">${esc(l.name)}</a>
+            <span class="muted"> · <a class="inl" href="${esc(l.search_url)}" target="_blank">search</a></span>
+            ${l.priority_note?`<div class="muted">${esc(l.priority_note)}</div>`:''}</td>
+        <td class="n">₹${fmt(Math.round(l.expected_inr))}</td>
+        <td><span class="pill ${l.risk_bucket}">${l.risk_bucket}</span></td>
+      </tr>`).join('');
+    return `<div style="border:1px solid var(--line);border-radius:10px;margin-top:12px;overflow:hidden">
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;
+                  padding:10px 12px;background:var(--bg);border-bottom:1px solid var(--line)">
+        <div><b>Cart ${c.cart_no}</b> — Delhi store ${esc(c.merchant_id)}
+          <span class="muted">· ${c.n_items} items · ${c.n_units} units · ₹${fmt(Math.round(c.value_inr))}</span></div>
+        <div class="row" style="gap:6px">
+          <button onclick="copyCart(${c.cart_no},this)">Copy shopping list</button>
+          <a href="${esc(c.blinkit_url)}" target="_blank"><button>Open Blinkit ↗</button></a>
+        </div>
+      </div>
+      <table style="margin:0"><thead><tr><th>Qty</th><th>Item</th><th>Est. ₹</th><th>Risk</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`;
+  }).join('');
+  $('#fulfilBox').innerHTML =
+    `<p class="cap" style="margin-top:12px"><b>One consolidated cart per Delhi dark store${doneStr}.</b>
+       Blinkit has no public "fill my cart" link (a cart is tied to a phone + login + address),
+       so the buyer works down this list in the app — or taps <b>Copy shopping list</b> and pastes it.
+       Direct links may 404 outside India; use <b>search</b> then.</p>` + cards;
+}
+function copyCart(no, btn){
+  const txt = window._cartLists[no] || '';
+  navigator.clipboard.writeText(txt).then(()=>{
+    const t=btn.textContent; btn.textContent='Copied ✓';
+    setTimeout(()=>btn.textContent=t,1400);
+  }).catch(()=>{ alert(txt); });
+}
+
+async function simulateBuys(){
+  if(!needBatch()) return;
+  await run(event.target,'/api/ops/demo/simulate-buys','out4',{batch_id:curBatch,short_one:true},()=>showPicksheet());
+}
+async function reconcile(){
+  if(!needBatch()) return;
+  try{ const j=await api('/api/ops/batch/'+encodeURIComponent(curBatch)+'/reconcile');
+    $('#out4').textContent=`Reconciled: ${j.orders_complete} order(s) complete · ${j.orders_short} short.`;
+    $('#out4').classList.add('show','flash'); setTimeout(()=>$('#out4').classList.remove('flash'),1000); refreshState(); packout();
+  }catch(e){ $('#out4').textContent='Error: '+(e.message||e); $('#out4').classList.add('show'); }
+}
+async function packout(){
+  if(!needBatch()) return;
+  const j = await api('/api/ops/batch/'+encodeURIComponent(curBatch)+'/packout');
+  if(!j.bins||!j.bins.length){ $('#fulfilBox').innerHTML='<p class="muted">Nothing to pack out yet — reconcile first.</p>'; return; }
+  $('#fulfilBox').innerHTML = `<p class="cap" style="margin-top:12px"><b>One parcel per customer.</b>
+      A parcel ships only when every line is filled; a short one waits or is refunded.</p>
+    <table><thead><tr><th>Parcel</th><th>Ship to</th><th>Items (filled/ordered)</th><th>Weight</th></tr></thead><tbody>`+
+    j.bins.map(b=>`<tr><td>${esc(b.order_id)} ${b.complete?'<span class="pill NORMAL">complete</span>':'<span class="pill HIGH">short</span>'}</td>
+      <td class="muted">${esc((b.ship_to&&b.ship_to.city)||'—')} ${esc((b.ship_to&&b.ship_to.zip5)||'')}</td>
+      <td>${b.items.map(i=>`${i.qty_filled}/${i.qty} ${esc(i.name).slice(0,26)}`).join('<br>')}</td>
+      <td class="n">${fmt(Math.round(b.weight_g))} g</td></tr>`).join('')+`</tbody></table>`;
+}
+
+// ---- signals ----
+async function loadRisk(){
+  const {items} = await api('/api/ops/risk?bucket=CRITICAL&limit=15');
+  $('#signalBox').innerHTML = items.length? `<table><thead><tr><th>Score</th><th>Item</th><th>Shelf</th><th>Stock</th></tr></thead><tbody>`+
+    items.map(r=>`<tr><td class="n">${(+r.score).toFixed(2)}</td><td>${esc(r.name)}</td>
+      <td class="muted">${esc(r.group_name||'')}</td><td>${r.in_stock?'in':'out'}</td></tr>`).join('')+`</tbody></table>`
+    : '<p class="muted">Nothing scored yet — run "Score stockout risk" in step 1.</p>';
+}
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function jsq(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+// init
+refreshState();
+setInterval(refreshState, 8000);
+</script>
+</body>
+</html>

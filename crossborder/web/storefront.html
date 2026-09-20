@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="/app/config.js"></script>
+<title>Sourced from India</title>
+<style>
+  :root{
+    --bg:#fbfaf8; --panel:#fff; --ink:#1a1a1a; --muted:#6b6b6b; --line:#e6e3dd;
+    --accent:#c2410c; --accent-soft:#fff1e8; --ok:#15803d; --warn:#a16207; --bad:#b91c1c;
+    --radius:10px; --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 14px rgba(0,0,0,.04);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#14130f; --panel:#1e1c18; --ink:#f2efe9; --muted:#a09a90; --line:#302d27;
+    --accent:#fb923c; --accent-soft:#2a1a10; --ok:#4ade80; --warn:#fbbf24; --bad:#f87171;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+  }}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  header{position:sticky;top:0;z-index:20;background:var(--panel);
+    border-bottom:1px solid var(--line);padding:14px 16px}
+  .wrap{max-width:1240px;margin:0 auto}
+  .brandrow{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .logo{font-weight:700;font-size:17px;letter-spacing:-.02em}
+  .logo span{color:var(--accent)}
+  .tag{font-size:12px;color:var(--muted)}
+  input,select,button{font:inherit;color:inherit}
+  #q{flex:1;min-width:200px;padding:9px 13px;border:1px solid var(--line);
+    border-radius:var(--radius);background:var(--bg)}
+  select{padding:9px 11px;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg)}
+  .chk{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);white-space:nowrap}
+  main{max-width:1240px;margin:0 auto;padding:18px 16px 120px;
+    display:grid;grid-template-columns:1fr 330px;gap:20px;align-items:start}
+  @media(max-width:940px){main{grid-template-columns:1fr}}
+  .count{font-size:13px;color:var(--muted);margin-bottom:10px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
+  .thumb{aspect-ratio:1;background:#fff;display:flex;align-items:center;justify-content:center;padding:10px}
+  .thumb img{max-width:100%;max-height:100%;object-fit:contain}
+  .body{padding:10px 11px 12px;display:flex;flex-direction:column;gap:5px;flex:1}
+  .nm{font-size:13.5px;font-weight:600;line-height:1.3;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .sub{font-size:11.5px;color:var(--muted)}
+  .prices{display:flex;align-items:baseline;gap:7px;margin-top:auto;padding-top:4px}
+  .usd{font-size:17px;font-weight:700}
+  .inr{font-size:11px;color:var(--muted)}
+  .badge{font-size:10.5px;padding:2px 6px;border-radius:5px;font-weight:600;
+    display:inline-block;width:fit-content}
+  .b-ok{background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}
+  .b-bad{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+  .b-warn{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+  .add{margin-top:8px;padding:7px;border:1px solid var(--accent);background:var(--accent);
+    color:#fff;border-radius:7px;cursor:pointer;font-size:12.5px;font-weight:600}
+  .add:disabled{opacity:.4;cursor:not-allowed}
+  .add.sec{background:transparent;color:var(--accent)}
+  aside{position:sticky;top:78px;background:var(--panel);border:1px solid var(--line);
+    border-radius:var(--radius);padding:15px;box-shadow:var(--shadow)}
+  aside h3{margin:0 0 10px;font-size:14px}
+  .line{display:flex;gap:8px;font-size:12.5px;padding:7px 0;border-bottom:1px solid var(--line)}
+  .line .g{flex:1;min-width:0}
+  .line .g div:first-child{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .qty{width:46px;padding:3px;text-align:center;border:1px solid var(--line);
+    border-radius:5px;background:var(--bg)}
+  .rm{border:none;background:none;color:var(--muted);cursor:pointer;font-size:15px;padding:0 3px}
+  .row{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0}
+  .row.tot{font-size:15px;font-weight:700;border-top:1px solid var(--line);
+    margin-top:7px;padding-top:9px}
+  .ship{border:1px solid var(--line);border-radius:7px;padding:8px;margin:6px 0;cursor:pointer;
+    display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:12px}
+  .ship.on{border-color:var(--accent);background:var(--accent-soft)}
+  .ship small{color:var(--muted);display:block;font-size:11px}
+  .note{font-size:11.5px;padding:8px 10px;border-radius:7px;margin-top:8px;line-height:1.45}
+  .note.w{background:color-mix(in srgb,var(--warn) 12%,transparent);color:var(--warn)}
+  .note.e{background:color-mix(in srgb,var(--bad) 12%,transparent);color:var(--bad)}
+  .note.s{background:color-mix(in srgb,var(--ok) 12%,transparent);color:var(--ok)}
+  .co{width:100%;margin-top:10px;padding:11px;border:none;border-radius:8px;
+    background:var(--accent);color:#fff;font-weight:700;cursor:pointer}
+  .co:disabled{opacity:.45;cursor:not-allowed}
+  .empty{color:var(--muted);font-size:12.5px;text-align:center;padding:22px 0}
+  .more{display:block;margin:20px auto;padding:9px 22px;border:1px solid var(--line);
+    background:var(--panel);border-radius:8px;cursor:pointer}
+  a.ops{margin-left:auto;font-size:12px;color:var(--muted);text-decoration:none;
+    border:1px solid var(--line);padding:6px 10px;border-radius:7px}
+
+  /* --- basket builder panel --- */
+  .bb{margin-top:16px;border-top:1px solid var(--line);padding-top:13px}
+  .bb h3{margin:0 0 4px}
+  .bbhead{font-size:12.5px;color:var(--muted);line-height:1.45;margin-bottom:10px}
+  .bbhead b{color:var(--ink)}
+  .headroom{margin:9px 0 12px}
+  .hbar{height:9px;background:var(--line);border-radius:5px;overflow:hidden;display:flex}
+  .hbar .used{background:var(--accent)}
+  .hbar .free{background:color-mix(in srgb,var(--ok) 45%,transparent)}
+  .hlabel{display:flex;justify-content:space-between;font-size:11px;
+    color:var(--muted);margin-top:5px}
+  .hlabel b{color:var(--ok)}
+  .sg{display:flex;gap:9px;align-items:center;padding:8px;border:1px solid var(--line);
+    border-radius:9px;margin-bottom:7px;background:var(--bg)}
+  .sg.free{border-color:color-mix(in srgb,var(--ok) 45%,transparent);
+    background:color-mix(in srgb,var(--ok) 7%,transparent)}
+  .sgt{width:40px;height:40px;flex:none;background:#fff;border-radius:6px;
+    display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .sgt img{max-width:100%;max-height:100%;object-fit:contain}
+  .sgg{flex:1;min-width:0}
+  .sgn{font-size:12.5px;font-weight:600;line-height:1.25;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .sgr{font-size:11px;color:var(--muted);margin-top:2px}
+  .sgr.ok{color:var(--ok);font-weight:600}
+  .sgp{font-size:13px;font-weight:700;white-space:nowrap}
+  .sgadd{border:1px solid var(--accent);background:transparent;color:var(--accent);
+    border-radius:6px;padding:5px 9px;font-size:12px;font-weight:700;cursor:pointer;flex:none}
+  .sgadd:hover{background:var(--accent);color:#fff}
+  .ratio{font-size:11.5px;color:var(--muted);margin-top:8px}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="brandrow" style="margin-bottom:11px">
+    <div class="logo">Sourced <span>from India</span></div>
+    <div class="tag">Indian groceries, shipped to your door in the US</div>
+    <a class="ops" href="/ops">Ops dashboard &rarr;</a>
+  </div>
+  <div class="brandrow">
+    <input id="q" placeholder="Search 6,000+ listable products...">
+    <select id="cat"><option value="">All categories</option></select>
+    <label class="chk"><input type="checkbox" id="stk" checked> In stock only</label>
+  </div>
+</div></header>
+
+<main>
+  <section>
+    <div class="count" id="count">Loading...</div>
+    <div class="grid" id="grid"></div>
+    <button class="more" id="more" style="display:none">Load more</button>
+  </section>
+
+  <aside>
+    <h3>Your cart</h3>
+    <div id="cart"><div class="empty">Cart is empty</div></div>
+    <div id="quote"></div>
+    <div id="basket"></div>
+  </aside>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const money = n => '$' + Number(n).toFixed(2);
+let offset = 0, total = 0, cart = {}, carrier = null, lastQuote = null;
+
+async function facets(){
+  const f = await (await fetch((window.API_BASE||'')+'/api/facets')).json();
+  f.categories.forEach(c => {
+    if(!c.name) return;
+    const o = document.createElement('option');
+    o.value = c.name; o.textContent = `${c.name} (${c.n})`;
+    $('#cat').appendChild(o);
+  });
+}
+
+async function load(reset){
+  if(reset){ offset = 0; $('#grid').innerHTML = ''; }
+  const p = new URLSearchParams({
+    q: $('#q').value, category: $('#cat').value,
+    in_stock_only: $('#stk').checked, limit: 60, offset
+  });
+  const d = await (await fetch((window.API_BASE||'')+'/api/catalog?' + p)).json();
+  total = d.total;
+  $('#count').textContent = `${d.total.toLocaleString()} listable products`;
+  d.items.forEach(it => $('#grid').appendChild(card(it)));
+  offset += d.items.length;
+  $('#more').style.display = offset < total ? 'block' : 'none';
+}
+
+function card(it){
+  const el = document.createElement('div');
+  el.className = 'card';
+  // A SKU whose freight dwarfs its value is shown honestly rather than hidden:
+  // the customer finds out at checkout otherwise, and that is worse.
+  const heavy = it.freight_ratio > 2;
+  el.innerHTML = `
+    <div class="thumb">${it.image ? `<img loading="lazy" src="${it.image}" alt="">` : ''}</div>
+    <div class="body">
+      <div class="nm">${esc(it.name)}</div>
+      <div class="sub">${esc(it.brand || '')} &middot; ${esc(it.unit || '')}</div>
+      <span class="badge ${it.in_stock ? 'b-ok' : 'b-bad'}">${it.in_stock ? 'In stock' : 'Out of stock'}</span>
+      ${heavy ? `<span class="badge b-warn">Ships best in a bundle</span>` : ''}
+      <div class="prices">
+        <span class="usd">${money(it.list_price_usd)}</span>
+        <span class="inr">₹${it.price_inr} in India</span>
+      </div>
+      <button class="add ${it.in_stock ? '' : 'sec'}" ${it.in_stock ? '' : 'disabled'}>Add to cart</button>
+    </div>`;
+  el.querySelector('.add').onclick = () => addToCart(it);
+  return el;
+}
+
+function esc(s){ const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+function addToCart(it){
+  cart[it.product_id] = cart[it.product_id] || { item: it, qty: 0 };
+  cart[it.product_id].qty++;
+  renderCart(); quote();
+}
+
+function renderCart(){
+  const ids = Object.keys(cart);
+  if(!ids.length){
+    $('#cart').innerHTML = '<div class="empty">Cart is empty</div>';
+    $('#quote').innerHTML = ''; $('#basket').innerHTML = ''; return;
+  }
+  $('#cart').innerHTML = ids.map(id => {
+    const c = cart[id];
+    return `<div class="line">
+      <div class="g"><div>${esc(c.item.name)}</div>
+        <div style="color:var(--muted)">${esc(c.item.unit || '')} &middot; ₹${c.item.price_inr}</div></div>
+      <input class="qty" type="number" min="1" max="99" value="${c.qty}" data-id="${id}">
+      <button class="rm" data-rm="${id}">&times;</button>
+    </div>`;
+  }).join('');
+  $('#cart').querySelectorAll('.qty').forEach(i => i.onchange = e => {
+    cart[e.target.dataset.id].qty = Math.max(1, +e.target.value); quote();
+  });
+  $('#cart').querySelectorAll('[data-rm]').forEach(b => b.onclick = e => {
+    delete cart[e.target.dataset.rm]; renderCart(); quote();
+  });
+}
+
+async function quote(){
+  const lines = Object.entries(cart).map(([product_id, c]) => ({ product_id, qty: c.qty }));
+  if(!lines.length){ $('#quote').innerHTML = ''; return; }
+  $('#quote').innerHTML = '<div class="empty">Getting live shipping quotes...</div>';
+  const r = await fetch((window.API_BASE||'')+'/api/quote', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ lines, carrier })
+  });
+  if(!r.ok){ $('#quote').innerHTML = '<div class="note e">Could not quote this cart.</div>'; return; }
+  lastQuote = await r.json();
+  renderQuote(lastQuote);
+  advise(lines);
+}
+
+// --- basket builder -------------------------------------------------------
+// The economics that make this business work are invisible to a shopper: a
+// small cart pays 6.8x its goods value in freight, an eight-item one pays 2.7x.
+// This panel turns that into something the customer actually benefits from --
+// weight they have already paid for and can still spend.
+async function advise(lines){
+  const r = await fetch((window.API_BASE||'')+'/api/basket/advise', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ lines, carrier })
+  });
+  if(!r.ok){ $('#basket').innerHTML = ''; return; }
+  renderAdvice(await r.json());
+}
+
+function renderAdvice(a){
+  if(!a.suggestions || !a.suggestions.length){ $('#basket').innerHTML = ''; return; }
+
+  const used = a.chargeable_g, free = a.free_headroom_g, billed = a.billed_g || 1;
+  const bar = free > 20 ? `
+    <div class="headroom">
+      <div class="hbar">
+        <div class="used" style="width:${used/billed*100}%"></div>
+        <div class="free" style="width:${free/billed*100}%"></div>
+      </div>
+      <div class="hlabel">
+        <span>${(used/1000).toFixed(2)} kg packed</span>
+        <b>${free.toFixed(0)} g still free</b>
+      </div>
+    </div>` : '';
+
+  $('#basket').innerHTML = `
+    <div class="bb">
+      <h3>Make this shipment worth it</h3>
+      <div class="bbhead">${esc(a.headline)}</div>
+      ${bar}
+      ${a.suggestions.map(s => `
+        <div class="sg ${s.fits_free_headroom ? 'free' : ''}">
+          <div class="sgt">${s.image ? `<img loading="lazy" src="${esc(s.image)}" alt="">` : ''}</div>
+          <div class="sgg">
+            <div class="sgn">${esc(s.name)}</div>
+            <div class="sgr ${s.fits_free_headroom ? 'ok' : ''}">${esc(s.reason)}</div>
+          </div>
+          <div class="sgp">${money(s.list_price_usd)}</div>
+          <button class="sgadd" data-add="${esc(s.product_id)}">Add</button>
+        </div>`).join('')}
+      <div class="ratio">Shipping is currently
+        <b>${a.freight_ratio.toFixed(1)}×</b> the value of your goods${
+          a.freight_ratio > 2 ? ' — adding a few dense items brings that down.' : '.'}</div>
+    </div>`;
+
+  $('#basket').querySelectorAll('[data-add]').forEach(b => b.onclick = async () => {
+    const pid = b.dataset.add;
+    b.disabled = true; b.textContent = '…';
+    // Fetch the full product so the cart line matches a normal add-to-cart.
+    const d = await (await fetch((window.API_BASE||'')+'/api/product/' + pid)).json();
+    const p = d.product;
+    cart[pid] = cart[pid] || { item: {
+      product_id: pid, name: p.name, unit: p.unit, price_inr: p.price_inr,
+      image: p.image, in_stock: p.in_stock }, qty: 0 };
+    cart[pid].qty++;
+    renderCart(); quote();
+  });
+}
+
+function renderQuote(d){
+  const p = d.pricing, s = d.shipping;
+  const opts = s.options.map(o => `
+    <div class="ship ${(carrier || p.carrier) === o.carrier_code ? 'on' : ''}" data-c="${o.carrier_code}">
+      <div><b>${esc(o.carrier_name)}</b>
+        <small>${o.transit_days[0]}-${o.transit_days[1]} days &middot; ${o.tracking} tracking</small></div>
+      <b>${money(o.total_usd)}</b>
+    </div>`).join('');
+
+  const warn = (p.warnings || []).map(w => `<div class="note w">${esc(w)}</div>`).join('');
+  const range = s.range_usd
+    ? `<div class="note s">Shipping this cart ranges <b>${money(s.range_usd[0])}</b> to
+       <b>${money(s.range_usd[1])}</b> depending on speed.</div>` : '';
+
+  $('#quote').innerHTML = `
+    <h3 style="margin:16px 0 8px">Shipping options</h3>
+    ${range}${opts}
+    <h3 style="margin:16px 0 8px">Landed cost</h3>
+    <div class="row"><span>Goods</span><span>${money(p.goods_usd)}</span></div>
+    <div class="row"><span>Sourcing &amp; handling</span><span>${money(p.sourcing_usd)}</span></div>
+    <div class="row"><span>Shipping (${esc(p.carrier)})</span><span>${money(p.freight_usd)}</span></div>
+    <div class="row"><span>Duty</span><span>${money(p.duty_usd)}</span></div>
+    <div class="row"><span>Customs fee</span><span>${money(p.mpf_usd)}</span></div>
+    <div class="row"><span>Payment processing</span><span>${money(p.payments_usd)}</span></div>
+    <div class="row tot"><span>Total</span><span>${money(p.list_price_usd)}</span></div>
+    <div class="row" style="color:var(--muted)">
+      <span>Chargeable weight</span><span>${(s.weight.chargeable_g/1000).toFixed(2)} kg</span></div>
+    ${warn}
+    <button class="co" id="co" ${p.viable ? '' : 'disabled'}>
+      ${p.viable ? 'Checkout &middot; ' + money(p.list_price_usd)
+                 : 'Add a little more to ship this &darr;'}</button>`;
+
+  $('#quote').querySelectorAll('.ship').forEach(el => el.onclick = () => {
+    carrier = el.dataset.c; quote();
+  });
+  const co = $('#co'); if(co) co.onclick = checkout;
+}
+
+async function checkout(){
+  const lines = Object.entries(cart).map(([product_id, c]) => ({ product_id, qty: c.qty }));
+  const r = await fetch((window.API_BASE||'')+'/api/order', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ lines, carrier, customer_zip: '10001' })
+  });
+  const d = await r.json();
+  if(r.status === 409){
+    // The stock gate refused. Name the item, do not just fail.
+    const msgs = d.gate.blocked.map(b => {
+      const nm = cart[b.product_id]?.item?.name || b.product_id;
+      return `<b>${esc(nm)}</b>: ${esc(b.message)}`;
+    }).join('<br>');
+    $('#quote').insertAdjacentHTML('beforeend',
+      `<div class="note e"><b>Order not placed.</b><br>${msgs}</div>`);
+    return;
+  }
+  $('#quote').insertAdjacentHTML('beforeend',
+    `<div class="note s"><b>Order ${esc(d.order_id)} confirmed.</b><br>
+     ${money(d.total_usd)} via ${esc(d.carrier)}, arriving in
+     ${d.transit_days[0]}-${d.transit_days[1]} days.</div>`);
+  cart = {}; renderCart();
+}
+
+let t; $('#q').oninput = () => { clearTimeout(t); t = setTimeout(() => load(true), 250); };
+$('#cat').onchange = () => load(true);
+$('#stk').onchange = () => load(true);
+$('#more').onclick = () => load(false);
+facets(); load(true);
+</script>
+</body>
+</html>

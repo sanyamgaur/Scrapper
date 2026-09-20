@@ -1,0 +1,23 @@
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# SQLite sidecar files (the committed snapshot db itself is kept)
+*.db-shm
+*.db-wal
+
+# Local run output
+*.log
+site/
+images/
+
+# OS cruft
+.DS_Store
+Thumbs.db

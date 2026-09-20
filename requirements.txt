@@ -1,2 +1,12 @@
-httpx[http2]==0.27.2
-playwright==1.47.0
+# scraper (existing)
+httpx[http2]
+playwright
+
+# cross-border engines + web app
+pyyaml
+fastapi
+uvicorn[standard]
+pydantic
+
+# optional: LLM tail classifier
+# anthropic

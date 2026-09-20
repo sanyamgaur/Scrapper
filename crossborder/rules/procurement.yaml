@@ -1,0 +1,136 @@
+# =============================================================================
+# Procurement, risk, restock, basket and price-drift policy
+# =============================================================================
+# Every tunable in the fulfilment half of the funnel. Change policy here.
+# =============================================================================
+
+meta:
+  version: "2026.09.1"
+  operator_timezone: "Asia/Kolkata"
+
+# ------------------------------------------------------------------ batching
+batching:
+  # US customers order across four timezones; the operator buys in IST.
+  # A 23:00 IST cutoff closes the batch at ~13:30 ET, so an order placed during
+  # the US morning still makes the same day's run.
+  cutoff_ist: "23:00"
+  # Blinkit is built for small baskets. A 200-line batch is not one order.
+  max_lines_per_cart: 40
+  max_value_per_cart_inr: 15000
+  max_qty_per_sku: 6          # per-SKU purchase caps are common on q-commerce
+  # A basket is served by ONE dark store, so runs are split by merchant before
+  # anything else. Verified: the listable set spans merchants 34280 and 36778.
+  split_by_merchant: true
+  # Buying the risky lines first is the whole point of the risk engine: an item
+  # likely to vanish should not be bought last.
+  priority_first: true
+
+# -------------------------------------------------------------- stockout risk
+risk:
+  # Weights sum to 1.0 within whichever signals are actually available. The
+  # score is a plain weighted sum so an operator can be told WHY, not just what.
+  weights:
+    currently_out_of_stock: 0.40   # the strongest single signal we have
+    shelf_base_rate:        0.25   # this shelf's observed out-of-stock fraction
+    flip_frequency:         0.15   # history only: how often it toggles
+    restock_latency:        0.10   # history only: how long it stays gone
+    deep_discount:          0.05   # clearance pricing often precedes delisting
+    never_seen_in_stock:    0.05
+  buckets:
+    critical: 0.75
+    high: 0.50
+  # With no availability history the score rests on a snapshot and a shelf
+  # prior. Say so, rather than implying prediction we cannot support.
+  confidence:
+    high_min_runs: 14      # ~2 weeks of availability runs
+    medium_min_runs: 4
+  # A CRITICAL SKU is bought first, and is not sold at all when this is on.
+  block_sale_above: 0.90
+
+# ------------------------------------------------------------- stock freshness
+stock:
+  # Does checkout DEMAND a fresh live reading before it takes money?
+  #   false (default) -> No live Blinkit feed is running, so staleness tells us
+  #                      nothing. Sell on the latest crawl/last reading and block
+  #                      only items we can SEE are out of stock. The store works.
+  #   true            -> Fail closed on any stale/unknown reading. Correct ONLY
+  #                      when availability_engine.py is running and keeping cart
+  #                      items fresh within cart_seconds below. Flip this to true
+  #                      the day you wire up a live checker.
+  # Leaving it false is why a customer no longer sees "could not confirm live
+  # availability" on every order.
+  require_live_confirmation: false
+
+  # How old a reading may be before it stops being trusted, per tier. Only
+  # consulted in strict mode (require_live_confirmation: true). The CART tier
+  # gates checkout and is deliberately tight: taking money on a stale reading is
+  # the same mistake as selling something known to be gone.
+  freshness_seconds:
+    cart: 60
+    hot: 900
+    listed: 21600
+    tail: 172800
+
+# ------------------------------------------------------------------- restock
+restock:
+  # In stock for ten minutes is not restocked. Hold before recommending.
+  stability_hours: 6
+  # A SKU that oscillates is not back; it is flapping. Suppress it.
+  max_flips_per_day: 3
+  flap_suppress_hours: 48
+  # Relisting is RECOMMENDED, never automatic: a restocked SKU must still pass
+  # compliance and viability, and those are business decisions.
+  auto_relist: false
+  # Notify at most this many waitlisted customers, oldest first. Telling 200
+  # people an item is back when 6 units exist manufactures 194 complaints.
+  waitlist_notify_cap: 5
+
+# ------------------------------------------------------------------- basket
+basket:
+  # A cart is unviable above this freight-to-goods ratio (mirrors pricing.yaml).
+  target_freight_ratio: 2.0
+  max_suggestions: 6
+  # Items whose value per gram beats this are worth adding on freight grounds.
+  min_value_density_inr_per_g: 1.25    # catalogue median
+  # Prefer add-ons from the cart's existing dark store: a cross-merchant
+  # suggestion silently creates a SECOND Blinkit order with a second delivery
+  # fee, which can cost more than the suggestion earns.
+  prefer_same_merchant: true
+  same_merchant_bonus: 0.25
+  # Never suggest something likely to fail procurement.
+  max_risk_score: 0.60
+  require_in_stock: true
+  # RELEVANCE GUARD. Pure freight arithmetic recommends a USD 197 watch beside
+  # INR 93 of chana: optimal maths, absurd shopping. A suggestion may not cost
+  # more than this multiple of the cart's own goods value.
+  max_price_ratio: 1.5
+  # And prefer add-ons from the same aisle the shopper is already in.
+  same_super_category_bonus: 0.6
+
+# --------------------------------------------------------------- price drift
+price_drift:
+  # Two DIFFERENT thresholds, because they protect different things.
+  #
+  # list_deadband: drift between the price we published and the current price.
+  # Per instruction, ignore movement inside +/- USD 3-5. A flat $3 on a $25 item
+  # is 12%, which is very wide, so the band is "the greater of $3 or 5%" -- it
+  # stays quiet on small absolute moves without ignoring a 20% jump on a $80 SKU.
+  list_deadband_usd: 3.00
+  list_deadband_pct: 5.0
+  # quote_tolerance: drift between what a specific customer was quoted and the
+  # price at checkout. Held tighter, because that is a promise to a person
+  # rather than a shelf price. This supersedes the old hardcoded 12% in stock.py.
+  # Must stay TIGHTER than the list band above, in both terms. The engine
+  # enforces this invariant regardless of what is set here, but keeping the
+  # numbers honest makes the policy readable.
+  quote_tolerance_pct: 4.0
+  quote_tolerance_usd: 2.00
+  # A price DROP is margin in our favour: reprice on the next cycle, never block
+  # an order for it. Only rises erode margin.
+  asymmetric: true
+  drop_action: "REPRICE_SILENT"
+  # Action ladder once a rise clears the deadband.
+  rise_action: "REPRICE"
+  # A rise that pushes the SKU past its viability ratio comes off the site.
+  delist_when_unviable: true
+  reprice_batch_size: 500

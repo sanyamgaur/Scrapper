@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="/app/config.js"></script>
+<title>Buy Sheet</title>
+<style>
+  :root{
+    --bg:#fbfaf8; --panel:#fff; --ink:#1a1a1a; --muted:#6b6b6b; --line:#e6e3dd;
+    --accent:#c2410c; --ok:#15803d; --warn:#a16207; --bad:#b91c1c;
+    --radius:12px; --shadow:0 1px 3px rgba(0,0,0,.07),0 6px 18px rgba(0,0,0,.05);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#14130f; --panel:#1e1c18; --ink:#f2efe9; --muted:#a09a90; --line:#302d27;
+    --accent:#fb923c; --ok:#4ade80; --warn:#fbbf24; --bad:#f87171;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+  }}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-text-size-adjust:100%}
+  header{position:sticky;top:0;z-index:20;background:var(--panel);
+    border-bottom:1px solid var(--line);padding:12px 14px}
+  .wrap{max-width:660px;margin:0 auto}
+  h1{margin:0;font-size:17px;letter-spacing:-.02em}
+  .sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .prog{height:7px;background:var(--line);border-radius:4px;margin-top:10px;overflow:hidden}
+  .prog div{height:100%;background:var(--ok);transition:width .3s}
+  main{max-width:660px;margin:0 auto;padding:14px 14px 90px}
+  .cart{margin-bottom:22px}
+  .carthead{display:flex;justify-content:space-between;align-items:baseline;
+    padding:9px 12px;background:var(--panel);border:1px solid var(--line);
+    border-radius:var(--radius) var(--radius) 0 0;font-size:13px}
+  .carthead b{font-size:14px}
+  .store{font-size:11.5px;color:var(--muted)}
+  .line{background:var(--panel);border:1px solid var(--line);border-top:none;
+    padding:13px 12px;display:flex;gap:11px}
+  .line:last-child{border-radius:0 0 var(--radius) var(--radius)}
+  .line.done{opacity:.5}
+  .thumb{width:54px;height:54px;flex:none;background:#fff;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .thumb img{max-width:100%;max-height:100%;object-fit:contain}
+  .g{flex:1;min-width:0}
+  .nm{font-size:14.5px;font-weight:600;line-height:1.3}
+  .meta{font-size:12px;color:var(--muted);margin-top:2px}
+  .qty{display:inline-block;background:var(--accent);color:#fff;font-weight:700;
+    padding:1px 8px;border-radius:5px;font-size:13px;margin-right:6px}
+  .note{font-size:12px;margin-top:5px;padding:5px 8px;border-radius:6px;
+    background:color-mix(in srgb,var(--warn) 15%,transparent);color:var(--warn)}
+  .note.crit{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+  .links{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .links a{font-size:12.5px;text-decoration:none;border:1px solid var(--accent);
+    color:var(--accent);padding:5px 11px;border-radius:7px;font-weight:600}
+  .acts{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap;align-items:center}
+  button{font:inherit;cursor:pointer;border-radius:7px;padding:7px 13px;
+    font-size:13px;font-weight:600;border:1px solid var(--line);background:transparent;color:inherit}
+  .buy{border-color:var(--ok);color:var(--ok)}
+  .buy:hover{background:var(--ok);color:#fff}
+  .short{border-color:var(--warn);color:var(--warn)}
+  .short:hover{background:var(--warn);color:#fff}
+  .skip{border-color:var(--muted);color:var(--muted)}
+  .price{width:92px;padding:6px 9px;border:1px solid var(--line);border-radius:7px;
+    background:var(--bg);color:inherit;font-size:13px}
+  .att{font-size:12px;margin-top:6px;padding:6px 9px;border-radius:6px;display:none}
+  .att.bad{display:block;background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+  .att.ok{display:block;background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}
+  .state{font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:5px}
+  .s-BOUGHT{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+  .s-SHORT{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+  .s-SKIPPED{background:color-mix(in srgb,var(--muted) 18%,transparent);color:var(--muted)}
+  .bill{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:12px;margin-top:11px;display:flex;gap:9px;align-items:center;flex-wrap:wrap;font-size:13px}
+  .msg{font-size:12.5px;margin-top:8px;padding:8px 10px;border-radius:7px;width:100%}
+  .msg.ok{background:color-mix(in srgb,var(--ok) 13%,transparent);color:var(--ok)}
+  .msg.bad{background:color-mix(in srgb,var(--bad) 13%,transparent);color:var(--bad)}
+  .empty{color:var(--muted);text-align:center;padding:40px 14px;font-size:14px}
+  .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:9px;
+    font-size:13.5px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:50}
+  .toast.on{opacity:1}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>Buy sheet</h1>
+  <div class="sub" id="sub">Loading…</div>
+  <div class="prog"><div id="prog" style="width:0%"></div></div>
+</div></header>
+
+<main id="main"><div class="empty">Loading…</div></main>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
+const BATCH = new URLSearchParams(location.search).get('batch') || '';
+
+function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'),2000); }
+
+async function load(){
+  if(!BATCH){ $('#main').innerHTML = '<div class="empty">No batch selected.<br>Open as <code>/operator?batch=PB-YYYY-MM-DD</code></div>'; return; }
+  const d = await (await fetch((window.API_BASE||'')+`/api/ops/batch/${BATCH}/picksheet`)).json();
+  if(!d.carts || !d.carts.length){ $('#main').innerHTML='<div class="empty">Nothing to buy in this batch.</div>'; return; }
+
+  $('#sub').textContent = `${d.batch_id} · ${d.done}/${d.total} lines done`;
+  $('#prog').style.width = (d.total ? d.done/d.total*100 : 0) + '%';
+
+  $('#main').innerHTML = d.carts.map(c => `
+    <div class="cart">
+      <div class="carthead">
+        <b>Order ${c.cart_no} of ${d.carts.length}</b>
+        <span class="store">dark store ${esc(c.merchant_id)} · ₹${c.value_inr.toFixed(0)}</span>
+      </div>
+      ${c.lines.map(l => lineHtml(l)).join('')}
+      <div class="bill">
+        <span>Blinkit bill total ₹</span>
+        <input class="price" type="number" id="bill-${c.cart_no}" placeholder="0">
+        <button data-bill="${c.cart_no}">Check bill</button>
+        <div class="msg" id="billmsg-${c.cart_no}" style="display:none"></div>
+      </div>
+    </div>`).join('');
+  wire();
+}
+
+function lineHtml(l){
+  const done = ['BOUGHT','SHORT','SKIPPED','SUBSTITUTED','RECEIVED'].includes(l.state);
+  return `<div class="line ${done?'done':''}" data-pid="${esc(l.product_id)}">
+    <div class="thumb">${l.image?`<img src="${esc(l.image)}" alt="">`:''}</div>
+    <div class="g">
+      <div class="nm"><span class="qty">×${l.qty}</span>${esc(l.name)}</div>
+      <div class="meta">${esc(l.brand)} · ${esc(l.unit)} · expect ₹${l.expected_inr.toFixed(0)}
+        ${done?`<span class="state s-${esc(l.state)}">${esc(l.state)}</span>`:''}</div>
+      ${l.priority_note?`<div class="note ${l.risk_bucket==='CRITICAL'?'crit':''}">${esc(l.priority_note)}</div>`:''}
+      ${done?'':`
+      <div class="links">
+        <a href="${esc(l.product_url)}" target="_blank" rel="noopener">Open in Blinkit</a>
+        <a href="${esc(l.search_url)}" target="_blank" rel="noopener">Search instead</a>
+      </div>
+      <div class="acts">
+        <input class="price" type="number" placeholder="₹ shown" data-price="${esc(l.product_id)}">
+        <button class="buy" data-act="BOUGHT" data-pid="${esc(l.product_id)}" data-qty="${l.qty}">Bought all ${l.qty}</button>
+        <button class="short" data-act="SHORT" data-pid="${esc(l.product_id)}">Only some</button>
+        <button class="skip" data-act="SKIPPED" data-pid="${esc(l.product_id)}">Not there</button>
+      </div>
+      <div class="att" id="att-${esc(l.product_id)}"></div>`}
+    </div></div>`;
+}
+
+function wire(){
+  // Price attestation fires on blur: catching a wrong pack size before the
+  // buy button is the cheapest place in the whole funnel to catch it.
+  document.querySelectorAll('[data-price]').forEach(i => i.onblur = async () => {
+    const pid = i.dataset.price, v = parseFloat(i.value);
+    if(!v) return;
+    const r = await (await fetch((window.API_BASE||'')+'/api/ops/batch/attest',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({batch_id:BATCH,product_id:pid,shown_inr:v})})).json();
+    const el = document.getElementById('att-'+pid);
+    el.className = 'att ' + (r.ok?'ok':'bad');
+    el.textContent = r.message;
+  });
+
+  document.querySelectorAll('[data-act]').forEach(b => b.onclick = async () => {
+    const pid = b.dataset.pid, act = b.dataset.act;
+    let qty = b.dataset.qty ? parseInt(b.dataset.qty) : null;
+    if(act === 'SHORT'){
+      const got = prompt('How many did you actually get?');
+      if(got === null) return;
+      qty = parseInt(got) || 0;
+    }
+    if(act === 'SKIPPED') qty = 0;
+    const priceEl = document.querySelector(`[data-price="${CSS.escape(pid)}"]`);
+    const actual = priceEl && priceEl.value ? parseFloat(priceEl.value) : null;
+    await fetch((window.API_BASE||'')+'/api/ops/batch/mark',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({batch_id:BATCH,product_id:pid,state:act,
+                           qty_bought:qty,actual_inr:actual})});
+    toast(act === 'BOUGHT' ? 'Marked bought' : act === 'SHORT' ? `Marked ${qty} of them` : 'Marked unavailable');
+    load();
+  });
+
+  document.querySelectorAll('[data-bill]').forEach(b => b.onclick = async () => {
+    const n = b.dataset.bill, v = parseFloat(document.getElementById('bill-'+n).value);
+    if(!v) return;
+    const r = await (await fetch((window.API_BASE||'')+'/api/ops/batch/bill',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({batch_id:BATCH,cart_no:parseInt(n),bill_total_inr:v})})).json();
+    const el = document.getElementById('billmsg-'+n);
+    el.style.display = 'block';
+    el.className = 'msg ' + (r.balanced ? 'ok' : 'bad');
+    el.textContent = r.message;
+  });
+}
+
+load();
+</script>
+</body>
+</html>

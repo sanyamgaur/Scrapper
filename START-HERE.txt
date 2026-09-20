@@ -1,0 +1,47 @@
+SOURCED — complete project (everything in one folder)
+======================================================
+This one folder is the whole system: all engines, the database, the website,
+and the control tower. Nothing else to download.
+
+Use Python 3.11, 3.12 or 3.13 (3.14 can fail to build some wheels).
+
+──────────────────────────────────────────────────────────────────────────
+EASIEST — one command, everything on one address
+──────────────────────────────────────────────────────────────────────────
+  Windows : double-click  start-windows.bat
+  Mac     : double-click  start-mac-linux.command   (first time: right-click > Open)
+  Any OS  : in a terminal here, run:
+                pip install -r requirements-web.txt
+                python run_console.py
+
+  Then open:  http://127.0.0.1:8000/console      <- the control tower
+              http://127.0.0.1:8000/              <- the storefront
+              http://127.0.0.1:8000/ops           <- compliance queue
+  Leave the window open. Ctrl+C to stop.
+  Port 8000 busy?   python run_console.py --port 8001
+
+──────────────────────────────────────────────────────────────────────────
+OPTIONAL — run the website and the backend as two separate processes
+──────────────────────────────────────────────────────────────────────────
+  Window 1:  python run_backend.py          (API on :8000, CORS on)
+  Window 2:  python serve_frontend.py        (website on :3000)
+  The site's backend address is web/app/config.js (set to http://127.0.0.1:8000
+  automatically is NOT done here — for the split, set DEFAULT there to
+  "http://127.0.0.1:8000"). For most people the one-command mode above is simpler.
+
+──────────────────────────────────────────────────────────────────────────
+WHAT'S REAL vs SNAPSHOT (say this in a demo)
+──────────────────────────────────────────────────────────────────────────
+  - The engines (compliance, pricing, shipping, procurement, risk, basket,
+    drift) are real and compute live per order.
+  - The product catalogue is a fixed snapshot imported from inventory_delhi.csv
+    (crawled 16 Sep 2026). Refreshing it needs the scraper (crawl.py/discover.py),
+    which only runs on a real machine in India with a visible browser — not on a
+    server.
+  - There is no live availability feed, so checkout sells on the snapshot and
+    blocks only items marked out of stock. To make it strict, run
+    availability_engine.py on a live session and set
+    rules/procurement.yaml -> stock.require_live_confirmation: true
+
+The scraper scripts (crawl.py, discover.py, etc.) are included for completeness
+but are NOT needed to run the site; they need requirements.txt + Playwright.

@@ -1,0 +1,390 @@
+/* =============================================================================
+   Sourced — design system
+   =============================================================================
+   One warm, food-forward palette. Every colour is a token on :root and is
+   redefined for dark mode, so nothing hardcodes a hex outside this block.
+   ========================================================================== */
+
+:root{
+  /* Warm paper neutrals — this is a food shop, not a SaaS dashboard. */
+  --bg:#fbf9f5;
+  --surface:#ffffff;
+  --surface-2:#f5f1e9;
+  --ink:#1b1917;
+  --ink-2:#57534e;
+  --ink-3:#8a837c;
+  --line:#e8e2d7;
+  --line-2:#d6cdbe;
+
+  /* Turmeric accent. Used for action, never for decoration. */
+  --accent:#c2410c;
+  --accent-ink:#ffffff;
+  --accent-soft:#fdf0e7;
+  --accent-line:#f2c9ae;
+
+  --ok:#15803d;      --ok-soft:#e9f5ec;
+  --warn:#a16207;    --warn-soft:#fdf5e3;
+  --bad:#b91c1c;     --bad-soft:#fdecec;
+  --info:#1d4ed8;    --info-soft:#eaf0fd;
+
+  --r-sm:8px; --r:12px; --r-lg:18px; --r-full:999px;
+  --sh-1:0 1px 2px rgba(28,25,23,.05), 0 1px 3px rgba(28,25,23,.04);
+  --sh-2:0 2px 6px rgba(28,25,23,.06), 0 8px 24px rgba(28,25,23,.06);
+  --sh-3:0 12px 40px rgba(28,25,23,.14);
+  --header-h:118px;
+  --maxw:1240px;
+  --font:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#141210;
+    --surface:#1e1b18;
+    --surface-2:#262220;
+    --ink:#f5f1ea;
+    --ink-2:#b5ada3;
+    --ink-3:#8a8178;
+    --line:#332e29;
+    --line-2:#443d36;
+    --accent:#fb923c;
+    --accent-ink:#1b1917;
+    --accent-soft:#2b1c12;
+    --accent-line:#5c3a22;
+    --ok:#4ade80;   --ok-soft:#16281d;
+    --warn:#fbbf24; --warn-soft:#2c2412;
+    --bad:#f87171;  --bad-soft:#2d1717;
+    --info:#93c5fd; --info-soft:#16203a;
+    --sh-1:0 1px 2px rgba(0,0,0,.4);
+    --sh-2:0 2px 8px rgba(0,0,0,.45);
+    --sh-3:0 14px 44px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141210; --surface:#1e1b18; --surface-2:#262220;
+  --ink:#f5f1ea; --ink-2:#b5ada3; --ink-3:#8a8178;
+  --line:#332e29; --line-2:#443d36;
+  --accent:#fb923c; --accent-ink:#1b1917; --accent-soft:#2b1c12; --accent-line:#5c3a22;
+  --ok:#4ade80; --ok-soft:#16281d; --warn:#fbbf24; --warn-soft:#2c2412;
+  --bad:#f87171; --bad-soft:#2d1717; --info:#93c5fd; --info-soft:#16203a;
+  --sh-1:0 1px 2px rgba(0,0,0,.4);
+  --sh-2:0 2px 8px rgba(0,0,0,.45);
+  --sh-3:0 14px 44px rgba(0,0,0,.6);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.55 var(--font);
+  font-feature-settings:"tnum" 0;
+  overflow-wrap:break-word;
+}
+img{max-width:100%;display:block}
+/* Default every inline icon to text size. Without this an icon() dropped into a
+   heading stretches to fill its parent. */
+svg{width:1.05em;height:1.05em;flex:none;vertical-align:-.12em}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px}
+@media(max-width:560px){ .wrap{padding:0 16px} }
+
+/* ---------------------------------------------------------------- header -- */
+.hdr{position:sticky;top:0;z-index:60;background:var(--surface);
+  border-bottom:1px solid var(--line)}
+.hdr-top{display:flex;align-items:center;gap:18px;padding:13px 0}
+.brand{display:flex;align-items:baseline;gap:8px;font-weight:700;font-size:19px;
+  letter-spacing:-.025em;flex:none}
+.brand em{font-style:normal;color:var(--accent)}
+.brand small{font-weight:500;font-size:11.5px;color:var(--ink-3);letter-spacing:0}
+@media(max-width:760px){ .brand small{display:none} }
+
+
+.search{flex:1;position:relative;min-width:0}
+.search input{width:100%;padding:11px 14px 11px 40px;border:1px solid var(--line-2);
+  border-radius:var(--r-full);background:var(--bg);font-size:14.5px}
+.search input::placeholder{color:var(--ink-3)}
+.search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  width:16px;height:16px;color:var(--ink-3);pointer-events:none}
+
+.hdr-acts{display:flex;align-items:center;gap:8px;flex:none}
+.iconbtn{display:inline-flex;align-items:center;gap:7px;padding:9px 13px;
+  border:1px solid var(--line-2);background:transparent;border-radius:var(--r-full);
+  cursor:pointer;font-size:13.5px;font-weight:600;white-space:nowrap}
+.iconbtn:hover{background:var(--surface-2)}
+.iconbtn svg{width:16px;height:16px}
+.cartbtn{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.cartbtn:hover{filter:brightness(1.06);background:var(--accent)}
+.pip{display:inline-flex;align-items:center;justify-content:center;min-width:19px;
+  height:19px;padding:0 5px;border-radius:var(--r-full);background:rgba(255,255,255,.25);
+  font-size:11.5px;font-weight:700}
+
+/* Shelf navigation */
+.nav{display:flex;gap:4px;overflow-x:auto;padding:0 0 10px;
+  scrollbar-width:none;-ms-overflow-style:none}
+.nav::-webkit-scrollbar{display:none}
+.nav a{padding:6px 13px;border-radius:var(--r-full);font-size:13.5px;
+  color:var(--ink-2);white-space:nowrap;font-weight:500}
+.nav a:hover{background:var(--surface-2);color:var(--ink)}
+.nav a.on{background:var(--ink);color:var(--bg)}
+/* The department rail scrolls; fade the right edge so it reads as scrollable
+   rather than as a word cut in half. */
+.nav-wrap{position:relative}
+.nav-wrap::after{content:"";position:absolute;right:0;top:0;bottom:10px;width:44px;
+  pointer-events:none;background:linear-gradient(to right,transparent,var(--surface))}
+
+/* Honest expectation-setting, in the chrome rather than buried in a FAQ.
+   A charcoal strip rather than a tinted, bordered band: the earlier version
+   read as a promo banner, not a policy statement. */
+.ticker{background:var(--ink);color:var(--bg);font-size:12.5px;padding:9px 0}
+.ticker .wrap{display:flex;align-items:center;justify-content:center;gap:8px}
+.ticker svg{width:14px;height:14px;color:var(--accent);flex:none}
+.ticker b{font-weight:600;color:var(--accent)}
+:root[data-theme="dark"] .ticker{background:var(--surface-2);color:var(--ink-2)}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .ticker{
+  background:var(--surface-2);color:var(--ink-2)} }
+
+/* On a phone the brand, search and cart cannot share one row: the search input
+   collapsed to a circle because flex ran out of width, and at 768px it was a
+   cramped 170px. Below 900px search gets its own full-width row. */
+@media(max-width:900px){
+  .hdr-top{flex-wrap:wrap;row-gap:10px}
+  .brand{order:1;flex:1;font-size:17px}
+  .hdr-acts{order:2}
+  .search{order:3;flex:0 0 100%;width:100%}
+  .ticker{font-size:11px;padding:7px 0}
+  .ticker span.opt{display:none}
+}
+
+/* ------------------------------------------------------------------ grid -- */
+.grid{display:grid;gap:16px;
+  grid-template-columns:repeat(auto-fill,minmax(196px,1fr))}
+@media(max-width:560px){
+  .grid{grid-template-columns:repeat(2,1fr);gap:11px}
+}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--sh-1);
+  transition:box-shadow .16s,transform .16s;cursor:pointer}
+.card:hover{box-shadow:var(--sh-2);transform:translateY(-2px)}
+.card .shot{aspect-ratio:1;background:#fff;display:flex;align-items:center;
+  justify-content:center;padding:14px;position:relative}
+.card .shot img{max-height:100%;object-fit:contain;mix-blend-mode:multiply}
+:root[data-theme="dark"] .card .shot img{mix-blend-mode:normal}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .card .shot img{
+  mix-blend-mode:normal} }
+/* Placeholder when a CDN image is missing or blocked — better than a void. */
+/* Monogram placeholder. A tinted gradient keyed to the product id, so a missing
+   image reads as a designed state rather than a hole in the grid. */
+.ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+  font-size:30px;font-weight:700;letter-spacing:-.03em;border-radius:inherit;
+  background:linear-gradient(145deg,
+    hsl(var(--ph-h,30) 62% 94%), hsl(calc(var(--ph-h,30) + 24) 58% 88%));
+  color:hsl(var(--ph-h,30) 45% 38%);}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .ph{
+  background:linear-gradient(145deg,
+    hsl(var(--ph-h,30) 22% 20%), hsl(calc(var(--ph-h,30) + 24) 20% 15%));
+  color:hsl(var(--ph-h,30) 45% 72%);} }
+:root[data-theme="dark"] .ph{
+  background:linear-gradient(145deg,
+    hsl(var(--ph-h,30) 22% 20%), hsl(calc(var(--ph-h,30) + 24) 20% 15%));
+  color:hsl(var(--ph-h,30) 45% 72%);}
+.panel.shot .ph{font-size:84px}
+.thumb{background:var(--surface-2);display:flex;align-items:center;justify-content:center;
+  overflow:hidden;flex:none}
+.thumb .ph{font-size:19px}
+
+/* Quick-add, revealed on hover. Keyboard users get it via focus. */
+.quick{position:absolute;right:8px;bottom:8px;width:32px;height:32px;border-radius:var(--r-full);
+  border:1px solid var(--line-2);background:var(--surface);color:var(--ink);
+  font-size:19px;font-weight:600;line-height:1;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;box-shadow:var(--sh-2);
+  opacity:0;transform:translateY(4px);transition:opacity .16s,transform .16s,background .16s}
+.card:hover .quick,.quick:focus-visible{opacity:1;transform:translateY(0)}
+.quick:hover{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+@media(hover:none){ .quick{opacity:1;transform:none} }
+.card .off{position:absolute;top:8px;left:8px;background:var(--ok);color:#fff;
+  font-size:10.5px;font-weight:700;padding:3px 7px;border-radius:var(--r-sm)}
+.card .body{padding:11px 12px 13px;display:flex;flex-direction:column;gap:5px;flex:1}
+.card .nm{font-size:13.5px;font-weight:600;line-height:1.32;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .meta{font-size:11.5px;color:var(--ink-3)}
+.card .price{display:flex;align-items:baseline;gap:7px;margin-top:auto;padding-top:6px}
+.card .usd{font-size:17px;font-weight:700;letter-spacing:-.02em}
+.card .inr{font-size:11px;color:var(--ink-3)}
+
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;
+  padding:2.5px 7px;border-radius:var(--r-sm);width:fit-content;letter-spacing:.01em}
+.t-ok{background:var(--ok-soft);color:var(--ok)}
+.t-bad{background:var(--bad-soft);color:var(--bad)}
+.t-warn{background:var(--warn-soft);color:var(--warn)}
+.t-info{background:var(--info-soft);color:var(--info)}
+
+/* --------------------------------------------------------------- buttons -- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:10px 16px;border-radius:var(--r-sm);border:1px solid var(--line-2);
+  background:transparent;font-size:14px;font-weight:600;cursor:pointer;
+  transition:background .14s,border-color .14s}
+.btn:hover:not(:disabled){background:var(--surface-2)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-pri:hover:not(:disabled){filter:brightness(1.07);background:var(--accent)}
+.btn-blk{width:100%}
+.btn-sm{padding:6px 11px;font-size:12.5px}
+.btn svg{width:15px;height:15px}
+
+/* ----------------------------------------------------------------- misc --- */
+.h1{font-size:26px;font-weight:700;letter-spacing:-.03em;margin:0}
+.h2{font-size:18px;font-weight:700;letter-spacing:-.02em;margin:0}
+.sub{color:var(--ink-2);font-size:14px}
+.muted{color:var(--ink-3);font-size:12.5px}
+.row{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;padding:4px 0}
+.row.tot{font-size:17px;font-weight:700;border-top:1px solid var(--line);
+  margin-top:8px;padding-top:11px}
+.panel{background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);padding:16px;box-shadow:var(--sh-1)}
+.note{font-size:12.5px;padding:10px 12px;border-radius:var(--r-sm);line-height:1.5}
+.note.ok{background:var(--ok-soft);color:var(--ok)}
+.note.warn{background:var(--warn-soft);color:var(--warn)}
+.note.bad{background:var(--bad-soft);color:var(--bad)}
+.note.info{background:var(--info-soft);color:var(--info)}
+
+.skel{background:linear-gradient(90deg,var(--surface-2) 25%,var(--line) 37%,var(--surface-2) 63%);
+  background-size:400% 100%;animation:sh 1.3s ease infinite;border-radius:var(--r)}
+@keyframes sh{0%{background-position:100% 50%}100%{background-position:0 50%}}
+.empty{text-align:center;padding:64px 20px;color:var(--ink-3)}
+.empty h3{color:var(--ink);font-size:17px;margin:0 0 6px}
+
+.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,14px);
+  background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:var(--r-full);
+  font-size:13.5px;font-weight:600;opacity:0;pointer-events:none;z-index:200;
+  transition:opacity .22s,transform .22s;box-shadow:var(--sh-3)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+main{min-height:70vh;padding:24px 0 80px}
+.foot{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--ink-3);font-size:12.5px}
+
+
+/* =============================================================================
+   Home
+   ========================================================================== */
+.hero{background:
+    radial-gradient(1200px 400px at 12% -10%, var(--accent-soft), transparent 70%),
+    linear-gradient(180deg, var(--surface), var(--bg));
+  border-bottom:1px solid var(--line);margin:-24px 0 26px;padding:52px 0 44px}
+.hero-in h1{font-size:clamp(30px,4.4vw,50px);line-height:1.07;letter-spacing:-.035em;
+  margin:0 0 14px;font-weight:700;max-width:14ch}
+.hero-in h1 em{font-style:normal;color:var(--accent)}
+.hero-in p{font-size:16px;color:var(--ink-2);max-width:56ch;margin:0 0 22px;line-height:1.6}
+.hero-cta{display:flex;gap:10px;flex-wrap:wrap}
+/* Trust row: what matters about the SERVICE, never inventory size. */
+.trust-row{display:flex;gap:28px;margin-top:32px;flex-wrap:wrap}
+.trust-row div{display:flex;align-items:center;gap:9px;font-size:13px;
+  color:var(--ink-2);font-weight:500;max-width:220px}
+.trust-row .ic{flex:none;width:34px;height:34px;border-radius:var(--r-full);
+  background:var(--surface);border:1px solid var(--line-2);display:flex;
+  align-items:center;justify-content:center;color:var(--accent);box-shadow:var(--sh-1)}
+.trust-row svg{width:16px;height:16px}
+@media(max-width:560px){
+  .hero{padding:34px 0 30px;margin-bottom:20px}
+  .trust-row{gap:16px;margin-top:24px}
+  .trust-row div{font-size:12px;max-width:none}
+}
+
+/* Department tiles. An icon badge plus a defined border stop these reading as
+   blank colour blocks; the arrow gives the tile an affordance it lacked. */
+.depts{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));
+  gap:12px;margin-bottom:8px}
+@media(max-width:560px){ .depts{grid-template-columns:repeat(2,1fr);gap:10px} }
+.dept{position:relative;display:flex;align-items:center;gap:12px;
+  min-height:76px;padding:14px 16px;border-radius:var(--r);
+  border:1.5px solid var(--line-2);
+  background:linear-gradient(150deg,
+    hsl(calc(var(--d) + 18) 58% 96%), hsl(calc(var(--d) + 44) 50% 91%));
+  transition:transform .16s,box-shadow .16s,border-color .16s}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .dept{
+  background:linear-gradient(150deg,
+    hsl(calc(var(--d) + 18) 24% 20%), hsl(calc(var(--d) + 44) 22% 15%));} }
+:root[data-theme="dark"] .dept{background:linear-gradient(150deg,
+  hsl(calc(var(--d) + 18) 24% 20%), hsl(calc(var(--d) + 44) 22% 15%));}
+.dept:hover{transform:translateY(-2px);box-shadow:var(--sh-2);border-color:var(--accent)}
+.dept-ic{flex:none;width:38px;height:38px;border-radius:var(--r-full);
+  background:var(--surface);display:flex;align-items:center;justify-content:center;
+  font-size:18px;box-shadow:var(--sh-1)}
+.dept-n{font-size:13.5px;font-weight:650;letter-spacing:-.01em;line-height:1.3;flex:1}
+.dept-go{flex:none;width:18px;height:18px;color:var(--ink-3);opacity:0;
+  transform:rotate(180deg) translateX(4px);transition:opacity .16s,transform .16s}
+.dept:hover .dept-go{opacity:1;transform:rotate(180deg) translateX(0);color:var(--accent)}
+
+/* Rails scroll horizontally. A wrapping grid left an orphan card alone on a
+   second row whenever the item count did not divide by the column count. */
+.rail{margin-bottom:48px}
+.railscroll{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(196px,1fr);
+  gap:16px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x proximity;
+  scrollbar-width:thin}
+.railscroll > *{scroll-snap-align:start}
+.railscroll::-webkit-scrollbar{height:8px}
+.railscroll::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:var(--r-full)}
+.railscroll::-webkit-scrollbar-track{background:transparent}
+@media(max-width:560px){
+  .railscroll{grid-auto-columns:minmax(150px,1fr);gap:11px}
+}
+.rail-h{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
+  margin-bottom:14px;flex-wrap:wrap}
+
+/* ------------------------------------------------------------- toolbar --- */
+/* Filter + sort, grouped as one control bar rather than a loose flex row that
+   wrapped unpredictably. */
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  flex-wrap:wrap;padding:10px 14px;margin-bottom:20px;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.toolbar-label{font-size:13.5px;font-weight:600;color:var(--ink-2);min-width:0}
+.toolbar-controls{display:flex;align-items:center;gap:14px;flex-wrap:wrap;row-gap:12px}
+.toolbar-div{width:1px;align-self:stretch;background:var(--line);min-height:22px}
+/* When the controls wrap to their own line (narrow toolbar), a 1px vertical
+   divider becomes a stray floating tick mark rather than a separator. */
+@media(max-width:600px){ .toolbar-div{display:none} }
+.field-inline{display:flex;align-items:center;gap:8px}
+.field-inline label{font-size:12.5px;font-weight:600;color:var(--ink-3);
+  white-space:nowrap;text-transform:uppercase;letter-spacing:.03em}
+.toolbar select{border:1px solid var(--line-2);background:var(--bg);
+  padding:7px 30px 7px 11px;border-radius:var(--r-sm);font-size:13.5px;
+  font-weight:600;cursor:pointer;
+  appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2357534e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 9px center;background-size:13px}
+
+/* Toggle switch, replacing a bare checkbox for the in-stock filter. */
+.switch{position:relative;display:inline-flex;align-items:center;width:36px;height:21px;
+  flex:none}
+.switch input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;z-index:1}
+.switch .track{position:absolute;inset:0;background:var(--line-2);border-radius:var(--r-full);
+  transition:background .15s}
+.switch .knob{position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;
+  background:var(--surface);box-shadow:var(--sh-1);transition:transform .15s}
+.switch input:checked ~ .track{background:var(--accent)}
+.switch input:checked ~ .knob{transform:translateX(15px)}
+.switch input:focus-visible ~ .track{outline:2px solid var(--accent);outline-offset:2px}
+
+/* --------------------------------------------------------- section rhythm - */
+.section-h{display:flex;align-items:baseline;justify-content:space-between;
+  gap:16px;margin:0 0 16px;flex-wrap:wrap}
+.eyebrow{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--accent);margin:0 0 6px}
+
+/* Cards get a little more life now that images actually load. */
+/* The image lies over its monogram, so there is never a blank tile. */
+.shot,.thumb{position:relative}
+.shot .ph,.thumb .ph{position:absolute;inset:0}
+/* Deliberately no background on the img itself: the container already supplies
+   the correct backdrop (.shot is white, .thumb is --surface-2). An img painting
+   its own white background masked the monogram underneath for the ENTIRE time
+   a photo was loading, not just after it failed — a real bug, not just a
+   sandbox artifact, since any slow connection would show the same white flash
+   instead of the placeholder. */
+img.over{position:absolute;inset:0;margin:auto;max-width:100%;max-height:100%;
+  width:auto;height:auto;object-fit:contain}
+.card .shot img.over{padding:14px}
+.panel.shot img.over{padding:32px}
+.card .shot img{transition:transform .28s ease}
+.card:hover .shot img{transform:scale(1.045)}

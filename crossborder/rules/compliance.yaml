@@ -1,0 +1,506 @@
+# =============================================================================
+# India -> US cross-border listability rule pack
+# =============================================================================
+# Every rule answers one question: may this SKU be listed on the US storefront?
+#
+# Verdicts (worst wins across all fired rules):
+#   BLOCKED  - never list. Legal prohibition, or physically cannot arrive intact.
+#   REVIEW   - do not auto-list. A human clears it once, and the decision is
+#              recorded as an override so the same SKU is never re-reviewed.
+#   ALLOWED  - list it.
+#
+# Dimensions - why a rule fired, so ops can triage a queue by cause:
+#   US_IMPORT     legal prohibition/restriction at the US border
+#   HAZMAT        dangerous goods; air carriers refuse it regardless of legality
+#   TEMPERATURE   cold chain required; will not arrive intact
+#   PERISHABLE    shelf life shorter than transit time
+#   FRAGILITY     breaks in transit
+#   FUNCTIONAL    legal and shippable but will not work in the US (mains voltage)
+#   DUTY          admissible but carries antidumping/high duty exposure
+#   IP_RISK       counterfeit / grey-market / brand-authorization exposure
+#
+# Precedence: rules are evaluated in order of `priority` (higher first). The
+# worst verdict wins, but EVERY matched rule is recorded on the SKU, so the
+# review queue shows the full picture rather than just the first hit.
+#
+# `authority` is the citation. It exists so that when a shipment is held, you
+# can show the officer the specific rule and its basis rather than arguing.
+# It is our documented basis for a commercial decision, not legal advice;
+# have a licensed customs broker sign off before you rely on it in production.
+# =============================================================================
+
+meta:
+  version: "2026.09.1"
+  jurisdiction: "US import / India export"
+  review_default: true   # unmatched SKUs land in REVIEW, never auto-ALLOWED
+
+# -----------------------------------------------------------------------------
+# KEYWORD RULES - matched against product name + brand (case-insensitive regex).
+# These carry the highest priority because a product name is more specific than
+# the shelf it happens to sit on.
+# -----------------------------------------------------------------------------
+keyword_rules:
+
+  # --- Animal products: the hardest US prohibitions -------------------------
+  - id: KW-MEAT-001
+    priority: 100
+    pattern: '\b(chicken|mutton|lamb|goat meat|pork|bacon|ham|sausage|salami|pepperoni|keema|kheema|meat|beef|turkey breast)\b'
+    # Household Essentials holds no food: a "Chicken Showpiece" is decor.
+    scope_not_super: ["Household Essentials"]
+    # A masala NAMED for the dish it seasons contains no meat. "Chicken Korma
+    # Masala" is ground spice; blocking it deleted 65 listable SKUs.
+    except_pattern: '\b(masala|seasoning|curry powder|spice mix|marinade|gravy mix|rub|flavou?r|instant mix|noodle)\b'
+    verdict: BLOCKED
+    dimension: US_IMPORT
+    reason: "Meat and poultry products from India are prohibited entry. India is not USDA-recognized as free of FMD/HPAI, so APHIS bars commercial and personal meat imports."
+    authority: "9 CFR 94; USDA APHIS Animal Product Manual - India restricted for FMD/HPAI"
+
+  - id: KW-SEAFOOD-002
+    priority: 100
+    pattern: '\b(fish|prawn|shrimp|crab|lobster|squid|pomfret|rohu|surmai|basa|tilapia|seafood|anchov)\w*'
+    scope_not_super: ["Household Essentials"]
+    except_pattern: '\b(masala|seasoning|curry powder|spice mix|showpiece|toy|tank|bowl|net|shaped|print)\b'
+    verdict: BLOCKED
+    dimension: US_IMPORT
+    reason: "Seafood imports require an FDA-registered facility, HACCP compliance and NOAA/SIMP entry filing. Not viable as a per-parcel retail item."
+    authority: "21 CFR 123 (Seafood HACCP); NOAA Seafood Import Monitoring Program"
+
+  - id: KW-EGG-003
+    priority: 100
+    pattern: '\b(eggs?|anda)\b'
+    verdict: BLOCKED
+    dimension: US_IMPORT
+    reason: "Shell eggs and egg products from India are prohibited (avian influenza controls)."
+    authority: "9 CFR 94.6; APHIS poultry product restrictions"
+
+  # --- Dairy: not a flat ban, but the line is sharp ------------------------
+  - id: KW-DAIRY-FRESH-010
+    priority: 95
+    # Deliberately NOT a bare \bcream\b / \bbutter\b / \bmilk\b. Those words appear
+    # in cream biscuits, peanut butter and milk chocolate, all shelf-stable and
+    # listable. This rule names actual chilled dairy, and only in food aisles.
+    scope_super: ["Grocery & Kitchen", "Snacks & Drinks"]
+    pattern: '\b(fresh cream|whipping cream|table cream|cooking cream|dairy cream|malai|curd|dahi|yoghurt|yogurt|paneer|cheese|salted butter|unsalted butter|white butter|table butter|lassi|buttermilk|chaas|shrikhand|khoa|mawa|rabri|toned milk|full cream milk|cow milk|buffalo milk|milk packet|fresh milk)\b'
+    verdict: BLOCKED
+    dimension: TEMPERATURE
+    reason: "Fresh/chilled dairy requires unbroken cold chain and carries APHIS dairy restrictions. Cannot survive 4-10 day air transit."
+    authority: "9 CFR 94.16 (milk products); FDA 21 CFR 1240.61 (pasteurization)"
+    except_pattern: '\b(cheese\s*(ball|puff|corn|nacho|cracker|flavou?r|masala|popcorn|dip|sauce|spread|slice pizza)s?|flavou?red cheese|cream\s*(biscuit|roll|wafer|cracker|filled)s?|milk\s*(powder|solids|chocolate|bar|drink|shake)s?|condensed milk|milkmaid|soya milk|almond milk|oat milk|coconut milk|peanut butter|cocoa butter|shea butter|butter\s*(cookie|biscuit|naan|chicken|paneer|masala|scotch)s?|paneer\s*(masala|tikka|butter masala|mix)|(shahi|matar|palak|kadai|tikka) paneer|cheese\s*[&+]|cheese (and|n) )'
+
+  - id: KW-MILKPOWDER-011
+    priority: 94
+    pattern: '\b(milk powder|dairy whitener|infant formula|baby formula|lactogen|nan pro|dexolac|similac|enfamil)\b'
+    verdict: BLOCKED
+    dimension: US_IMPORT
+    reason: "Milk-derived powders and infant formula face APHIS dairy restrictions plus FDA infant-formula registration. Infant formula in particular requires FDA notification before marketing."
+    authority: "9 CFR 94.16; 21 U.S.C. 350a (Infant Formula Act)"
+
+  - id: KW-GHEE-012
+    priority: 90
+    pattern: '\b(ghee|clarified butter)\b'
+    verdict: REVIEW
+    dimension: US_IMPORT
+    reason: "Shelf-stable milk fat is generally admissible but is still a dairy product requiring APHIS clearance and FDA prior notice. Clear per-brand, then list."
+    authority: "9 CFR 94.16; FDA Prior Notice 21 CFR 1.280"
+
+  # --- Fresh produce, seeds, plants ---------------------------------------
+  - id: KW-PRODUCE-020
+    priority: 95
+    pattern: '\b(fresh|raw)\s+\w*(fruit|vegetable)|^(apple|banana|mango|onion|potato|tomato|ginger|garlic|chilli|coriander|spinach|lemon|grapes|papaya|guava|carrot|cucumber|cabbage|cauliflower|brinjal|okra|bhindi|methi|palak)\b'
+    verdict: BLOCKED
+    dimension: US_IMPORT
+    reason: "Fresh fruits and vegetables from India are prohibited or require a phytosanitary permit and port inspection. Not viable per-parcel."
+    authority: "7 CFR 319.56 (Fruits and Vegetables); APHIS FAVIR database"
+
+  - id: KW-SEED-021
+    priority: 95
+    pattern: '\b(seeds? for (sowing|planting)|plant sapling|live plant|sapling|bulbs? for planting|soil|manure|compost)\b'
+    verdict: BLOCKED
+    dimension: US_IMPORT
+    reason: "Seeds for propagation, live plants and soil require APHIS permits and phytosanitary certificates; soil is categorically prohibited."
+    authority: "7 CFR 319.37 (Nursery Stock); 7 CFR 330.300 (Soil)"
+
+  - id: KW-POPPY-022
+    priority: 96
+    pattern: '\b(poppy seed|khus khus|khuskhus|posto)\b'
+    verdict: BLOCKED
+    dimension: US_IMPORT
+    reason: "Poppy seed is derived from Papaver somniferum and is treated as a controlled-substance risk at the border; shipments are routinely seized."
+    authority: "21 U.S.C. 802 (Controlled Substances Act); CBP enforcement practice"
+
+  # --- Tobacco, betel, intoxicants ----------------------------------------
+  - id: KW-TOBACCO-030
+    priority: 100
+    pattern: '\b(tobacco|cigarette|cigar|bidi|beedi|gutkha|gutka|khaini|zarda|snuff|hookah|shisha|vape|e-?cigarette|nicotine|pan masala|paan masala)\b'
+    verdict: BLOCKED
+    dimension: US_IMPORT
+    reason: "Tobacco and nicotine products require FDA tobacco authorization, TTB permits and federal excise tax. The PACT Act effectively bars mail-order sales to consumers."
+    authority: "21 U.S.C. 387 (FDA Tobacco Control Act); PACT Act 15 U.S.C. 375-378"
+
+  - id: KW-BETEL-031
+    priority: 100
+    pattern: '\b(supari|betel nut|areca nut|paan|betel leaf|kattha|catechu)\b'
+    verdict: BLOCKED
+    dimension: US_IMPORT
+    reason: "Areca/betel nut is subject to an FDA import alert for detention without physical examination; betel leaf is a prohibited plant product."
+    authority: "FDA Import Alert 21-19 (areca nut); 7 CFR 319.56"
+
+  - id: KW-ALCOHOL-032
+    priority: 100
+    pattern: '\b(beer|wine|whisky|whiskey|vodka|rum|gin|brandy|liqueur|alcohol(ic)? beverage|tequila)\b'
+    scope_not_super: ["Household Essentials"]
+    # Glassware, openers, racks and cork lights are not alcohol.
+    except_pattern: '\b(opener|corkscrew|glass|glasses|rack|chiller|stopper|charm|decanter|coaster|light|lamp|string|holder|bag|shaped)\b'
+    verdict: BLOCKED
+    dimension: US_IMPORT
+    reason: "Alcoholic beverages require a TTB importer basic permit, state-level licensing and excise tax. Carriers refuse alcohol on consumer parcels."
+    authority: "27 U.S.C. 203 (TTB Basic Permit); state ABC laws"
+
+  # --- Pharma and anything that reads as a drug ----------------------------
+  - id: KW-PHARMA-040
+    priority: 98
+    # "tablet" is a computer in Household Essentials and "syrup" is a dessert
+    # topping in the food aisle. This rule only means what it says in personal care.
+    scope_super: ["Beauty & Personal Care"]
+    pattern: '\b(tablet|capsule|syrup|injection|antibiotic|paracetamol|crocin|dolo|azithromycin|ibuprofen|combiflam|disprin|antacid|digene|eno|omeprazole|pantoprazole|cetirizine|prescription|rx\b|ointment for|antiseptic cream|betadine|inhaler|insulin|thermometer strip)\b'
+    verdict: BLOCKED
+    dimension: US_IMPORT
+    reason: "Unapproved foreign drugs cannot be imported for commercial resale; FDA refuses entry regardless of whether the molecule is OTC in the US."
+    authority: "21 U.S.C. 331/355 (FD&C Act); FDA Import Alert 66-41 (unapproved drugs)"
+
+  - id: KW-AYURVEDA-041
+    priority: 92
+    pattern: '\b(ayurvedic|churna|chyawanprash|ashwagandha|triphala|giloy|shilajit|kadha|medicinal|herbal remedy|arishta|asava|bhasma|vati|guggul)\b'
+    verdict: REVIEW
+    dimension: US_IMPORT
+    reason: "Ayurvedic preparations are treated as unapproved drugs when they carry therapeutic claims, and some carry heavy-metal (lead/mercury) import alerts. Clear per-brand with a label review."
+    authority: "21 U.S.C. 321(g) (drug definition); FDA Import Alert 66-41; DSHEA 21 U.S.C. 350b"
+
+  - id: KW-SUPPLEMENT-042
+    priority: 88
+    pattern: '\b(protein powder|whey|mass gainer|multivitamin|vitamin [a-k]\b|supplement|creatine|bcaa|omega.?3|fish oil|collagen|biotin tablet)\b'
+    verdict: REVIEW
+    dimension: US_IMPORT
+    reason: "Dietary supplements need FDA facility registration, DSHEA-compliant labelling and a Supplement Facts panel. Indian labels rarely comply as-is."
+    authority: "DSHEA 21 U.S.C. 350b; 21 CFR 101.36 (Supplement Facts)"
+
+  # --- Hazmat: carriers refuse these whether or not they are legal ---------
+  - id: KW-AEROSOL-050
+    priority: 99
+    pattern: '\b(aerosol|(deodorant|deo|body|hair|insect|mosquito|room) spray|spray (deodorant|paint|can)|air freshener|room freshener|shaving foam|whipping siphon)\b'
+    verdict: BLOCKED
+    dimension: HAZMAT
+    reason: "Pressurized aerosols are UN1950 dangerous goods. Forbidden in passenger-aircraft cargo and refused on standard consumer air parcels."
+    authority: "IATA DGR UN1950; 49 CFR 173.306"
+
+  - id: KW-FLAMMABLE-051
+    priority: 99
+    pattern: '\b(nail polish|nail paint|nail enamel|nail polish remover|acetone|sanitizer|sanitiser|rubbing alcohol|lighter|refill gas|butane|kerosene|thinner|turpentine|petrol|spirit|varnish|enamel paint|camphor|kapur|matchbox|match box|matches|firecracker|sparkler|candle wax melt)\b'
+    verdict: BLOCKED
+    dimension: HAZMAT
+    reason: "Flammable liquids and solids (UN1170/UN1263/UN1324 class) are restricted dangerous goods; consumer air parcels will not carry them."
+    authority: "IATA DGR Class 3/4.1; 49 CFR 172.101"
+
+  - id: KW-PERFUME-052
+    priority: 93
+    pattern: '\b(perfume|eau de (parfum|toilette)|edp\b|edt\b|attar|cologne|fragrance mist)\b'
+    verdict: REVIEW
+    dimension: HAZMAT
+    reason: "Alcohol-based fragrance is a limited-quantity dangerous good. Shippable only in small volumes with DG paperwork and a carrier that accepts LQ."
+    authority: "IATA DGR UN1266 (perfumery products), Limited Quantity provisions"
+
+  - id: KW-PESTICIDE-053
+    priority: 99
+    pattern: '\b(mosquito (coil|repellent|liquid|refill|mat)|insecticide|pesticide|cockroach killer|rat kill|hit spray|all out|good knight|mortein|baygon|naphthalene|moth ball)\b'
+    verdict: BLOCKED
+    dimension: US_IMPORT
+    reason: "Pesticides must be EPA-registered (FIFRA) and filed on EPA Notice of Arrival before import. Unregistered foreign pesticides are refused entry."
+    authority: "FIFRA 7 U.S.C. 136a; 40 CFR 152 (registration); EPA Form 3540-1"
+
+  - id: KW-CORROSIVE-054
+    priority: 99
+    pattern: '\b(bleach|harpic|drain ?(ex|cleaner)|toilet cleaner acid|hydrochloric|caustic|lye|battery acid|ammonia solution)\b'
+    verdict: BLOCKED
+    dimension: HAZMAT
+    reason: "Corrosive household chemicals (UN1760/UN1789 class) are dangerous goods refused on consumer air parcels."
+    authority: "IATA DGR Class 8; 49 CFR 173.136"
+
+  - id: KW-BATTERY-055
+    priority: 94
+    pattern: '\b(power ?bank|lithium|li-?ion battery|battery pack|rechargeable battery|inverter battery|car battery)\b'
+    verdict: REVIEW
+    dimension: HAZMAT
+    reason: "Lithium cells are UN3480/UN3481 dangerous goods with state-of-charge, watt-hour and packaging rules. Shippable only when installed in equipment and within Wh limits."
+    authority: "IATA DGR Packing Instruction 965-970; 49 CFR 173.185"
+
+  - id: KW-MAGNET-056
+    priority: 90
+    pattern: '\b(neodymium|strong magnet|magnetic toy ball)\b'
+    verdict: REVIEW
+    dimension: HAZMAT
+    reason: "Strong magnets are a restricted air cargo article (magnetized material) and loose high-powered magnet sets face CPSC rules."
+    authority: "IATA DGR UN2807; 16 CFR 1262 (magnet sets)"
+
+  # --- Temperature and shelf life ------------------------------------------
+  - id: KW-ICECREAM-060
+    priority: 97
+    pattern: '\b(ice ?cream|kulfi|frozen dessert|gelato|popsicle|choco bar|ice candy|frozen yog(h)?urt)\b'
+    verdict: BLOCKED
+    dimension: TEMPERATURE
+    reason: "Requires continuous sub-zero cold chain. Cannot arrive intact via air parcel at any price point we can charge."
+    authority: "Physical constraint; FDA 21 CFR 1.908 (FSMA sanitary transport)"
+
+  - id: KW-FROZEN-061
+    priority: 97
+    pattern: '\b(frozen|chilled|refrigerated|keep refrigerated)\b'
+    # "Disney Frozen" is a film. Non-food aisles cannot hold a cold chain item.
+    scope_not_super: ["Household Essentials", "Beauty & Personal Care"]
+    except_pattern: '\b(disney frozen|frozen (umbrella|watch|bottle|doll|toy|print|theme|bag|lunch))\b'
+    verdict: BLOCKED
+    dimension: TEMPERATURE
+    reason: "Frozen and chilled goods need an unbroken cold chain that consumer air parcel service does not provide."
+    authority: "Physical constraint; FSMA Sanitary Transport Rule"
+
+  - id: KW-CHOCOLATE-062
+    priority: 70
+    pattern: '\b(chocolate|choco|truffle|ferrero|dairy milk|kitkat|snickers|bournville|toblerone)\b'
+    verdict: REVIEW
+    dimension: TEMPERATURE
+    reason: "Chocolate melts above ~30C. Listable with a seasonal hold (block May-September) and insulated packing, not year-round."
+    authority: "Operational constraint; commodity melting point"
+    handling: [SEASONAL_HOLD, INSULATED_PACK]
+
+  - id: KW-TOYINFOOD-063
+    priority: 99
+    pattern: '\b(kinder joy|kinder surprise|toy inside|surprise egg)\b'
+    verdict: BLOCKED
+    dimension: US_IMPORT
+    reason: "Confectionery with a non-nutritive object embedded in it is adulterated per se under US law and is seized on sight."
+    authority: "21 U.S.C. 342(d)(1); FDA Import Alert 34-02"
+
+  - id: KW-FRESHSWEET-064
+    priority: 85
+    pattern: '\b(rasgulla|rasmalai|gulab jamun|barfi|burfi|peda|kalakand|sandesh|mysore pak|motichoor|laddu|ladoo|halwa|milk cake|soan papdi)\b'
+    verdict: REVIEW
+    dimension: PERISHABLE
+    reason: "Indian sweets are usually milk-based with a 3-7 day shelf life. Only retort-packed or wholly non-dairy variants with 90+ day shelf life are listable."
+    authority: "Operational constraint; APHIS dairy restrictions where milk-based"
+    handling: [SHELF_LIFE_CHECK]
+
+  # --- FDA-regulated non-food ---------------------------------------------
+  - id: KW-SUNSCREEN-070
+    priority: 91
+    pattern: '\b(sunscreen|sun ?block|spf\s*\d+)\b'
+    verdict: REVIEW
+    dimension: US_IMPORT
+    reason: "Sunscreen is an OTC drug in the US. Indian formulations frequently use filters not permitted under the US monograph and labelling will not comply."
+    authority: "21 CFR 352 (Sunscreen Monograph); FD&C Act OTC drug requirements"
+
+  - id: KW-OTCDRUG-071
+    priority: 89
+    pattern: '\b(toothpaste|mouthwash|anti.?dandruff|antiperspirant|acne (cream|gel)|fairness cream|antifungal|pain balm|zandu balm|iodex|moov|volini|vicks|amrutanjan)\b'
+    verdict: REVIEW
+    dimension: US_IMPORT
+    reason: "These are OTC drugs in the US (fluoride, antiperspirant actives, antifungals, topical analgesics), requiring monograph compliance and a Drug Facts panel."
+    authority: "21 CFR 355/350/333 (OTC monographs); 21 CFR 201.66 (Drug Facts)"
+
+  - id: KW-COSMETIC-072
+    priority: 75
+    scope_super: ["Beauty & Personal Care"]
+    pattern: '\b(lipstick|kajal|eyeliner|mascara|foundation|compact|blush|nail|shampoo|conditioner|face wash|serum|moisturis|moisturiz|cream|lotion|soap|hair oil|hair colour|hair color|henna|mehendi|talc)\b'
+    verdict: REVIEW
+    dimension: US_IMPORT
+    reason: "Cosmetics require MoCRA facility registration and product listing; kajal/surma carry a lead import alert and hair colour carries PPD restrictions."
+    authority: "MoCRA 2022 (21 U.S.C. 364); FDA Import Alert 53-19 (kohl/kajal lead)"
+
+  - id: KW-KAJAL-073
+    priority: 93
+    pattern: '\b(kajal|kohl|surma|sindoor|kumkum)\b'
+    verdict: BLOCKED
+    dimension: US_IMPORT
+    reason: "Kohl/kajal/surma and traditional sindoor are subject to an FDA lead import alert and have been the subject of repeated US lead-poisoning recalls."
+    authority: "FDA Import Alert 53-19; 21 CFR 700.13; CPSC lead advisories on sindoor"
+
+  - id: KW-DEVICE-074
+    priority: 88
+    pattern: '\b(condom|lubricant gel|pregnancy test|ovulation test|contact lens|syringe|bandage|first aid|glucometer|bp monitor|nebulizer|mask n95|surgical)\b'
+    verdict: REVIEW
+    dimension: US_IMPORT
+    reason: "These are FDA-regulated medical devices requiring establishment registration, device listing and often 510(k) clearance."
+    authority: "21 CFR 807 (Establishment Registration); 21 CFR 884.5300 (condoms)"
+
+  # --- Consumer product safety --------------------------------------------
+  - id: KW-TOY-080
+    priority: 72
+    pattern: '\b(toy|doll|puzzle|board game|rattle|teether|building block|action figure|soft toy|teddy)\b'
+    verdict: REVIEW
+    dimension: US_IMPORT
+    reason: "Children's products need CPSIA third-party testing, a Children's Product Certificate and tracking labels; lead and phthalate limits apply."
+    authority: "CPSIA 15 U.S.C. 2063; 16 CFR 1303 (lead paint); ASTM F963"
+
+  - id: KW-JEWELLERY-081
+    priority: 74
+    pattern: '\b(jewel|necklace|earring|bangle|bracelet|anklet|pendant|ring set|mangalsutra|nose pin|payal|chain)\b'
+    verdict: REVIEW
+    dimension: US_IMPORT
+    reason: "Imitation jewellery faces CPSC lead and cadmium limits, and precious-metal items attract higher duty plus FTC marking rules."
+    authority: "16 CFR 1500.91 (lead in children's jewelry); FTC Jewelry Guides 16 CFR 23"
+
+  - id: KW-VOLTAGE-082
+    priority: 86
+    pattern: '\b(mixer grinder|juicer|induction cook|electric kettle|steam iron|dry iron|room heater|water heater|geyser|toaster|microwave|electric blender|hair dryer|hair straightener|electric trimmer|vacuum cleaner|water purifier|air cooler|electric fan|emergency light|sewing machine|immersion rod)\b'
+    verdict: REVIEW
+    dimension: FUNCTIONAL
+    reason: "Indian mains appliances are 220-240V/50Hz. US mains is 120V/60Hz, so these do not work without a transformer and are a refund/complaint magnet even though they are legal to import."
+    authority: "Operational constraint; FCC Part 15 also applies to electronics"
+    handling: [VOLTAGE_MISMATCH]
+
+  - id: KW-FCC-083
+    priority: 78
+    pattern: '\b(earphone|headphone|bluetooth|speaker|smart ?watch|router|charger|power adapter|usb|mobile|laptop|tablet\b|keyboard|mouse\b|webcam|camera)\b'
+    verdict: REVIEW
+    dimension: US_IMPORT
+    reason: "Radio-frequency devices require an FCC equipment authorization and Form 740 declaration at entry."
+    authority: "47 CFR Part 15/2.1033; FCC Form 740"
+
+  - id: KW-FRAGILE-084
+    priority: 60
+    pattern: '\b(glass|ceramic|porcelain|crockery|mirror|bulb|tube ?light|earthen|terracotta|clay pot|diya|matka)\b'
+    verdict: REVIEW
+    dimension: FRAGILITY
+    reason: "High breakage rate in international parcel handling. Listable only with reinforced packing and a higher damage allowance in unit economics."
+    authority: "Operational constraint"
+    handling: [FRAGILE_PACK]
+
+  # --- Duty / trade remedy exposure ---------------------------------------
+  - id: KW-HONEY-090
+    priority: 87
+    pattern: '\b(honey|shahad)\b'
+    verdict: REVIEW
+    dimension: DUTY
+    reason: "Raw honey from India is covered by a US antidumping duty order with punitive per-exporter rates. Landed cost can exceed the retail price."
+    authority: "US DOC Antidumping Order A-533-903 (Raw Honey from India)"
+
+  - id: KW-IPRISK-091
+    priority: 65
+    pattern: '\b(replica|first copy|inspired by|refurbished|unbranded premium)\b'
+    verdict: BLOCKED
+    dimension: IP_RISK
+    reason: "Counterfeit or trademark-infringing goods are seized and expose the importer to civil penalties."
+    authority: "19 U.S.C. 1526; 15 U.S.C. 1124 (Lanham Act)"
+
+# -----------------------------------------------------------------------------
+# GROUP RULES - matched against Blinkit's `group_name` (the 261-shelf level).
+# This is the highest-leverage layer: one rule covers hundreds of SKUs.
+# Priority sits below keyword rules so a specific product name can override.
+# -----------------------------------------------------------------------------
+group_rules:
+  # Blocked outright
+  Ice Creams & More:      {verdict: BLOCKED, dimension: TEMPERATURE, reason: "Frozen dessert shelf; requires sub-zero cold chain.", authority: "Physical constraint"}
+  Ice Cream Cones:        {verdict: BLOCKED, dimension: TEMPERATURE, reason: "Frozen dessert shelf.", authority: "Physical constraint"}
+  Ice Cream Tubs:         {verdict: BLOCKED, dimension: TEMPERATURE, reason: "Frozen dessert shelf.", authority: "Physical constraint"}
+  Ice Cream Sticks:       {verdict: BLOCKED, dimension: TEMPERATURE, reason: "Frozen dessert shelf.", authority: "Physical constraint"}
+  Frozen Veg Snacks:      {verdict: BLOCKED, dimension: TEMPERATURE, reason: "Frozen shelf; cold chain required.", authority: "Physical constraint"}
+  Frozen Non-Veg Snacks:  {verdict: BLOCKED, dimension: US_IMPORT, reason: "Frozen meat/seafood; prohibited from India and cold-chain dependent.", authority: "9 CFR 94; APHIS"}
+  Chicken, Meat & Fish:   {verdict: BLOCKED, dimension: US_IMPORT, reason: "Meat/poultry/seafood from India prohibited.", authority: "9 CFR 94; APHIS Animal Product Manual"}
+  Eggs:                   {verdict: BLOCKED, dimension: US_IMPORT, reason: "Shell eggs prohibited (HPAI controls).", authority: "9 CFR 94.6"}
+  Paan Corner:            {verdict: BLOCKED, dimension: US_IMPORT, reason: "Betel/areca/tobacco shelf.", authority: "FDA Import Alert 21-19; PACT Act"}
+  Repellents & Disinfectants: {verdict: BLOCKED, dimension: US_IMPORT, reason: "Pesticides require EPA FIFRA registration.", authority: "FIFRA 7 U.S.C. 136a"}
+  Fresh Vegetables:       {verdict: BLOCKED, dimension: US_IMPORT, reason: "Fresh produce prohibited/permit-only.", authority: "7 CFR 319.56"}
+  Fresh Fruits:           {verdict: BLOCKED, dimension: US_IMPORT, reason: "Fresh produce prohibited/permit-only.", authority: "7 CFR 319.56"}
+  Exotic Fruits & Vegetables: {verdict: BLOCKED, dimension: US_IMPORT, reason: "Fresh produce prohibited/permit-only.", authority: "7 CFR 319.56"}
+  Cuts & Sprouts:         {verdict: BLOCKED, dimension: PERISHABLE, reason: "Cut fresh produce; hours of shelf life.", authority: "7 CFR 319.56"}
+  Flowers & Leaves:       {verdict: BLOCKED, dimension: US_IMPORT, reason: "Cut flowers and plant material need phytosanitary clearance.", authority: "7 CFR 319.74"}
+  Dairy:                  {verdict: BLOCKED, dimension: TEMPERATURE, reason: "Chilled dairy shelf.", authority: "9 CFR 94.16"}
+  Curd & Yogurt:          {verdict: BLOCKED, dimension: TEMPERATURE, reason: "Chilled dairy shelf.", authority: "9 CFR 94.16"}
+  Paneer & Tofu:          {verdict: BLOCKED, dimension: TEMPERATURE, reason: "Chilled protein shelf.", authority: "9 CFR 94.16"}
+  Butter & More:          {verdict: BLOCKED, dimension: TEMPERATURE, reason: "Chilled dairy fat shelf.", authority: "9 CFR 94.16"}
+  Cheese:                 {verdict: BLOCKED, dimension: TEMPERATURE, reason: "Chilled dairy shelf.", authority: "9 CFR 94.16"}
+  Milk:                   {verdict: BLOCKED, dimension: TEMPERATURE, reason: "Liquid dairy shelf.", authority: "9 CFR 94.16"}
+  Bread & Pav:            {verdict: BLOCKED, dimension: PERISHABLE, reason: "2-4 day shelf life; arrives stale or mouldy.", authority: "Operational constraint"}
+  Batter & Chutney:       {verdict: BLOCKED, dimension: PERISHABLE, reason: "Fresh chilled batter; days of shelf life.", authority: "Operational constraint"}
+
+  # Review shelves
+  Health & Pharma:        {verdict: REVIEW, dimension: US_IMPORT, reason: "Pharma/OTC shelf; per-SKU FDA assessment required.", authority: "21 U.S.C. 355; FDA Import Alert 66-41"}
+  Vitamins & Supplements: {verdict: REVIEW, dimension: US_IMPORT, reason: "DSHEA labelling and facility registration required.", authority: "21 U.S.C. 350b"}
+  Protein Supplements:    {verdict: REVIEW, dimension: US_IMPORT, reason: "DSHEA labelling and facility registration required.", authority: "21 U.S.C. 350b"}
+  Sexual Wellness:        {verdict: REVIEW, dimension: US_IMPORT, reason: "Condoms/lubricants are FDA devices; adult items have carrier restrictions.", authority: "21 CFR 884.5300"}
+  Baby Food:              {verdict: REVIEW, dimension: US_IMPORT, reason: "Infant nutrition is tightly regulated; formula is effectively barred.", authority: "21 U.S.C. 350a"}
+  Home Appliances:        {verdict: REVIEW, dimension: FUNCTIONAL, reason: "220-240V Indian mains will not run on US 120V supply.", authority: "Operational constraint", handling: [VOLTAGE_MISMATCH]}
+  Kitchen Appliances:     {verdict: REVIEW, dimension: FUNCTIONAL, reason: "220-240V Indian mains will not run on US 120V supply.", authority: "Operational constraint", handling: [VOLTAGE_MISMATCH]}
+  Mobile & Computer:      {verdict: REVIEW, dimension: US_IMPORT, reason: "RF devices need FCC authorization and Form 740.", authority: "47 CFR Part 15"}
+  Chargers & Cables:      {verdict: REVIEW, dimension: US_IMPORT, reason: "Indian plug type and FCC authorization.", authority: "47 CFR Part 15", handling: [VOLTAGE_MISMATCH]}
+  Earphones & Headsets:   {verdict: REVIEW, dimension: HAZMAT, reason: "Contains lithium cells; FCC authorization also applies.", authority: "IATA PI 970; 47 CFR Part 15"}
+  Jewellery:              {verdict: REVIEW, dimension: US_IMPORT, reason: "CPSC lead/cadmium limits and FTC marking rules.", authority: "16 CFR 1500.91; 16 CFR 23"}
+  Toys & Games:           {verdict: REVIEW, dimension: US_IMPORT, reason: "CPSIA testing and certification for children's products.", authority: "CPSIA 15 U.S.C. 2063"}
+  Hair Colour:            {verdict: REVIEW, dimension: US_IMPORT, reason: "PPD and coal-tar dye labelling requirements.", authority: "21 CFR 70.3(u); FD&C Act 601(a)"}
+  Nail Paints & Accessories: {verdict: BLOCKED, dimension: HAZMAT, reason: "Nail lacquer and remover are flammable liquids.", authority: "IATA DGR Class 3 UN1263"}
+  Fragrance & Talc:       {verdict: REVIEW, dimension: HAZMAT, reason: "Alcohol-based fragrance is a limited-quantity DG; talc carries an asbestos testing expectation.", authority: "IATA UN1266; FDA talc guidance"}
+  Decorative Lights:      {verdict: REVIEW, dimension: FUNCTIONAL, reason: "220V mains lighting; UL/ETL listing expected by US retail.", authority: "Operational constraint", handling: [VOLTAGE_MISMATCH]}
+  Pooja Needs:            {verdict: REVIEW, dimension: HAZMAT, reason: "Shelf mixes inert items with camphor, incense and oil lamps that are flammable solids.", authority: "IATA DGR Class 4.1"}
+  Dry Fruits:             {verdict: REVIEW, dimension: US_IMPORT, reason: "Tree nuts and dried fruit need FDA prior notice and face aflatoxin sampling.", authority: "21 CFR 1.280; FDA Import Alert 21-01"}
+
+  # Explicitly cleared shelves - shelf-stable, non-regulated, robust in transit
+  Chips & Wafers:         {verdict: ALLOWED, dimension: null, reason: "Shelf-stable packaged snack.", authority: "FDA prior notice only"}
+  Namkeen Snacks:         {verdict: ALLOWED, dimension: null, reason: "Shelf-stable packaged snack.", authority: "FDA prior notice only"}
+  Bhujia & Mixtures:      {verdict: ALLOWED, dimension: null, reason: "Shelf-stable packaged snack.", authority: "FDA prior notice only"}
+  Cookies:                {verdict: ALLOWED, dimension: null, reason: "Shelf-stable packaged bakery.", authority: "FDA prior notice only"}
+  Powdered Spices:        {verdict: ALLOWED, dimension: null, reason: "Shelf-stable dry spice.", authority: "FDA prior notice only"}
+  Whole Spices:           {verdict: ALLOWED, dimension: null, reason: "Shelf-stable dry spice.", authority: "FDA prior notice only"}
+  Dal:                    {verdict: ALLOWED, dimension: null, reason: "Dry pulses, commercially packaged.", authority: "FDA prior notice only"}
+  Noodles:                {verdict: ALLOWED, dimension: null, reason: "Shelf-stable dry noodle.", authority: "FDA prior notice only"}
+  Books & Magazines:      {verdict: ALLOWED, dimension: null, reason: "Printed matter; duty free.", authority: "HTSUS 4901 (duty free)"}
+  Pens & Pencils:         {verdict: ALLOWED, dimension: null, reason: "Stationery.", authority: "-"}
+  Arts & Crafts:          {verdict: ALLOWED, dimension: null, reason: "Stationery and craft supplies.", authority: "-"}
+  Socks & Handkerchiefs:  {verdict: ALLOWED, dimension: null, reason: "Textiles; standard duty.", authority: "HTSUS Ch. 61/62"}
+  Bedsheets & Towels:     {verdict: ALLOWED, dimension: null, reason: "Textiles; standard duty.", authority: "HTSUS Ch. 63"}
+  Bags & School Needs:    {verdict: ALLOWED, dimension: null, reason: "Standard consumer goods.", authority: "-"}
+  Tissues & Disposables:  {verdict: ALLOWED, dimension: null, reason: "Paper goods.", authority: "-"}
+  Spreads:                {verdict: ALLOWED, dimension: null, reason: "Shelf-stable spread (nut butter, jam).", authority: "FDA prior notice only"}
+  Ketchup & Sauces:       {verdict: ALLOWED, dimension: null, reason: "Shelf-stable condiment.", authority: "FDA prior notice only"}
+  Jam & Honey:            {verdict: REVIEW, dimension: DUTY, reason: "Jam is clear; honey on the same shelf carries an antidumping order.", authority: "A-533-903 (Raw Honey from India)"}
+  Pickles & Chutney:      {verdict: ALLOWED, dimension: null, reason: "Shelf-stable acidified preserve.", authority: "21 CFR 114 (acidified foods)"}
+  Atta & Flours:          {verdict: ALLOWED, dimension: null, reason: "Dry milled cereal.", authority: "FDA prior notice only"}
+  Rice:                   {verdict: ALLOWED, dimension: null, reason: "Dry milled cereal.", authority: "FDA prior notice only"}
+  Tea:                    {verdict: ALLOWED, dimension: null, reason: "Dry shelf-stable beverage.", authority: "Federal Tea Importation Act repealed 1996"}
+  Coffee:                 {verdict: ALLOWED, dimension: null, reason: "Dry shelf-stable beverage.", authority: "FDA prior notice only"}
+  Biscuits:               {verdict: ALLOWED, dimension: null, reason: "Shelf-stable packaged bakery.", authority: "FDA prior notice only"}
+  Rusk & Khari:           {verdict: ALLOWED, dimension: null, reason: "Shelf-stable packaged bakery.", authority: "FDA prior notice only"}
+  Breakfast Cereal:       {verdict: ALLOWED, dimension: null, reason: "Shelf-stable dry cereal.", authority: "FDA prior notice only"}
+  Home Decor:             {verdict: ALLOWED, dimension: null, reason: "Non-electrical decorative goods.", authority: "-"}
+  Lifestyle Accessories:  {verdict: ALLOWED, dimension: null, reason: "Standard consumer goods.", authority: "-"}
+  Innerwear:              {verdict: ALLOWED, dimension: null, reason: "Textiles; standard duty.", authority: "HTSUS Ch. 61"}
+  Gift Wraps & Bags:      {verdict: ALLOWED, dimension: null, reason: "Paper goods.", authority: "-"}
+
+# -----------------------------------------------------------------------------
+# CATEGORY RULES - the coarsest layer (28 categories). Only used when no
+# keyword and no group rule fires, so it functions as the safety net.
+# -----------------------------------------------------------------------------
+category_rules:
+  Ice Creams & More:      {verdict: BLOCKED, dimension: TEMPERATURE, reason: "Frozen category.", authority: "Physical constraint"}
+  Chicken, Meat & Fish:   {verdict: BLOCKED, dimension: US_IMPORT, reason: "Animal protein from India prohibited.", authority: "9 CFR 94"}
+  Health & Pharma:        {verdict: REVIEW, dimension: US_IMPORT, reason: "Pharma category requires per-SKU FDA assessment.", authority: "21 U.S.C. 355"}
+  Feminine Hygiene:       {verdict: ALLOWED, dimension: null, reason: "Shelf-stable personal care; FDA device class I exempt.", authority: "21 CFR 884.5400"}
+  Stationery & Games:     {verdict: REVIEW, dimension: US_IMPORT, reason: "Mixed shelf; games/toys hit CPSIA while pure stationery is clear.", authority: "CPSIA 15 U.S.C. 2063"}
+  Electronics:            {verdict: REVIEW, dimension: US_IMPORT, reason: "FCC authorization and lithium-cell rules apply.", authority: "47 CFR Part 15"}
+  Vegetables & Fruits:    {verdict: BLOCKED, dimension: US_IMPORT, reason: "Fresh produce prohibited.", authority: "7 CFR 319.56"}
+  Dairy, Bread & Eggs:    {verdict: BLOCKED, dimension: TEMPERATURE, reason: "Chilled/perishable category.", authority: "9 CFR 94.16"}
+  Cleaners & Repellents:  {verdict: REVIEW, dimension: HAZMAT, reason: "Mixed shelf of inert cleaners and EPA-regulated pesticides.", authority: "FIFRA; IATA DGR"}
+
+# -----------------------------------------------------------------------------
+# PACK RULES - physical thresholds applied after the pack parser runs.
+# -----------------------------------------------------------------------------
+pack_rules:
+  - id: PK-HEAVY-001
+    max_billable_g: 20000
+    verdict: REVIEW
+    dimension: DUTY
+    reason: "Over 20 kg net: freight exceeds typical goods value, and the parcel may need formal customs entry rather than an informal clearance."
+    authority: "19 CFR 143.21 (informal entry limit USD 2500)"
+
+  - id: PK-UNKNOWN-002
+    on_unparseable_pack: true
+    verdict: REVIEW
+    dimension: DUTY
+    reason: "Pack size could not be parsed, so shipping weight cannot be computed. Quoting this SKU risks under-charging freight."
+    authority: "Operational constraint"

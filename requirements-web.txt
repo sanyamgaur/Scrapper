@@ -1,0 +1,13 @@
+# Everything the cross-border storefront + engines need to run.
+# Deliberately does NOT include httpx/playwright: those are only used by the
+# original scraper (crawl.py, discover.py) and pull in greenlet, which needs a
+# C++ build toolchain to compile on Windows if no prebuilt wheel matches your
+# Python version. Running the website never needs a browser or an HTTP client
+# with HTTP/2 support, so it never needs that toolchain either.
+pyyaml
+fastapi
+uvicorn[standard]
+pydantic
+
+# optional: LLM tail classifier (crossborder/llm.py)
+# anthropic

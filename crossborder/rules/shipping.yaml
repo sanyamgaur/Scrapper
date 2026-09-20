@@ -1,0 +1,273 @@
+# =============================================================================
+# India -> US outbound parcel rate card
+# =============================================================================
+# These are indicative published retail rates for the Delhi (DEL) -> US lane,
+# expressed the way carriers actually bill: a chargeable weight derived from
+# max(actual, volumetric), then a slab rate, then percentage surcharges.
+#
+# THESE NUMBERS ARE ESTIMATES AND MUST BE REPLACED WITH YOUR NEGOTIATED RATES.
+# Contract rates for a shipper doing real volume typically land 40-60% below
+# published retail. The engine is built so that swapping this file is the only
+# change needed -- no code edits. When you sign a carrier API, the same
+# interface accepts live quotes and this file becomes the fallback.
+#
+# Currency: INR throughout. FX to USD happens in pricing.py, once, so there is
+# exactly one place where the exchange rate lives.
+# =============================================================================
+
+meta:
+  version: "2026.09.1"
+  lane: "DEL -> US (all zones)"
+  currency: "INR"
+  rates_are: "indicative published retail; replace with contracted rates"
+  volumetric_divisor: 5000   # cm^3 per kg, the IATA standard for air express
+
+# Packaging overhead applied to the sum of item net weights, because a parcel
+# weighs more than the goods inside it. Tare is the box; factor covers filler,
+# tape and the fact that net weight excludes primary packaging.
+packaging:
+  weight_factor: 1.18      # +18% for primary packaging not counted in net weight
+  box_tare_g: 260          # corrugated box + void fill for a typical order
+  fragile_extra_g: 180     # reinforced packing when FRAGILE_PACK is flagged
+  insulated_extra_g: 420   # foil liner + gel pack when INSULATED_PACK is flagged
+  min_billable_g: 500      # carriers round tiny parcels up to a floor
+  # No physical retail item weighs nothing. A 1 g sachet of saffron still
+  # ships as a box. Without this floor, value-per-gram goes to infinity and
+  # the basket builder ranks packaging as the ideal product.
+  min_item_g: 18
+
+# Fallback weights for SKUs sold by count, where the pack string gives a piece
+# count but no mass. Keyed by Blinkit group, then category, then a global
+# default. Deliberately generous: under-estimating weight means under-charging
+# freight, which comes straight out of margin on every single order.
+piece_weights_g:
+  # Weight of ONE of the named consumable. These are checked before the
+  # per-shelf defaults below, because a shelf default is the weight of a retail
+  # PACK, and applying it per piece is catastrophic: "100 pulls" of tissue
+  # became 25 kg before this table existed.
+  by_piece_word:
+    pull: 2.2        # one tissue pull
+    pulls: 2.2
+    wipe: 3.5
+    wipes: 3.5
+    sheet: 4.0
+    sheets: 4.0
+    napkin: 3.0
+    napkins: 3.0
+    tab: 1.2         # one dishwash/effervescent tablet
+    tabs: 1.2
+    tablet: 1.2
+    tablets: 1.2
+    capsule: 0.8
+    capsules: 0.8
+    cap: 0.8
+    caps: 0.8
+    pad: 8.0
+    pads: 8.0
+    diaper: 38.0
+    diapers: 38.0
+    ply: 2.0
+    page: 4.5
+    pages: 4.5
+    leaf: 2.0
+    leaves: 2.0
+    wick: 1.5
+    wicks: 1.5
+    stick: 6.0
+    sticks: 6.0
+    cone: 8.0
+    cones: 8.0
+    candle: 25.0
+    candles: 25.0
+    bag: 14.0        # one garbage/carry bag
+    bags: 14.0
+    sachet: 9.0
+    sachets: 9.0
+    strip: 12.0
+    strips: 12.0
+    roll: 90.0
+    rolls: 90.0
+
+  # Above this piece count, a per-shelf default is treated as the weight of the
+  # whole pack rather than of each piece. A 45-piece pack of party plates is not
+  # 45 separate retail units.
+  max_piece_multiplier: 12
+  # Nothing in this catalogue legitimately weighs more than this per line unit.
+  # Hitting it means the estimate is wrong, so clamp and flag rather than
+  # quoting a parcel no carrier will take.
+  sanity_ceiling_g: 25000
+
+  by_group:
+    Jewellery: 40
+    Lifestyle Accessories: 120
+    Hair Accessories: 25
+    Beauty Accessories: 60
+    Books & Magazines: 320
+    Toys & Games: 350
+    Stationery: 90
+    Pens & Pencils: 15
+    Arts & Crafts: 150
+    Home Decor: 450
+    Home Needs: 400
+    Kitchen Accessories: 300
+    Bottles & Flasks: 400
+    Home Appliances: 2500
+    Kitchen Appliances: 2200
+    Mobile & Computer: 300
+    Earphones & Headsets: 180
+    Chargers & Cables: 120
+    Decorative Lights: 250
+    Party & Festive Needs: 180
+    Pooja Needs: 200
+    Bedsheets & Towels: 700
+    Innerwear: 120
+    Socks & Handkerchiefs: 60
+    Bags & School Needs: 600
+    Tissues & Disposables: 300
+    Sports & Gym: 800
+    Bathroom Essentials: 350
+  by_category:
+    Electronics: 400
+    Home & Lifestyle: 350
+    Stationery & Games: 200
+    Kitchenware & Appliances: 600
+    Beauty & Cosmetics: 80
+  default: 250
+
+# -----------------------------------------------------------------------------
+# CARRIERS
+# -----------------------------------------------------------------------------
+# `slabs` are cumulative breakpoints: find the first slab whose up_to_kg is >=
+# the chargeable weight, then cost = base_inr + per_kg_inr * chargeable_kg.
+# `accepts` lists handling flags the carrier will take; a parcel carrying a
+# flag not in this list is filtered out of the comparison entirely.
+# -----------------------------------------------------------------------------
+carriers:
+
+  - code: DHL_EXPRESS
+    name: "DHL Express Worldwide"
+    service: express
+    transit_days: [3, 6]
+    tracking: full
+    max_kg: 30.0
+    slabs:
+      - {up_to_kg: 0.5,  base_inr: 2650, per_kg_inr: 0}
+      - {up_to_kg: 1.0,  base_inr: 3400, per_kg_inr: 0}
+      - {up_to_kg: 2.0,  base_inr: 0,    per_kg_inr: 1850}
+      - {up_to_kg: 5.0,  base_inr: 0,    per_kg_inr: 1420}
+      - {up_to_kg: 10.0, base_inr: 0,    per_kg_inr: 1180}
+      - {up_to_kg: 30.0, base_inr: 0,    per_kg_inr: 1020}
+    fuel_surcharge_pct: 28.5
+    remote_area_inr: 1100
+    accepts: [FRAGILE_PACK, INSULATED_PACK, VOLTAGE_MISMATCH, SHELF_LIFE_CHECK]
+    notes: "Fastest and most reliable. Best for high-value or time-sensitive orders."
+
+  - code: FEDEX_IP
+    name: "FedEx International Priority"
+    service: express
+    transit_days: [4, 7]
+    tracking: full
+    max_kg: 30.0
+    slabs:
+      - {up_to_kg: 0.5,  base_inr: 2780, per_kg_inr: 0}
+      - {up_to_kg: 1.0,  base_inr: 3520, per_kg_inr: 0}
+      - {up_to_kg: 2.0,  base_inr: 0,    per_kg_inr: 1920}
+      - {up_to_kg: 5.0,  base_inr: 0,    per_kg_inr: 1480}
+      - {up_to_kg: 10.0, base_inr: 0,    per_kg_inr: 1215}
+      - {up_to_kg: 30.0, base_inr: 0,    per_kg_inr: 1060}
+    fuel_surcharge_pct: 27.0
+    remote_area_inr: 1050
+    accepts: [FRAGILE_PACK, INSULATED_PACK, VOLTAGE_MISMATCH, SHELF_LIFE_CHECK]
+    notes: "Comparable to DHL. Useful as a second quote to keep rates honest."
+
+  - code: ARAMEX
+    name: "Aramex Priority Parcel"
+    service: express
+    transit_days: [5, 9]
+    tracking: full
+    max_kg: 30.0
+    slabs:
+      - {up_to_kg: 0.5,  base_inr: 2150, per_kg_inr: 0}
+      - {up_to_kg: 1.0,  base_inr: 2780, per_kg_inr: 0}
+      - {up_to_kg: 2.0,  base_inr: 0,    per_kg_inr: 1520}
+      - {up_to_kg: 5.0,  base_inr: 0,    per_kg_inr: 1180}
+      - {up_to_kg: 10.0, base_inr: 0,    per_kg_inr: 980}
+      - {up_to_kg: 30.0, base_inr: 0,    per_kg_inr: 870}
+    fuel_surcharge_pct: 24.0
+    remote_area_inr: 900
+    accepts: [FRAGILE_PACK, VOLTAGE_MISMATCH, SHELF_LIFE_CHECK]
+    notes: "Cheaper than DHL/FedEx, slower. No insulated/temperature handling."
+
+  - code: INDIA_POST_EMS
+    name: "India Post International EMS"
+    service: economy
+    transit_days: [10, 21]
+    tracking: limited
+    max_kg: 20.0
+    slabs:
+      - {up_to_kg: 0.5,  base_inr: 1350, per_kg_inr: 0}
+      - {up_to_kg: 2.0,  base_inr: 0,    per_kg_inr: 920}
+      - {up_to_kg: 5.0,  base_inr: 0,    per_kg_inr: 760}
+      - {up_to_kg: 10.0, base_inr: 0,    per_kg_inr: 640}
+      - {up_to_kg: 20.0, base_inr: 0,    per_kg_inr: 580}
+    fuel_surcharge_pct: 0.0
+    remote_area_inr: 0
+    accepts: [VOLTAGE_MISMATCH]
+    notes: "Cheapest per kg. Slow, weak tracking, higher loss rate. Not for food with short shelf life or anything fragile."
+
+  - code: CONSOLIDATOR
+    name: "Consolidated Air Freight (3PL to US hub + domestic last mile)"
+    service: consolidated
+    transit_days: [8, 15]
+    tracking: full
+    max_kg: 50.0
+    slabs:
+      - {up_to_kg: 1.0,  base_inr: 1180, per_kg_inr: 0}
+      - {up_to_kg: 5.0,  base_inr: 0,    per_kg_inr: 720}
+      - {up_to_kg: 10.0, base_inr: 0,    per_kg_inr: 610}
+      - {up_to_kg: 50.0, base_inr: 0,    per_kg_inr: 520}
+    fuel_surcharge_pct: 12.0
+    remote_area_inr: 0
+    last_mile_usd: 6.80        # USPS/UPS Ground from the US hub to the doorstep
+    accepts: [FRAGILE_PACK, INSULATED_PACK, VOLTAGE_MISMATCH, SHELF_LIFE_CHECK]
+    notes: "Best unit economics at volume; requires you to batch orders. This is the lane your margin story eventually depends on."
+
+# -----------------------------------------------------------------------------
+# US LANDED-COST INPUTS
+# -----------------------------------------------------------------------------
+customs:
+  # NOTE: the USD 800 Section 321 de minimis exemption was suspended for all
+  # countries by executive order in 2025. Set `de_minimis_usd` to 0 while that
+  # holds, and re-verify before each pricing refresh -- this single number moves
+  # landed cost by more than any carrier negotiation you will ever do.
+  de_minimis_usd: 0.0
+  de_minimis_note: "Section 321 suspended 2025; verify current CBP guidance before relying on any exemption."
+  merchandise_processing_fee_pct: 0.3464
+  mpf_min_usd: 2.62
+  mpf_max_usd: 634.62
+  # Indicative ad-valorem duty by Blinkit category, approximating the relevant
+  # HTSUS chapters. A licensed broker should replace these with real HTS codes
+  # per SKU; they are here so landed cost is never quoted as if duty were zero.
+  duty_pct_by_category:
+    "Chips & Namkeen": 6.4
+    "Sweets & Chocolates": 8.5
+    "Tea, Coffee & Milk Drinks": 3.2
+    "Oil, Ghee & Masala": 5.0
+    "Atta, Rice & Dal": 4.2
+    "Dry Fruits & Cereals": 7.0
+    "Bakery & Biscuits": 6.0
+    "Instant Food": 6.4
+    "Sauces & Spreads": 6.4
+    "Drinks & Juices": 4.5
+    "Beauty & Cosmetics": 3.5
+    "Skin & Face": 3.5
+    "Hair": 3.5
+    "Bath & Body": 4.0
+    "Baby Care": 4.0
+    "Feminine Hygiene": 4.5
+    "Home & Lifestyle": 6.5
+    "Kitchenware & Appliances": 7.5
+    "Electronics": 3.0
+    "Stationery & Games": 4.5
+    "Cleaners & Repellents": 5.0
+  duty_pct_default: 6.0
