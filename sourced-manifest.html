@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sourced Manifest</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#eef1f6;
+    --bg-raised:#ffffff;
+    --bg-sunken:#e4e9f1;
+    --ink:#111827;
+    --ink-soft:#48536a;
+    --ink-faint:#7c869c;
+    --rule:#d7dee8;
+    --rule-strong:#b6c1d2;
+    --accent:#1f5fa8;
+    --accent-2:#2f9bd6;
+    --accent-soft:#e3edf9;
+    --accent-ink:#164a86;
+    --amber:#b3730a;
+    --amber-soft:#faf0da;
+    --ok:#1f7a4d;
+    --ok-soft:#e2f1e8;
+    --warn:#b3730a;
+    --warn-soft:#faf0da;
+    --bad:#b3362b;
+    --bad-soft:#f8e6e2;
+    --shadow-sm: 0 1px 2px rgba(17,24,39,.07);
+    --shadow: 0 1px 2px rgba(17,24,39,.06), 0 10px 28px -14px rgba(17,24,39,.22);
+    --shadow-lg: 0 2px 4px rgba(17,24,39,.08), 0 24px 48px -20px rgba(17,24,39,.28);
+    --grid-line: rgba(31,95,168,.055);
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0a0e15; --bg-raised:#121924; --bg-sunken:#0d131c;
+      --ink:#e9edf5; --ink-soft:#a7b1c4; --ink-faint:#6b7690;
+      --rule:#222c3d; --rule-strong:#2e3a4e;
+      --accent:#5aa9e6; --accent-2:#7cc9f0; --accent-soft:#132436; --accent-ink:#8fc7f5;
+      --amber:#e0a83e; --amber-soft:#2c2313;
+      --ok:#4fd18a; --ok-soft:#122a1c;
+      --warn:#e0a83e; --warn-soft:#2c2313;
+      --bad:#ef8a76; --bad-soft:#2e1a17;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.35);
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.55);
+      --shadow-lg: 0 2px 4px rgba(0,0,0,.4), 0 24px 48px -20px rgba(0,0,0,.7);
+      --grid-line: rgba(90,169,230,.07);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0a0e15; --bg-raised:#121924; --bg-sunken:#0d131c;
+    --ink:#e9edf5; --ink-soft:#a7b1c4; --ink-faint:#6b7690;
+    --rule:#222c3d; --rule-strong:#2e3a4e;
+    --accent:#5aa9e6; --accent-2:#7cc9f0; --accent-soft:#132436; --accent-ink:#8fc7f5;
+    --amber:#e0a83e; --amber-soft:#2c2313;
+    --ok:#4fd18a; --ok-soft:#122a1c;
+    --warn:#e0a83e; --warn-soft:#2c2313;
+    --bad:#ef8a76; --bad-soft:#2e1a17;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.35);
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.55);
+    --shadow-lg: 0 2px 4px rgba(0,0,0,.4), 0 24px 48px -20px rgba(0,0,0,.7);
+    --grid-line: rgba(90,169,230,.07);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{ margin:0; padding:0; }
+  body{
+    background:
+      linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0/100% 34px,
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0/34px 100%,
+      var(--bg);
+    color:var(--ink);
+    font-family:'Source Serif 4', Georgia, 'Times New Roman', serif;
+    font-size:17px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  img{ max-width:100%; }
+  ::selection{ background:var(--accent-soft); color:var(--accent-ink); }
+  :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+  .progress{
+    position:fixed; top:0; left:0; height:3px; width:0%;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2)); z-index:50; transition:width .08s linear;
+  }
+
+  .wrap{ max-width:780px; margin:0 auto; padding: 0 20px 100px; }
+
+  /* ---------- header / manifest block ---------- */
+  header.manifest{
+    margin-top:44px;
+    border:1.5px solid var(--ink);
+    background:var(--bg-raised);
+    box-shadow:var(--shadow-lg);
+    position:relative;
+  }
+  header.manifest::before, header.manifest::after{
+    content:''; position:absolute; width:13px; height:13px; pointer-events:none;
+  }
+  header.manifest::before{ top:-7px; left:-7px; border-top:1.5px solid var(--ink-faint); border-left:1.5px solid var(--ink-faint); }
+  header.manifest::after{ bottom:-7px; right:-7px; border-bottom:1.5px solid var(--ink-faint); border-right:1.5px solid var(--ink-faint); }
+
+  .manifest-top{
+    display:flex; justify-content:space-between; align-items:flex-start;
+    gap:24px; padding:30px 30px 22px; border-bottom:1px solid var(--rule);
+    position:relative;
+  }
+  .manifest-eyebrow{
+    display:flex; align-items:center; gap:8px;
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--ink-faint); margin:0 0 12px;
+  }
+  .manifest-eyebrow .bar{ width:20px; height:2px; background:var(--accent); display:inline-block; }
+  h1.title{
+    font-family:'Archivo',sans-serif; font-weight:800; font-size:clamp(29px,5vw,40px);
+    line-height:1.05; letter-spacing:-0.015em; margin:0; text-wrap:balance;
+  }
+  h1.title em{ font-style:normal; color:var(--accent); position:relative; }
+
+  /* control-room status readout */
+  .readout{
+    flex:0 0 auto; border:1px solid var(--rule-strong); background:var(--bg-sunken);
+    border-radius:6px; padding:9px 14px; min-width:132px; margin-top:2px;
+  }
+  .readout-row{ display:flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace; }
+  .readout-led{ width:6px; height:6px; border-radius:50%; background:var(--ok); box-shadow:0 0 0 3px var(--ok-soft);
+                animation:blink 2.4s ease-in-out infinite; flex:0 0 auto; }
+  @keyframes blink{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
+  @media (prefers-reduced-motion: reduce){ .readout-led{ animation:none; } }
+  .readout-label{ font-size:9.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); }
+  .readout-value{ font-family:'IBM Plex Mono',monospace; font-size:14px; font-weight:600; color:var(--ink); margin-top:5px; font-variant-numeric:tabular-nums; }
+
+  .manifest-meta{
+    display:flex; flex-wrap:wrap; font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ink-soft);
+  }
+  .manifest-meta div{ padding:15px 22px; border-right:1px solid var(--rule); flex:1 1 auto; min-width:150px; }
+  .manifest-meta div:last-child{ border-right:none; }
+  .manifest-meta b{ display:block; color:var(--ink); font-weight:600; font-size:13.5px; margin-top:3px; font-variant-numeric:tabular-nums; }
+  .manifest-meta span{ color:var(--ink-faint); text-transform:uppercase; letter-spacing:.09em; font-size:10px; }
+
+  /* ---------- live links panel ---------- */
+  .routes{
+    margin-top:20px; border:1px solid var(--rule-strong); background:var(--bg-raised);
+    box-shadow:var(--shadow-lg); position:relative; overflow:hidden;
+  }
+  .routes::before{
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2),var(--amber));
+  }
+  .routes-head{
+    display:flex; align-items:center; gap:10px; padding:16px 24px 14px;
+    font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--ink-soft); margin-top:3px;
+  }
+  .dot{ width:9px; height:9px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 4px var(--accent-soft);
+        animation:pulse 2.2s ease-in-out infinite; flex:0 0 auto; }
+  @keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.45; } }
+  @media (prefers-reduced-motion: reduce){ .dot{ animation:none; } }
+  .routes-head strong{ color:var(--ink); font-weight:600; }
+
+  .route-list{ padding:4px 12px 14px; }
+  a.route{
+    display:flex; align-items:center; gap:16px; padding:15px 12px;
+    border-radius:8px; text-decoration:none; color:inherit;
+    transition:background .14s ease, transform .14s ease;
+    position:relative;
+  }
+  a.route:hover, a.route:focus-visible{ background:var(--accent-soft); transform:translateX(3px); }
+  a.route + a.route{ border-top:1px dashed var(--rule); }
+  .route-icon{
+    flex:0 0 auto; width:38px; height:38px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+    background:var(--accent-soft); color:var(--accent-ink); border:1px solid var(--rule);
+    transition:background .14s ease, border-color .14s ease;
+  }
+  a.route:hover .route-icon{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .route-icon svg{ width:18px; height:18px; }
+  .route-body{ flex:1 1 auto; min-width:0; }
+  .route-name{ font-family:'Archivo',sans-serif; font-weight:600; font-size:15px; color:var(--ink); }
+  .route-url{
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--accent-ink);
+    display:block; margin-top:2px; text-decoration:underline; text-decoration-color:var(--accent-soft);
+    text-underline-offset:3px; text-decoration-thickness:1.5px; word-break:break-all;
+  }
+  a.route:hover .route-url{ text-decoration-color:var(--accent); }
+  .route-go{
+    flex:0 0 auto; width:26px; height:26px; border-radius:50%; border:1.5px solid var(--rule-strong);
+    display:flex; align-items:center; justify-content:center; color:var(--ink-faint);
+    transition:transform .16s ease, border-color .16s ease, color .16s ease, background .16s ease;
+  }
+  a.route:hover .route-go{ transform:translateX(3px); border-color:var(--accent); color:#fff; background:var(--accent); }
+  .route-go svg{ width:13px; height:13px; }
+  .routes-foot{
+    padding:13px 24px; font-family:'IBM Plex Mono',monospace; font-size:11.5px;
+    color:var(--ink-faint); border-top:1px solid var(--rule); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  }
+  .routes-foot a{ color:var(--ink-soft); text-decoration:underline; text-decoration-color:var(--rule-strong); text-underline-offset:2px; }
+  .routes-foot a:hover{ color:var(--accent-ink); text-decoration-color:var(--accent); }
+
+  /* ---------- section nav ---------- */
+  nav.toc{
+    margin-top:16px; display:flex; flex-wrap:wrap; gap:0; font-family:'IBM Plex Mono',monospace; font-size:12px;
+  }
+  nav.toc a{
+    color:var(--ink-soft); text-decoration:none; padding:8px 13px; border:1px solid var(--rule);
+    margin:0 -1px -1px 0; white-space:nowrap; transition:color .12s ease, border-color .12s ease, background .12s ease;
+  }
+  nav.toc a:hover{ color:var(--accent-ink); border-color:var(--accent); background:var(--accent-soft); position:relative; z-index:1; }
+  nav.toc a b{ color:var(--amber); font-weight:600; margin-right:6px; }
+
+  /* ---------- sections ---------- */
+  section{ margin-top:60px; scroll-margin-top:24px; }
+  .section-head{ display:flex; align-items:baseline; gap:14px; margin-bottom:20px; }
+  .sec-num{
+    font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600;
+    color:var(--bg-raised); background:var(--ink); padding:4px 9px; letter-spacing:.02em; flex:0 0 auto; border-radius:3px;
+  }
+  h2{
+    font-family:'Archivo',sans-serif; font-weight:700; font-size:clamp(21px,3.4vw,27px);
+    letter-spacing:-.008em; margin:0; text-wrap:balance;
+  }
+  h3{ font-family:'Archivo',sans-serif; font-weight:600; font-size:16.5px; margin:32px 0 11px; color:var(--ink); }
+  h4{ font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent-ink); margin:26px 0 10px; }
+  p{ margin:0 0 15px; max-width:64ch; }
+  p:last-child{ margin-bottom:0; }
+  strong{ font-weight:600; }
+  em{ font-style:italic; }
+  a{ color:var(--accent-ink); text-decoration-color:var(--accent-soft); text-underline-offset:2px; }
+  a:hover{ text-decoration-color:var(--accent); }
+  code{
+    font-family:'IBM Plex Mono',monospace; font-size:.86em; background:var(--accent-soft);
+    color:var(--accent-ink); padding:.12em .38em; border-radius:3px; white-space:nowrap;
+  }
+
+  .lede{ font-size:19px; color:var(--ink-soft); max-width:60ch; }
+  .lede strong{ color:var(--ink); }
+
+  ol.steps{ list-style:none; margin:0; padding:0; counter-reset:step; }
+  ol.steps li{ counter-increment:step; position:relative; padding:10px 0 10px 44px; border-bottom:1px solid var(--rule); }
+  ol.steps li:first-child{ border-top:1px solid var(--rule); }
+  ol.steps li::before{
+    content:counter(step); position:absolute; left:0; top:8px;
+    font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600; color:var(--amber);
+    width:27px; height:27px; border:1.5px solid var(--amber); border-radius:50%;
+    display:flex; align-items:center; justify-content:center; background:var(--amber-soft);
+  }
+
+  ul.plain{ margin:0 0 15px; padding-left:22px; }
+  ul.plain li{ margin-bottom:8px; }
+  ul.plain li:last-child{ margin-bottom:0; }
+
+  /* phase blocks in the funnel walkthrough */
+  .phase{
+    border:1px solid var(--rule-strong); border-left:4px solid var(--accent); background:var(--bg-raised);
+    border-radius:0 8px 8px 0; padding:20px 22px; margin:18px 0; box-shadow:var(--shadow-sm);
+  }
+  .phase.ph2{ border-left-color:var(--amber); }
+  .phase.ph3{ border-left-color:var(--ok); }
+  .phase-head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .phase-num{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; letter-spacing:.06em;
+    color:var(--accent-ink); background:var(--accent-soft); padding:3px 9px; border-radius:20px;
+  }
+  .phase.ph2 .phase-num{ color:var(--amber); background:var(--amber-soft); }
+  .phase.ph3 .phase-num{ color:var(--ok); background:var(--ok-soft); }
+  .phase-title{ font-family:'Archivo',sans-serif; font-weight:700; font-size:16px; }
+  .phase ul.plain{ margin-top:12px; }
+  .phase ul.plain li{ font-size:15.5px; }
+
+  .tbl-wrap{ overflow-x:auto; margin:18px 0 22px; border-radius:6px; }
+  table.data{ width:100%; border-collapse:collapse; font-size:14.5px; }
+  table.data th{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--ink-soft); text-align:left; padding:0 14px 9px 0; border-bottom:1.5px solid var(--ink); font-weight:600;
+  }
+  table.data td{ padding:12px 14px 12px 0; border-bottom:1px solid var(--rule); vertical-align:top; font-family:'Source Serif 4', serif; }
+  table.data tbody tr{ transition:background .12s ease; }
+  table.data tbody tr:hover{ background:var(--bg-sunken); }
+  table.data tr:last-child td{ border-bottom:1.5px solid var(--rule-strong); }
+  table.data td.num, table.data th.num{ font-family:'IBM Plex Mono',monospace; font-variant-numeric:tabular-nums; }
+  table.data td:first-child{ font-weight:600; padding-left:10px; }
+  table.data th:first-child{ padding-left:10px; }
+
+  .tag{
+    display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:600;
+    letter-spacing:.03em; padding:3px 9px; border-radius:20px; white-space:nowrap;
+  }
+  .tag.ok{ background:var(--ok-soft); color:var(--ok); }
+  .tag.warn{ background:var(--warn-soft); color:var(--warn); }
+  .tag.bad{ background:var(--bad-soft); color:var(--bad); }
+
+  .callout{ border-left:3px solid var(--accent); background:var(--accent-soft); padding:17px 21px; margin:20px 0; border-radius:0 6px 6px 0; }
+  .callout p{ margin:0; color:var(--accent-ink); max-width:none; }
+  .callout p + p{ margin-top:8px; }
+  .callout.amber{ border-left-color:var(--amber); background:var(--amber-soft); }
+  .callout.amber p{ color:var(--ink); }
+  .callout .k{ font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:.88em; }
+
+  .verdicts{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--rule-strong); border:1px solid var(--rule-strong); margin:20px 0 22px; border-radius:6px; overflow:hidden; }
+  .verdict{ background:var(--bg-raised); padding:19px 17px; border-top:3px solid transparent; }
+  .verdict.allow{ border-top-color:var(--ok); } .verdict.review{ border-top-color:var(--warn); } .verdict.block{ border-top-color:var(--bad); }
+  .verdict .n{ font-family:'IBM Plex Mono',monospace; font-size:25px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .verdict .l{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; margin-top:5px; display:block; }
+  .verdict .d{ font-size:13px; color:var(--ink-soft); margin-top:7px; font-family:'Source Serif 4',serif; }
+  .verdict.allow .n, .verdict.allow .l{ color:var(--ok); }
+  .verdict.review .n, .verdict.review .l{ color:var(--warn); }
+  .verdict.block .n, .verdict.block .l{ color:var(--bad); }
+
+  /* mermaid flowchart frame */
+  .diagram{
+    border:1px solid var(--rule-strong); background:var(--bg-raised); border-radius:8px;
+    padding:22px 18px 10px; margin:22px 0; box-shadow:var(--shadow); overflow-x:auto;
+  }
+  .diagram-cap{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--ink-faint); padding:0 6px 14px; border-bottom:1px dashed var(--rule); margin-bottom:6px;
+  }
+  .mermaid{ margin:0; display:flex; justify-content:center; }
+
+  footer{
+    margin-top:68px; padding-top:26px; border-top:1.5px solid var(--ink);
+    font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-faint);
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+  }
+  footer a{ color:var(--ink-faint); }
+
+  @media (max-width:640px){
+    body{ font-size:16px; }
+    .manifest-top{ flex-direction:column; }
+    .readout{ align-self:flex-start; }
+    .manifest-meta div{ flex:1 1 45%; }
+    .verdicts{ grid-template-columns:1fr; }
+    a.route{ gap:12px; padding:13px 8px; }
+    .route-name{ font-size:14.5px; }
+    .route-url{ font-size:11.5px; }
+    .phase{ padding:16px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<div class="wrap">
+
+  <header class="manifest">
+    <div class="manifest-top">
+      <div>
+        <p class="manifest-eyebrow"><span class="bar"></span>Cross-Border Listing &amp; Fulfilment System</p>
+        <h1 class="title">Sourced — how the<br><em>system</em> works</h1>
+      </div>
+      <div class="readout">
+        <div class="readout-row"><span class="readout-led"></span><span class="readout-label">Snapshot</span></div>
+        <div class="readout-value">20 SEP 2026</div>
+      </div>
+    </div>
+    <div class="manifest-meta">
+      <div><span>Origin</span><b>Blinkit · Delhi</b></div>
+      <div><span>Destination</span><b>United States</b></div>
+      <div><span>Catalogue</span><b>31,366 SKUs</b></div>
+      <div><span>Engines</span><b>9, live</b></div>
+    </div>
+  </header>
+
+  <div class="routes">
+    <div class="routes-head"><span class="dot"></span> <strong>Live system</strong> — one application, one address</div>
+    <div class="route-list">
+
+      <a class="route" href="https://baba-it.onrender.com/" target="_blank" rel="noopener">
+        <span class="route-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9l1-5h14l1 5"/><path d="M4 9h16v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9z"/><path d="M9 13a3 3 0 0 0 6 0"/></svg></span>
+        <span class="route-body"><span class="route-name">Storefront</span><span class="route-url">baba-it.onrender.com/</span></span>
+        <span class="route-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg></span>
+      </a>
+
+      <a class="route" href="https://baba-it.onrender.com/console" target="_blank" rel="noopener">
+        <span class="route-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span>
+        <span class="route-body"><span class="route-name">Control tower</span><span class="route-url">baba-it.onrender.com/console</span></span>
+        <span class="route-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg></span>
+      </a>
+
+      <a class="route" href="https://baba-it.onrender.com/ops" target="_blank" rel="noopener">
+        <span class="route-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></span>
+        <span class="route-body"><span class="route-name">Compliance / ops queue</span><span class="route-url">baba-it.onrender.com/ops</span></span>
+        <span class="route-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg></span>
+      </a>
+
+      <a class="route" href="https://baba-it.onrender.com/operator" target="_blank" rel="noopener">
+        <span class="route-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="1.5"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M9 12h6M9 16h4"/></svg></span>
+        <span class="route-body"><span class="route-name">Operator view</span><span class="route-url">baba-it.onrender.com/operator</span></span>
+        <span class="route-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg></span>
+      </a>
+
+      <a class="route" href="https://baba-it.onrender.com/docs" target="_blank" rel="noopener">
+        <span class="route-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h10a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H8"/><path d="M8 4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2"/><path d="M11 9h5M11 13h5"/></svg></span>
+        <span class="route-body"><span class="route-name">API docs</span><span class="route-url">baba-it.onrender.com/docs — 47 endpoints</span></span>
+        <span class="route-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg></span>
+      </a>
+
+    </div>
+    <div class="routes-foot">
+      <span>First load after idle takes 30–50s — the host sleeps the service, and the catalogue is a 28MB database.</span>
+      <a href="https://github.com/sanyamgaur/Scrapper" target="_blank" rel="noopener">↳ source on GitHub</a>
+    </div>
+  </div>
+
+  <nav class="toc">
+    <a href="#s1"><b>01</b>What it does</a>
+    <a href="#s2"><b>02</b>The funnel</a>
+    <a href="#s3"><b>03</b>Compliance</a>
+    <a href="#s4"><b>04</b>Ops sheet</a>
+    <a href="#s5"><b>05</b>Money</a>
+    <a href="#s6"><b>06</b>Other engines</a>
+    <a href="#s7"><b>07</b>Real vs snapshot</a>
+    <a href="#s8"><b>08</b>Source</a>
+  </nav>
+
+  <!-- 1 -->
+  <section id="s1">
+    <div class="section-head"><span class="sec-num">§01</span><h2>What it does</h2></div>
+    <p class="lede">Sourced takes <strong>31,366 grocery products</strong> scraped from an Indian quick-commerce app and decides which can legally, physically and profitably be sold to a US customer — then carries the order through to someone buying it off a shelf in Delhi.</p>
+    <p>Four questions block every product: <strong>may we ship it</strong> (customs, FDA, airline dangerous goods), <strong>can we ship it</strong> (carriers bill on weight the catalogue never states), <strong>should we ship it</strong> (a $4 bag of peanuts with $27 freight is not a product), and <strong>can we get it</strong> (the price and stock flag were true only at crawl time).</p>
+    <p>Nine engines answer them. Every verdict traces to a specific rule, number and reason.</p>
+
+    <div class="verdicts">
+      <div class="verdict allow"><span class="n">6,173</span><span class="l">Allowed</span><div class="d">Listed for sale</div></div>
+      <div class="verdict review"><span class="n">21,713</span><span class="l">Review</span><div class="d">Not rejected — not yet cleared</div></div>
+      <div class="verdict block"><span class="n">3,480</span><span class="l">Blocked</span><div class="d">A rule says no, with a citation</div></div>
+    </div>
+
+    <div class="callout">
+      <p><span class="k">Unknown is not safe.</span> A product matching no rule goes to review, never to the storefront. That is why review outnumbers listable 3:1 — the catalogue grows by deliberate clearance.</p>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section id="s2">
+    <div class="section-head"><span class="sec-num">§02</span><h2>The funnel, start to finish</h2></div>
+    <p>Every product's journey runs through three phases — cleared for sale, sold, then physically fulfilled — narrowing at each gate. The diagram below is the whole thing; the walkthrough underneath fills in what happens at each stop.</p>
+
+    <div class="diagram">
+      <div class="diagram-cap">Fig. 1 — end-to-end funnel, crawl to delivery</div>
+      <div class="mermaid">
+flowchart TD
+    subgraph PH1["Phase 1 · Sourcing and Compliance"]
+        A["Crawl Blinkit<br/>31,366 SKUs"] --> B["Parse pack size<br/>97% resolved"]
+        B --> C{"Classify<br/>4 rule layers"}
+        C -->|"Blocked - 3,480"| D["Never listed"]
+        C -->|"Review - 21,713"| E["Cluster by shelf and rule<br/>531 decisions"]
+        E -->|"human clears"| G["Listed"]
+        C -->|"Allowed - 6,173"| G
+    end
+
+    subgraph PH2["Phase 2 · Listing and Selling"]
+        G --> H["Price and freight<br/>computed live"]
+        H --> I["Basket suggestions"]
+        I --> J["Customer orders"]
+        J --> K{"Stock gate<br/>synchronous recheck"}
+        K -->|"out of stock"| L["Order blocked"]
+    end
+
+    subgraph PH3["Phase 3 · Fulfilment and Delivery"]
+        K -->|"in stock"| M["Daily batch<br/>cutoff 23:00 IST"]
+        M --> N["Split by dark store"]
+        N --> O["Bought in risk order"]
+        O --> Q["Operator confirms<br/>and packs"]
+        Q --> R["Shipped to US"]
+    end
+      </div>
+    </div>
+
+    <h4>Phase 1 of 3</h4>
+    <div class="phase ph1">
+      <div class="phase-head"><span class="phase-num">SOURCING</span><span class="phase-title">From a raw scrape to a listable SKU</span></div>
+      <p>This phase turns an unstructured product feed into a catalogue the rest of the system can trust — every number resolved, every legal question answered, before anything is allowed near a price tag.</p>
+      <ul class="plain">
+        <li><strong>Crawl.</strong> A token-bucket limiter matched to Blinkit's real capacity (~0.635 req/s) pulls the Delhi catalogue without tripping rate limits, writing <code>inventory_delhi.csv</code>.</li>
+        <li><strong>Parse the pack.</strong> Free-text sizes like <code>2 x 100 g</code> become structured grams — 97% resolve at high confidence; the rest are held for review rather than guessed, because every downstream weight and price depends on this number.</li>
+        <li><strong>Classify.</strong> Four rule layers — keyword, shelf, aisle, physical threshold — run in order of specificity. Worst verdict wins, and all 38,546 fired-rule matches are logged, not just the deciding one.</li>
+        <li><strong>Cluster and clear.</strong> The 21,713 SKUs landing in review are grouped by shelf × rule into 531 decisions. A human clearing one decision writes an <code>override</code> that survives the next rule-pack rewrite.</li>
+      </ul>
+    </div>
+
+    <h4>Phase 2 of 3</h4>
+    <div class="phase ph2">
+      <div class="phase-head"><span class="phase-num">SELLING</span><span class="phase-title">From a listing to a paid, confirmed order</span></div>
+      <p>Nothing here is precomputed and cached — every price a customer sees was calculated for that request, against the current rule pack and a real-time stock check.</p>
+      <ul class="plain">
+        <li><strong>List.</strong> Cleared SKUs go live with a landed-cost price and a freight quote computed on demand (the exact cost lines are in §05).</li>
+        <li><strong>Suggest.</strong> The basket engine looks for free dimensional-weight headroom in the cart and proposes add-ons that ship for nothing — never a random cross-sell (§06 has the guardrails).</li>
+        <li><strong>Order.</strong> The customer checks out against the price and freight quoted at that moment.</li>
+        <li><strong>Gate.</strong> Every line is re-verified against Blinkit synchronously before payment captures. A stale or unknown reading fails the order closed — better a blocked checkout than an unfulfillable one.</li>
+      </ul>
+    </div>
+
+    <h4>Phase 3 of 3</h4>
+    <div class="phase ph3">
+      <div class="phase-head"><span class="phase-num">FULFILMENT</span><span class="phase-title">From a paid order to a parcel in the US</span></div>
+      <p>This is the physical half — turning a day of scattered US orders into a small number of trips through a Delhi dark store, then back apart into individually addressed parcels.</p>
+      <ul class="plain">
+        <li><strong>Batch.</strong> Orders placed before the 23:00 IST cutoff are consolidated with an allocation ledger — three customers ordering the same peanuts become one line of qty 3, with the ledger tracking which unit belongs to whom.</li>
+        <li><strong>Split by dark store.</strong> One Blinkit basket serves one merchant, and the listable catalogue spans two (34,280 and 36,778 SKUs each) — so a day's batch is almost never a single trip.</li>
+        <li><strong>Buy in risk order.</strong> Lines are picked in descending stockout risk, weighted by the USD revenue riding on them; when stock comes up short, the units go to the orders closest to being complete, not first-come-first-served.</li>
+        <li><strong>Confirm and pack.</strong> Because order placement itself can't be automated (payment requires human 2FA — see §06), an operator works a risk-ordered pick sheet with three checks: a price attestation, a quantity reconciliation, and a pack-out confirmation.</li>
+        <li><strong>Ship.</strong> The parcel leaves on the carrier selected at quote time, the one carrier out of five that could actually honour the product's handling requirements.</li>
+      </ul>
+    </div>
+
+    <p>Everything above reads and writes one SQLite file, <code>crossborder.db</code>: 18 tables covering catalogue, verdicts, the human queue, stock, orders and fulfilment — so any decision at any stage can be traced back to the row that caused it.</p>
+  </section>
+
+  <!-- 3 -->
+  <section id="s3">
+    <div class="section-head"><span class="sec-num">§03</span><h2>Compliance — the rules</h2></div>
+    <p>Rule pack <code>2026.09.1</code>. Four layers, evaluated most-specific first. Worst verdict wins; every match is recorded.</p>
+
+    <div class="tbl-wrap">
+      <table class="data">
+        <tr><th>Layer</th><th class="num">Rules</th><th>Matched against</th></tr>
+        <tr><td>Keyword</td><td class="num">39</td><td>Product name + brand (regex)</td></tr>
+        <tr><td>Group</td><td class="num">71</td><td>Blinkit's shelves — 29 allow, 24 block, 18 review</td></tr>
+        <tr><td>Category</td><td class="num">9</td><td>Blinkit's aisles</td></tr>
+        <tr><td>Pack</td><td class="num">2</td><td>Physical thresholds</td></tr>
+      </table>
+    </div>
+
+    <p><strong>Eight dimensions</strong> say <em>why</em> a rule fired, so ops can triage by cause: <code>US_IMPORT</code> (border prohibition), <code>HAZMAT</code> (airlines refuse it), <code>TEMPERATURE</code> (needs cold chain), <code>PERISHABLE</code> (shelf life &lt; transit), <code>FRAGILITY</code>, <code>FUNCTIONAL</code> (230V won't work in the US), <code>DUTY</code> (antidumping exposure), <code>IP_RISK</code>.</p>
+
+    <h3>The keyword layer, by family</h3>
+    <div class="tbl-wrap">
+      <table class="data">
+        <tr><th>Family</th><th class="num">Rules</th><th>Verdict</th><th>Example authority</th></tr>
+        <tr><td>Meat, seafood, eggs, dairy</td><td class="num">6</td><td>5 blocked, ghee → review</td><td>9 CFR 94; 21 CFR 123</td></tr>
+        <tr><td>Produce, seeds, poppy</td><td class="num">3</td><td>All blocked</td><td>7 CFR 319.56; 21 U.S.C. 802</td></tr>
+        <tr><td>Tobacco, betel, alcohol, pharma</td><td class="num">6</td><td>4 blocked, 2 review</td><td>FDA Import Alert 21-19; 21 U.S.C. 387</td></tr>
+        <tr><td>Dangerous goods</td><td class="num">7</td><td>4 blocked, 3 review</td><td>IATA DGR UN1950; 49 CFR 173.306</td></tr>
+        <tr><td>Cold chain, shelf life</td><td class="num">5</td><td>3 blocked, 2 review</td><td>FDA Import Alert 34-02</td></tr>
+        <tr><td>Cosmetics, drugs, devices</td><td class="num">5</td><td>Kajal blocked, 4 review</td><td>FDA Import Alert 53-19; MoCRA 2022</td></tr>
+        <tr><td>Consumer goods, trade</td><td class="num">7</td><td>IP risk blocked, 6 review</td><td>CPSIA; Antidumping A-533-903</td></tr>
+      </table>
+    </div>
+
+    <p>Notable calls: <strong>ghee</strong> is review not blocked — shelf-stable, still a milk product. <strong>Kajal</strong> is blocked on a named lead-content import alert. <strong>Honey</strong> is admissible but carries a live antidumping order on Indian raw honey. <strong>Toys inside confectionery</strong> are blocked outright, a category unremarkable in India.</p>
+    <p><strong>Category layer:</strong> meat, produce, dairy and ice cream blocked; pharma, electronics, stationery and cleaners to review. Feminine Hygiene is the only aisle cleared wholesale.</p>
+    <p><strong>Pack layer:</strong> over 20kg billable → review (freight exceeds goods value, may need formal customs entry). Unparseable pack → review (weight unknown, freight would be under-charged).</p>
+
+    <h3>Scoping</h3>
+    <p>The same word means different things on different shelves — <strong>cream</strong> is dairy in grocery and moisturiser in beauty; <strong>tablet</strong> is medicine in pharma and a computer in electronics. Rules carry scope qualifiers. Without them one broad rule silently deletes thousands of listable SKUs; this happened in development and a test now locks it out.</p>
+
+    <div class="callout amber">
+      <p>The rule pack states its own limit: the citations are <em>"our documented basis for a commercial decision, not legal advice"</em> — have a licensed customs broker sign off.</p>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section id="s4">
+    <div class="section-head"><span class="sec-num">§04</span><h2>The ops sheet</h2></div>
+    <p>A per-SKU queue of 21,713 items is one nobody works. Clustering by <strong>shelf × rule that fired</strong> collapses it to <strong>531 decisions</strong>, and the top 50 cover <strong>59%</strong> of the backlog. Clearing <code>Jewellery / KW-JEWELLERY-081</code> moves 829 SKUs in one click.</p>
+
+    <div class="tbl-wrap">
+      <table class="data">
+        <tr><th>Column</th><th>Holds</th></tr>
+        <tr><td><code>cluster_id</code></td><td>Shelf + rule — the unique key</td></tr>
+        <tr><td><code>group_name</code> · <code>rule_id</code> · <code>dimension</code></td><td>What fired, and why</td></tr>
+        <tr><td><code>reason</code> · <code>authority</code></td><td>Plain-language explanation + the citation</td></tr>
+        <tr><td><code>sku_count</code></td><td>How many SKUs this one decision moves</td></tr>
+        <tr><td><code>sample_names</code></td><td>Real product names, so the reviewer sees what they're judging</td></tr>
+        <tr><td><code>status</code> · <code>decided_by</code> · <code>decided_at</code> · <code>note</code></td><td>The decision and its trail</td></tr>
+      </table>
+    </div>
+    <p style="color:var(--ink-faint); font-family:'IBM Plex Mono',monospace; font-size:13px;">The last four columns are empty across all 531 rows — no clusters worked yet.</p>
+
+    <h3>Biggest waiting decisions</h3>
+    <div class="tbl-wrap">
+      <table class="data">
+        <tr><th>Shelf</th><th>Rule</th><th class="num">SKUs</th></tr>
+        <tr><td>Party &amp; Festive Needs</td><td><code>DEFAULT-REVIEW</code></td><td class="num">834</td></tr>
+        <tr><td>Jewellery</td><td><code>KW-JEWELLERY-081</code></td><td class="num">829</td></tr>
+        <tr><td>Jewellery</td><td><code>GROUP:Jewellery</code></td><td class="num">775</td></tr>
+        <tr><td>Home Needs</td><td><code>DEFAULT-REVIEW</code></td><td class="num">693</td></tr>
+        <tr><td>Pooja Needs</td><td><code>GROUP:Pooja Needs</code> (HAZMAT)</td><td class="num">617</td></tr>
+        <tr><td>Home Appliances</td><td><code>GROUP:Home Appliances</code></td><td class="num">575</td></tr>
+      </table>
+    </div>
+
+    <p><code>DEFAULT-REVIEW</code> means <strong>no rule matched at all</strong> — unexplored catalogue, and the cheapest wins available. Pooja Needs is HAZMAT because camphor and incense are flammable solids.</p>
+    <p>Cleared clusters write to <code>overrides</code>, a separate table. Rebuilding the rule pack rewrites every verdict, then re-applies overrides — so a rule tweak never discards an operator's work.</p>
+  </section>
+
+  <!-- 5 -->
+  <section id="s5">
+    <div class="section-head"><span class="sec-num">§05</span><h2>Money — pricing and freight</h2></div>
+    <p>Eight lines turn an INR shelf price into a USD price. Every number lives in YAML, never in code.</p>
+
+    <div class="tbl-wrap">
+      <table class="data">
+        <tr><th>Line</th><th>Value</th></tr>
+        <tr><td>Goods</td><td>INR ÷ FX at 88.0, held with a <strong>2.5% buffer</strong> over spot</td></tr>
+        <tr><td>Sourcing</td><td>₹35 delivery + 2% handling + ₹45 pick/pack + <strong>4% procurement-failure allowance</strong></td></tr>
+        <tr><td>Freight</td><td><code>max(actual, volumetric)</code> — see below</td></tr>
+        <tr><td>Duty</td><td>3.0–8.5% by category, <strong>6.0% default</strong></td></tr>
+        <tr><td>MPF</td><td>0.3464% of dutiable value, floor $2.62, cap $634.62</td></tr>
+        <tr><td>Payments</td><td>2.9% + $0.30, plus 1% FX spread, 0.8% chargeback reserve</td></tr>
+        <tr><td>Margin</td><td>Target <strong>28%</strong>, floor 15%. Beauty 38%, staples <strong>18%</strong> — freight already dominates</td></tr>
+        <tr><td>Rounding</td><td>To <code>.99</code>, minimum $2.99</td></tr>
+      </table>
+    </div>
+
+    <div class="callout amber">
+      <p><span class="k">De minimis is set to $0.</span> The $800 duty-free allowance is treated as unavailable (Section 321 suspended 2025), so every parcel is priced as dutiable. If it returns, one number changes and every price updates.</p>
+    </div>
+
+    <p><strong>Freight.</strong> Weight is the hard part, not the rate table: ×1.18 dimensional factor, +260g box, 500g billable floor, and unknown weights always <strong>round upward</strong> — an under-estimated gram costs margin on every order forever. Five carriers quote (DHL, FedEx, Aramex, India Post EMS, a consolidator) on declining per-kg slabs. A carrier that cannot honour a handling flag is <strong>excluded, not ranked cheaper</strong> — a cheap carrier that melts your chocolate is not an option.</p>
+
+    <p><strong>Viability matters more than price.</strong> Freight above 4× goods value is not viable; above 2× is flagged. A single cheap SKU runs 6.8× and is commercially dead; an eight-item basket runs 2.7× at 30.8% margin. That gap is why the basket builder exists.</p>
+  </section>
+
+  <!-- 6 -->
+  <section id="s6">
+    <div class="section-head"><span class="sec-num">§06</span><h2>The other engines</h2></div>
+
+    <div class="tbl-wrap">
+      <table class="data">
+        <tr><th>Engine</th><th>What it decides</th><th>Key rule</th></tr>
+        <tr><td>Stock</td><td>Whether a SKU is buyable now</td><td>Freshness tiers (cart 60s → tail 48h) + a synchronous checkout gate that <strong>fails closed</strong>. Availability is boolean — Blinkit gives no depth, so no fabricated "12 left"</td></tr>
+        <tr><td>Stockout risk</td><td>What's about to vanish</td><td>Weighted score; <strong>27,886 SKUs</strong> scored. Reports <code>low</code> confidence with no history rather than faking certainty. Shelf base rate: 18% on Toys &amp; Games vs 92% on Baby Toys</td></tr>
+        <tr><td>Procurement</td><td>A day's orders → Blinkit carts</td><td>Consolidate with an allocation ledger; split by dark store first; buy in risk order; give shorts to the orders <strong>closest to whole</strong></td></tr>
+        <tr><td>Price drift</td><td>When a shelf price moved</td><td>List drift: greater of $3 or 5%. Quote drift held tighter, enforced in code. <strong>Drops never block an order</strong> — only rises escalate to <code>REPRICE → DELISTED</code></td></tr>
+        <tr><td>Basket</td><td>What to suggest adding</td><td>Freight arithmetic, not "customers also bought". <strong>Free headroom</strong>: a 1.05kg cart already bills at 1.5kg, so the next 450g ship free. Capped at 1.5× cart value</td></tr>
+        <tr><td>Restock</td><td>When to relist</td><td>6-hour stability hold, flap suppression, re-check against compliance. <strong>Recommends, never auto-relists</strong>; waitlist notifications capped at 5</td></tr>
+      </table>
+    </div>
+
+    <p><strong>Order placement is not automated, deliberately.</strong> It needs an authenticated account, a cart-write endpoint, a saved address and payment authorisation — the project holds none. The blocker is payment: Indian card and UPI require RBI-mandated 2FA on a human's device by design. So the operator gets a risk-ordered pick sheet with deep links and three confirmations, including a typed price attestation that catches wrong-pack mis-picks.</p>
+  </section>
+
+  <!-- 7 -->
+  <section id="s7">
+    <div class="section-head"><span class="sec-num">§07</span><h2>Real vs snapshot</h2></div>
+    <p><span class="tag ok">Real</span> &nbsp;All nine engines compute live on every order. Change a YAML rule and the next quote reflects it.</p>
+    <p><span class="tag warn">Snapshot</span> &nbsp;The catalogue. 31,366 SKUs crawled 16 September 2026. Refreshing needs the scraper, which requires a real machine in India with a visible browser — it will not run on a server.</p>
+
+    <h3>Three consequences worth stating in a demo</h3>
+    <ul class="plain">
+      <li><strong>No live availability feed.</strong> Checkout sells against the snapshot and blocks only items already flagged out of stock. Setting <code>stock.require_live_confirmation: true</code> makes it strict, but needs a live session.</li>
+      <li><strong>Risk confidence is <code>low</code> everywhere</strong> — <code>stock_checks</code> is empty, so flip frequency and restock latency have nothing to work with.</li>
+      <li><strong>No orders placed yet.</strong> Fulfilment is built and tested, not yet run on real traffic. The database is also on ephemeral disk: anything written at runtime is wiped on the next deploy.</li>
+    </ul>
+
+    <div class="callout">
+      <p>In short: a complete decision system running on a frozen catalogue. The reasoning is real and inspectable; the products are a photograph.</p>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section id="s8">
+    <div class="section-head"><span class="sec-num">§08</span><h2>Where things live</h2></div>
+
+    <div class="tbl-wrap">
+      <table class="data">
+        <tr><th>Rule pack</th><th>Covers</th></tr>
+        <tr><td><a href="https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/rules/compliance.yaml" target="_blank" rel="noopener"><code>rules/compliance.yaml</code></a></td><td>Sections 3–4</td></tr>
+        <tr><td><a href="https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/rules/pricing.yaml" target="_blank" rel="noopener"><code>rules/pricing.yaml</code></a></td><td>Section 5</td></tr>
+        <tr><td><a href="https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/rules/shipping.yaml" target="_blank" rel="noopener"><code>rules/shipping.yaml</code></a></td><td>Section 5, carriers + customs</td></tr>
+        <tr><td><a href="https://github.com/sanyamgaur/Scrapper/blob/main/crossborder/rules/procurement.yaml" target="_blank" rel="noopener"><code>rules/procurement.yaml</code></a></td><td>Section 6</td></tr>
+      </table>
+    </div>
+
+    <p>Engines are in <a href="https://github.com/sanyamgaur/Scrapper/tree/main/crossborder" target="_blank" rel="noopener"><code>crossborder/</code></a>: <code>compliance.py</code>, <code>pricing.py</code>, <code>shipping.py</code>, <code>stock.py</code>, <code>stockout_risk.py</code>, <code>procurement.py</code>, <code>pricedrift.py</code>, <code>basket.py</code>, <code>restock.py</code>, <code>packparse.py</code>. The API and control tower are <code>api.py</code> and <code>console.py</code>. Getting started: <a href="https://github.com/sanyamgaur/Scrapper/blob/main/START-HERE.txt" target="_blank" rel="noopener"><code>START-HERE.txt</code></a>.</p>
+
+    <p style="color:var(--ink-faint); font-size:14.5px;">The legal citations above are quoted from the rule pack and <strong>not independently verified</strong> — check them at ecfr.gov or fda.gov before relying on them.</p>
+  </section>
+
+  <footer>
+    <span>Sourced / Cross-Border Manifest</span>
+    <span>§01–§08 · Rule pack 2026.09.1</span>
+  </footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<script>
+(function(){
+  var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var vars = isDark ? {
+    primaryColor:'#132436', primaryTextColor:'#e9edf5', primaryBorderColor:'#5aa9e6',
+    lineColor:'#6b7690', secondaryColor:'#2c2313', secondaryTextColor:'#e9edf5', secondaryBorderColor:'#2e3a4e',
+    tertiaryColor:'#0d131c', tertiaryTextColor:'#e9edf5', tertiaryBorderColor:'#2e3a4e',
+    background:'#121924', mainBkg:'#132436', clusterBkg:'#0d131c', clusterBorder:'#2e3a4e',
+    edgeLabelBackground:'#121924', fontFamily:'IBM Plex Mono, monospace', fontSize:'13px'
+  } : {
+    primaryColor:'#e3edf9', primaryTextColor:'#111827', primaryBorderColor:'#1f5fa8',
+    lineColor:'#7c869c', secondaryColor:'#faf0da', secondaryTextColor:'#111827', secondaryBorderColor:'#b6c1d2',
+    tertiaryColor:'#e4e9f1', tertiaryTextColor:'#111827', tertiaryBorderColor:'#b6c1d2',
+    background:'#ffffff', mainBkg:'#e3edf9', clusterBkg:'#e4e9f1', clusterBorder:'#b6c1d2',
+    edgeLabelBackground:'#ffffff', fontFamily:'IBM Plex Mono, monospace', fontSize:'13px'
+  };
+  if(window.mermaid){
+    mermaid.initialize({ startOnLoad:true, theme:'base', securityLevel:'loose', themeVariables:vars });
+  }
+})();
+</script>
+<script>
+(function(){
+  var bar = document.getElementById('progress');
+  function onScroll(){
+    var h = document.documentElement;
+    var scrolled = h.scrollTop;
+    var height = h.scrollHeight - h.clientHeight;
+    var pct = height > 0 ? (scrolled / height) * 100 : 0;
+    bar.style.width = pct + '%';
+  }
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  document.querySelectorAll('a[href^="#"]').forEach(function(a){
+    a.addEventListener('click', function(e){
+      var id = a.getAttribute('href').slice(1);
+      var el = document.getElementById(id);
+      if(el){
+        e.preventDefault();
+        el.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'start'});
+        history.pushState(null,'','#'+id);
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>
